@@ -45,7 +45,7 @@ Still on a Vapor 4 / Swift 5 project? **1.5.0 is the last stable Swift 5 release
 
 Starting a new project? Use **SwifQL 2** 🚀 It runs in Swift 6 language mode and contains the latest query-composition, API, and dialect improvements.
 
-The current published SwifQL 2 pre-release is **2.0.0-beta.6.0.1**. This release line requires **Swift 6.3 or newer** and is validated in CI with **Swift 6.3.3**. If you're upgrading from 1.5.x or an earlier 2.0 beta, check [MIGRATION.md](MIGRATION.md). For examples of what's new see [RELEASE_NOTES.md](RELEASE_NOTES.md) and [CHANGELOG.md](CHANGELOG.md).
+The current SwifQL 2 release candidate/current pre-release is **2.0.0-beta.6.1.0**. This release line requires **Swift 6.3 or newer** and is validated in CI with **Swift 6.3.3**. If you're upgrading from 1.5.x or an earlier 2.0 beta, check [MIGRATION.md](MIGRATION.md). For examples of what's new see [RELEASE_NOTES.md](RELEASE_NOTES.md) and [CHANGELOG.md](CHANGELOG.md).
 
 ## Installation
 
@@ -58,7 +58,7 @@ The current published SwifQL 2 pre-release is **2.0.0-beta.6.0.1**. This release
 ### Swift 6.3+ / SwifQL 2
 
 ```swift
-.package(url: "https://github.com/SwifQL/SwifQL", exact: "2.0.0-beta.6.0.1")
+.package(url: "https://github.com/SwifQL/SwifQL", exact: "2.0.0-beta.6.1.0")
 ```
 
 ### With Vapor 4 + [Bridges](https://github.com/SwifQL/Bridges) + PostgreSQL
@@ -87,7 +87,7 @@ The current published SwifQL 2 pre-release is **2.0.0-beta.6.0.1**. This release
 
 ### Pure
 ```swift
-.package(url: "https://github.com/SwifQL/SwifQL", exact: "2.0.0-beta.6.0.1"),
+.package(url: "https://github.com/SwifQL/SwifQL", exact: "2.0.0-beta.6.1.0"),
 .target(name: "App", dependencies: [
     .product(name: "SwifQL", package: "SwifQL"),
 ]),
@@ -95,7 +95,7 @@ The current published SwifQL 2 pre-release is **2.0.0-beta.6.0.1**. This release
 
 ### Pure on NIO2
 ```swift
-.package(url: "https://github.com/SwifQL/SwifQL", exact: "2.0.0-beta.6.0.1"),
+.package(url: "https://github.com/SwifQL/SwifQL", exact: "2.0.0-beta.6.1.0"),
 .package(url: "https://github.com/SwifQL/SwifQLNIO", from:"2.0.0"),
 .target(name: "App", dependencies: [
     .product(name: "SwifQL", package: "SwifQL"),
@@ -116,6 +116,43 @@ The current published SwifQL 2 pre-release is **2.0.0-beta.6.0.1**. This release
 .package(url: "https://github.com/SwifQL/SwifQLVapor", from:"1.0.0"),
 .target(name: "App", dependencies: ["Vapor", "SwifQL", "SwifQLVapor"]),
 ```
+
+## Declarative Table DDL
+
+SwifQL `2.0.0-beta.6.1.0` adds a small SQL-shaped declarative surface for table creation and alteration.
+
+```swift
+let createUsers = CreateTable("users") {
+    NewColumn("id", .uuid).primaryKey()
+    NewColumn("email", .text).unique().notNull()
+}
+
+createUsers.prepare(.psql).plain
+```
+
+will give:
+
+```sql
+CREATE TABLE "users" ("id" uuid PRIMARY KEY, "email" text UNIQUE NOT NULL)
+```
+
+To add columns, build one `ALTER TABLE` statement:
+
+```swift
+let alterUsers = AlterTable("users") {
+    AddColumn("display_name", .text)
+}
+
+alterUsers.prepare(.psql).plain
+```
+
+will give:
+
+```sql
+ALTER TABLE "users" ADD COLUMN "display_name" text
+```
+
+Table, schema, and column identifiers are explicit strings so historical DDL declarations do not change when current model metadata changes. These builders are intentionally static and non-empty, and `AlterTable` always represents one SQL `ALTER TABLE` statement. SwifQL only builds the SQL; migration versioning, history, transactions, and execution remain the consuming library or application's responsibility.
 
 ## Shared Semantic Values
 

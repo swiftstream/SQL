@@ -4,7 +4,7 @@ This file contains only approved current work. Ideas, unresolved choices, verifi
 
 ## Current capability state
 
-Shared Semantic Values are complete and were first published in SwifQL `2.0.0-beta.6.0.0`. The current release candidate/current prerelease is `2.0.0-beta.6.0.1`, a Swift 6.3 tools/CI compatibility hotfix with no SQL/API behavior change. No follow-up SwifQL implementation task is active for this capability.
+Shared Semantic Values are complete and were first published in SwifQL `2.0.0-beta.6.0.0`; `2.0.0-beta.6.0.1` remains the immutable Swift 6.3 tools/CI compatibility hotfix. The current release candidate/current prerelease is `2.0.0-beta.6.1.0`, which adds the accepted Declarative DDL authoring surface. No follow-up SwifQL implementation task is active for either completed capability.
 
 The maintainer accepted SwiftDuckDB Research 01, Plan Correction 01, P00 temporal executable evidence, and the fresh independent Plan Re-audit 01 CLEAN result. SwifQL is the accepted shared owner for:
 
@@ -15,7 +15,7 @@ DateTime
 Interval
 ```
 
-The shared-value capability passed its source, binding/rendering, external-consumer, cross-platform, documentation, immutable-validation, and independent root-audit gates before publication. It remains available from `2.0.0-beta.6.0.0`; the current release candidate is `2.0.0-beta.6.0.1`.
+The shared-value capability passed its source, binding/rendering, external-consumer, cross-platform, documentation, immutable-validation, and independent root-audit gates before publication. It remains available from `2.0.0-beta.6.0.0`; `2.0.0-beta.6.0.1` remains its toolchain/CI hotfix, while the current release candidate is `2.0.0-beta.6.1.0` with the accepted Declarative DDL authoring capability.
 
 Publication closes the SwifQL work for this capability. Any future SwifQL mutation requires a new explicit maintainer objective and exact task scope; the completed shared-value lineage does not authorize unrelated refactors, Bridges/PostgresBridge modernization, macros, migrations, Table decoding, or wider cross-dialect abstractions.
 

@@ -1,15 +1,15 @@
 # Migrating to SwifQL 2
 
-The current published SwifQL 2 pre-release is `2.0.0-beta.6.0.1`.
+The current SwifQL 2 release candidate/current pre-release is `2.0.0-beta.6.1.0`.
 
 ```swift
 .package(
     url: "https://github.com/SwifQL/SwifQL",
-    exact: "2.0.0-beta.6.0.1"
+    exact: "2.0.0-beta.6.1.0"
 )
 ```
 
-If you are moving from SwifQL 1.5.x or from an earlier 2.0 beta, this guide shows the changes that may require something from your code. Shared semantic values are available starting with `2.0.0-beta.6.0.0`; the current `2.0.0-beta.6.0.1` release is a Swift toolchain compatibility hotfix.
+If you are moving from SwifQL 1.5.x or from an earlier 2.0 beta, this guide shows the changes that may require something from your code. Shared semantic values are available starting with `2.0.0-beta.6.0.0`, and `2.0.0-beta.6.0.1` remains the Swift toolchain compatibility hotfix. `2.0.0-beta.6.1.0` adds declarative table DDL authoring; existing query source does not need to migrate to adopt it.
 
 The good news is that normal SQL-shaped SwifQL queries mostly stay normal SQL-shaped SwifQL queries.
 
@@ -367,7 +367,7 @@ No migration is needed unless your code depended on internal formatter identity 
 ## Quick migration checklist
 
 - Move the consuming project to Swift 6.3 or newer when adopting the current SwifQL 2 prerelease.
-- Pin the current pre-release with `exact: "2.0.0-beta.6.0.1"`.
+- Pin the current pre-release with `exact: "2.0.0-beta.6.1.0"`.
 - Check local/package extensions that manually append or pattern-match `SwifQLable.parts`.
 - Use `structurallyAppending(_:)` when a helper means “continue this framed query”.
 - Replace mutations of predefined `Fn.Name` values with `Fn.Name.custom(_:)` / `Fn.build(_:)`.

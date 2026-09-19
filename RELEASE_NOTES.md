@@ -1,3 +1,66 @@
+# SwifQL 2.0.0-beta.6.1.0 — Declarative Table DDL
+
+This prerelease adds a small SQL-shaped declarative surface for creating and altering tables.
+
+Install it with:
+
+```swift
+.package(
+    url: "https://github.com/SwifQL/SwifQL",
+    exact: "2.0.0-beta.6.1.0"
+)
+```
+
+## Create tables
+
+```swift
+let query = CreateTable("users") {
+    NewColumn("id", .uuid).primaryKey()
+    NewColumn("email", .text).unique().notNull()
+}
+
+query.prepare(.psql).plain
+```
+
+will give:
+
+```sql
+CREATE TABLE "users" ("id" uuid PRIMARY KEY, "email" text UNIQUE NOT NULL)
+```
+
+Generated columns participate in the same table-definition grammar:
+
+```swift
+CreateTable("metrics") {
+    NewColumn("base", .integer)
+    GeneratedColumn("derived", as: Path.Column("base") + 1)
+}
+```
+
+## Alter tables
+
+```swift
+let query = AlterTable("users") {
+    AddColumn("display_name", .text)
+}
+
+query.prepare(.psql).plain
+```
+
+will give:
+
+```sql
+ALTER TABLE "users" ADD COLUMN "display_name" text
+```
+
+Multiple actions stay in one `ALTER TABLE` statement and preserve source order.
+
+Table, schema, and column identifiers are explicit strings so historical DDL declarations do not silently change when current model metadata or key paths change. The DDL result builders are intentionally static and non-empty; direct runtime branching and loops are not part of this first grammar.
+
+This is additive. Existing fluent/query source and legacy DDL APIs do not need to migrate. SwifQL only builds SQL: migration versioning, history, transaction policy, and execution belong to the consuming library or application.
+
+---
+
 # SwifQL 2.0.0-beta.6.0.1 — Swift 6.3 Toolchain Floor
 
 This is a compatibility and release-pipeline hotfix. The minimum Swift tools version is 6.3, and release CI validates with Swift 6.3.3. SQL/API behavior is unchanged from `2.0.0-beta.6.0.0`.

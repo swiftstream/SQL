@@ -17,6 +17,19 @@ This is a navigation aid, not an architecture contract. Use it to locate the sma
 - `Sources/SwifQL/SplittedQuery.swift`
 - `Sources/SwifQL/Formatter.swift`
 
+## Declarative DDL authoring
+
+- `Sources/SwifQL/CreateTable.swift` — accepted declarative CREATE TABLE surface: `TableDefinition`, `CreateTable`, existing `tableDefinitions(...)`, and the `NewColumn` / `GeneratedColumn` definition conformances.
+- `Sources/SwifQL/GeneratedColumn.swift` — `GeneratedColumnStorage` and `GeneratedColumn` semantic value ownership.
+- `Sources/SwifQL/AlterTable.swift` — accepted one-statement ALTER TABLE surface: `AlterTableAction`, string/type-only `AddColumn`, and `AlterTable`.
+- `Sources/SwifQL/TypeDDL.swift` — generic TYPE / ENUM DDL composition helpers, including `type(_:)` and `enum(...)`.
+- `Sources/SwifQL/ResultBuilders/TableDefinitionBuilder.swift` — restricted non-empty static table-definition result builder; no conditional/loop hooks.
+- `Sources/SwifQL/ResultBuilders/AlterTableActionBuilder.swift` — restricted non-empty static ALTER-action result builder; no conditional/loop hooks.
+- `Tests/SwifQLTests/CreateTableTests.swift` — exact CREATE TABLE PostgreSQL/MySQL/Duck SQL, GeneratedColumn participation, snapshot semantics, bind neutrality, and no-semicolon coverage.
+- `Tests/SwifQLTests/AlterTableTests.swift` — exact AddColumn/ALTER TABLE PostgreSQL/MySQL/Duck SQL, one-statement ordering, schema qualification, and no-semicolon coverage.
+
+Historical-schema-safe declarative DDL uses explicit string identifiers. It does not derive migration-facing table/column names from current models or key paths. The broader future runtime query-authoring result-builder slice remains separate.
+
 ## Dialects
 
 Architecture owners:
@@ -114,6 +127,7 @@ The query/bind graph itself remains intentionally non-Sendable where its semanti
 ## Tests
 
 - `Tests/SwifQLTests/SwifQLTestCase.swift` - shared test helpers; `check(..., all:)` now exercises PostgreSQL/MySQL/Duck via `SQLDialect.all`.
+- `Tests/SwifQLTests/CreateTableTests.swift` / `Tests/SwifQLTests/AlterTableTests.swift` - accepted declarative CREATE/ALTER SQL, snapshot, binding-neutrality, and one-statement coverage.
 - `Tests/SwifQLTests/DuckDBDialectTests.swift` and other focused Duck suites - Duck rendering/feature coverage.
 - `Tests/SwifQLTests/StructuralBuilderCompatibilityTests.swift` - structural composition and static-raw compatibility coverage.
 - `Tests/SwifQLTests/FnTests.swift` - function/date migration coverage.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-beta.6.1.0
+
+Adds declarative table DDL authoring with `CreateTable`, `AlterTable`, and `AddColumn`. The new grammar keeps historical table/schema/column identifiers explicit, uses intentionally static non-empty DDL builders, and preserves the existing fluent/legacy DDL APIs. See [RELEASE_NOTES.md](RELEASE_NOTES.md) for examples.
+
 ## 2.0.0-beta.6.0.1
 
 This patch aligns the package minimum Swift tools floor with the validated Swift 6.3 line and runs CI on Swift 6.3.3. It introduces no SQL/API behavior changes from `2.0.0-beta.6.0.0`.

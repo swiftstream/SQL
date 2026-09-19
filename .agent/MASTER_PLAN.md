@@ -47,6 +47,32 @@ Attach scopes only at the semantic construct that truly owns the grammar context
 
 Focused semantic statement representation remains only a future escalation boundary after a separate maintainer decision proves ordinary/scoped parts plus the evidence-proven structural SQL-region model genuinely insufficient. For the current Duck PIVOT/UNPIVOT/MERGE wave, bounded semantic render scopes remain canonical for contextual rendering and Gate B has now passed with a generic major-version SQL-region/set-result frame architecture plus dedicated owner-sensitive clauses. Do not pre-install hidden routing into established `groupBy`, `orderBy`, `limit`, `returning`, or similar DSL methods; the generic continuation path must operate only on the current root frame and contain no dialect/PIVOT branch.
 
+## Declarative DDL authoring state
+
+The first declarative DDL authoring slice is implemented, independently plan-audited, independently source/diff/Git-audited, and primary-accepted.
+
+Accepted generic SQL-owned surface:
+
+```text
+TableDefinition
+TableDefinitionBuilder
+CreateTable
+AlterTableAction
+AlterTableActionBuilder
+AddColumn
+AlterTable
+```
+
+The new DDL values remain ordinary `SwifQLable` / `SwifQLPart` composition over the existing preparation pipeline. No parallel AST/renderer or migration runtime exists in SwifQL.
+
+Historical-schema-safe authoring uses explicit string table/schema/column identifiers; current model metadata and key paths must not rewrite old migration declarations. The DDL result builders are intentionally static/non-empty and reject direct runtime branching/loops.
+
+`CreateTable` snapshots child parts at initialization. `AlterTable` models exactly one SQL ALTER TABLE statement; the first `AddColumn` surface is intentionally String + SwifQL.Type only.
+
+This accepted checkpoint unblocks consumers such as SwiftDuckDB to build their own migration-plan/execution layer around SwifQL DDL values. SwiftDuckDB migration version/history/transaction semantics remain outside SwifQL.
+
+The broader future `SwifQL { Select / From / Where / ... }` result-builder authoring slice remains separate and may be researched independently without reopening the accepted DDL contracts.
+
 ## Duck direction
 
 Canonical public spelling is `.duck`. Ordinary Duck query source remains SQL-shaped and dialect-transparent; Duck-only support does not automatically justify a `Duck...` public wrapper. Dialect-transparent rendering may adapt syntax/qualification/casing for the same exact SQL construct, but it must not become a portability facade that swaps differently named SQL constructs such as `decode` and `from_base64`. The first Duck closure has passed its support/compatibility/native-validation gates and `.duck` is now included in `SQLDialect.all`; future changes to that built-in collection still require explicit test-classification and compatibility review.
@@ -69,7 +95,7 @@ Current live source and stable architecture owners define the implementation bas
 
 ## Current Shared Semantic Value state
 
-The accepted shared semantic value source and integration are complete, with cross-platform consumer evidence and fresh independent audits accepted CLEAN. `PureDate`, `PureTime`, `DateTime`, and `Interval` were first published in prerelease `2.0.0-beta.6.0.0` and remain current source truth. The current release candidate/current prerelease is `2.0.0-beta.6.0.1`, a Swift 6.3 tools/CI compatibility hotfix with no SQL/API redesign. Downstream dependency handoff remains a separate consumer-repository step.
+The accepted shared semantic value source and integration are complete, with cross-platform consumer evidence and fresh independent audits accepted CLEAN. `PureDate`, `PureTime`, `DateTime`, and `Interval` were first published in prerelease `2.0.0-beta.6.0.0` and remain current source truth. `2.0.0-beta.6.0.1` remains the immutable Swift 6.3 tools/CI compatibility hotfix. The current release candidate/current prerelease is `2.0.0-beta.6.1.0`, which adds the accepted Declarative DDL authoring surface without redesigning the shared value APIs or existing query source. Downstream dependency handoff remains a separate consumer-repository step.
 
 ## Future validation gates
 
