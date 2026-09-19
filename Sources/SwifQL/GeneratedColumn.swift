@@ -1,36 +1,3 @@
-import Foundation
-
-extension SwifQLable {
-    /// Appends the exact SQL operand `TYPE <type>`.
-    public func type(_ type: SwifQL.`Type`) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .type, .space)
-        parts.append(SwifQLPartType(type))
-        return SwifQLableParts(parts: parts)
-    }
-
-    /// Appends a parenthesized, comma-separated table-definition list.
-    public func tableDefinitions(_ definitions: SwifQLable...) -> SwifQLable {
-        tableDefinitions(definitions)
-    }
-
-    /// Appends a parenthesized, comma-separated table-definition list.
-    public func tableDefinitions(_ definitions: [SwifQLable]) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .openBracket)
-        for (index, definition) in definitions.enumerated() {
-            if index > 0 {
-                parts.append(o: .comma, .space)
-            }
-            parts.append(contentsOf: definition.parts)
-        }
-        parts.append(o: .closeBracket)
-        return SwifQLableParts(parts: parts)
-    }
-}
-
 public enum GeneratedColumnStorage {
     case virtual
     case stored

@@ -6,6 +6,15 @@
 import Foundation
 
 extension SwifQLable {
+    /// Appends the exact SQL operand `TYPE <type>`.
+    public func type(_ type: SwifQL.`Type`) -> SwifQLable {
+        var parts = self.parts
+        parts.appendSpaceIfNeeded()
+        parts.append(o: .type, .space)
+        parts.append(SwifQLPartType(type))
+        return SwifQLableParts(parts: parts)
+    }
+
     /// Appends a parser-literal ENUM body. These labels are structural SQL
     /// literals and therefore never become ordinary prepared values.
     public func `enum`(_ values: String...) -> SwifQLable {
