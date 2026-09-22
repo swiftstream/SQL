@@ -13,6 +13,12 @@ public func SwifQL(_ query: SwifQLable) -> SwifQLable {
     _SwifQL(query)
 }
 
+/// Current-identity declarative root. Additive overload; does not change the
+/// existing `SwifQL` value or unary function meaning.
+public func SwifQL(@SQLBuilder _ content: () -> SQLBuilder.Root) -> SwifQLable {
+    SQLBuilder.lowerRoot(content().fragments)
+}
+
 private struct _SwifQL: SwifQLable {
     public var parts: [SwifQLPart]
 
