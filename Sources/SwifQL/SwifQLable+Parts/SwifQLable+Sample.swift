@@ -274,6 +274,7 @@ public struct TableSample: SwifQLable {
     public let arguments: [SampleArgument]
     public let method: SampleMethod?
     public let repeatable: SampleRepeatability?
+    private let sourceSnapshot: [SwifQLPart]?
 
     public init(
         arguments: [SampleArgument],
@@ -283,6 +284,14 @@ public struct TableSample: SwifQLable {
         self.arguments = arguments
         self.method = method
         self.repeatable = repeatable.map(SampleRepeatability.init)
+        self.sourceSnapshot = nil
+    }
+
+    init(source: SwifQLable, options: TableSampleBuilder.Options) {
+        self.arguments = options.arguments
+        self.method = options.method
+        self.repeatable = options.repeatable.map(SampleRepeatability.init)
+        self.sourceSnapshot = source.parts
     }
 
     public init(_ size: SampleSize) {
@@ -302,12 +311,20 @@ public struct TableSample: SwifQLable {
     }
 
     public var parts: [SwifQLPart] {
-        [SwifQLPartSampling(
+        let samplingPart = SwifQLPartSampling(
             construct: .tableSample,
             method: method,
             arguments: arguments,
             repeatability: repeatable
-        )]
+        )
+
+        guard var sourceParts = sourceSnapshot else {
+            return [samplingPart]
+        }
+
+        sourceParts.appendSpaceIfNeeded()
+        sourceParts.append(samplingPart)
+        return sourceParts
     }
 }
 
