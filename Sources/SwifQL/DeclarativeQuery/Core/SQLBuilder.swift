@@ -71,6 +71,24 @@ public enum SQLBuilder {
         }
     }
 
+    /// Guaranteed FROM clause retained as the current outer owner until another
+    /// independent item or a finalized control-flow group closes it.
+    public struct GuaranteedFromOwner: FinalizableItem {
+        let result: FromBuilder.GuaranteedResult
+
+        public func finalize() -> SwifQLable { result }
+    }
+
+    /// Sibling JOIN continuation owned by one guaranteed FROM clause.
+    public struct GuaranteedFromJoinCurrent<State: JoinBuilder.JoinState>: FinalizableItem {
+        let result: FromBuilder.GuaranteedResult
+        let join: State
+
+        public func finalize() -> SwifQLable {
+            SQLBuilder.appending(join.finalize().parts, to: result)
+        }
+    }
+
     // MARK: - Expression intake
 
     /// Captures an existing complete `SwifQLable` as a neutral fragment,
@@ -86,6 +104,16 @@ public enum SQLBuilder {
         item
     }
 
+    /// Keeps the statically guaranteed FROM carrier typed at the outer root.
+    /// Erased `SwifQLable` values continue through the neutral-fragment path.
+    public static func buildExpression(_ expression: FromBuilder.GuaranteedResult) -> GuaranteedFromOwner {
+        GuaranteedFromOwner(result: expression)
+    }
+
+    public static func buildExpression(_ request: AliasRequest) -> AliasRequest { request }
+    public static func buildExpression(_ request: JoinBuilder.OnRequest) -> JoinBuilder.OnRequest { request }
+    public static func buildExpression(_ request: JoinBuilder.UsingRequest) -> JoinBuilder.UsingRequest { request }
+
     // MARK: - Empty / neutral partial composition
 
     public static func buildBlock() -> ClosedRoot {
@@ -94,6 +122,160 @@ public enum SQLBuilder {
 
     public static func buildPartialBlock(first: NeutralItem) -> Partial<NeutralItem> {
         Partial(completed: [], current: first)
+    }
+
+    public static func buildPartialBlock(first: GuaranteedFromOwner) -> Partial<GuaranteedFromOwner> {
+        Partial(completed: [], current: first)
+    }
+
+    public static func buildPartialBlock<C: FinalizableItem>(
+        accumulated: Partial<C>,
+        next: GuaranteedFromOwner
+    ) -> Partial<GuaranteedFromOwner> {
+        Partial(completed: accumulated.completed + [accumulated.current.finalize()], current: next)
+    }
+
+    public static func buildPartialBlock(
+        accumulated: ClosedRoot,
+        next: GuaranteedFromOwner
+    ) -> Partial<GuaranteedFromOwner> {
+        Partial(completed: accumulated.fragments, current: next)
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<GuaranteedFromOwner>,
+        next: JoinBuilder.JoinOpen
+    ) -> Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinOpen>> {
+        Partial(
+            completed: accumulated.completed,
+            current: GuaranteedFromJoinCurrent(result: accumulated.current.result, join: next)
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<GuaranteedFromOwner>,
+        next: JoinBuilder.JoinSourceAliased
+    ) -> Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinSourceAliased>> {
+        Partial(
+            completed: accumulated.completed,
+            current: GuaranteedFromJoinCurrent(result: accumulated.current.result, join: next)
+        )
+    }
+
+    public static func buildPartialBlock<State: JoinBuilder.JoinState>(
+        accumulated: Partial<GuaranteedFromJoinCurrent<State>>,
+        next: JoinBuilder.JoinOpen
+    ) -> Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinOpen>> {
+        let result = Self.appending(accumulated.current.join.finalize().parts, to: accumulated.current.result)
+        return Partial(
+            completed: accumulated.completed,
+            current: GuaranteedFromJoinCurrent(result: result, join: next)
+        )
+    }
+
+    public static func buildPartialBlock<State: JoinBuilder.JoinState>(
+        accumulated: Partial<GuaranteedFromJoinCurrent<State>>,
+        next: JoinBuilder.JoinSourceAliased
+    ) -> Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinSourceAliased>> {
+        let result = Self.appending(accumulated.current.join.finalize().parts, to: accumulated.current.result)
+        return Partial(
+            completed: accumulated.completed,
+            current: GuaranteedFromJoinCurrent(result: result, join: next)
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinOpen>>,
+        next: AliasRequest
+    ) -> Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinSourceAliased>> {
+        Partial(
+            completed: accumulated.completed,
+            current: GuaranteedFromJoinCurrent(
+                result: accumulated.current.result,
+                join: accumulated.current.join.addingAlias(next.name)
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinUsing>>,
+        next: AliasRequest
+    ) -> Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinUsingAliased>> {
+        Partial(
+            completed: accumulated.completed,
+            current: GuaranteedFromJoinCurrent(
+                result: accumulated.current.result,
+                join: accumulated.current.join.addingAlias(next.name)
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinOpen>>,
+        next: JoinBuilder.OnRequest
+    ) -> Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinOnQualified>> {
+        Partial(
+            completed: accumulated.completed,
+            current: GuaranteedFromJoinCurrent(
+                result: accumulated.current.result,
+                join: accumulated.current.join.addingOn(next.parts)
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinSourceAliased>>,
+        next: JoinBuilder.OnRequest
+    ) -> Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinOnQualified>> {
+        Partial(
+            completed: accumulated.completed,
+            current: GuaranteedFromJoinCurrent(
+                result: accumulated.current.result,
+                join: accumulated.current.join.addingOn(next.parts)
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinOpen>>,
+        next: JoinBuilder.UsingRequest
+    ) -> Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinUsing>> {
+        Partial(
+            completed: accumulated.completed,
+            current: GuaranteedFromJoinCurrent(
+                result: accumulated.current.result,
+                join: accumulated.current.join.addingUsing(next.names)
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinSourceAliased>>,
+        next: JoinBuilder.UsingRequest
+    ) -> Partial<GuaranteedFromJoinCurrent<JoinBuilder.JoinUsing>> {
+        Partial(
+            completed: accumulated.completed,
+            current: GuaranteedFromJoinCurrent(
+                result: accumulated.current.result,
+                join: accumulated.current.join.addingUsing(next.names)
+            )
+        )
+    }
+
+    public static func buildPartialBlock<State: JoinBuilder.JoinState>(
+        accumulated: Partial<GuaranteedFromJoinCurrent<State>>,
+        next: NeutralItem
+    ) -> Partial<NeutralItem> {
+        Partial(completed: accumulated.completed + [accumulated.current.finalize()], current: next)
+    }
+
+    private static func appending(
+        _ joinParts: [SwifQLPart],
+        to result: FromBuilder.GuaranteedResult
+    ) -> FromBuilder.GuaranteedResult {
+        var items = result.itemFragments
+        items.append(joinParts)
+        return FromBuilder.GuaranteedResult(children: FromBuilder.assemble(items), itemFragments: items)
     }
 
     public static func buildPartialBlock<C: FinalizableItem>(

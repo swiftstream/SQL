@@ -274,3 +274,90 @@ extension FromBuilder {
         Partial(completed: accumulated.completed, current: accumulated.current.addingAlias(next.name))
     }
 }
+
+extension GuaranteedFromBuilder {
+    public static func buildExpression(_ expression: JoinBuilder.JoinSourceAliased) -> JoinBuilder.JoinSourceAliased {
+        expression
+    }
+
+    public static func buildExpression(_ expression: JoinBuilder.JoinOpen) -> JoinBuilder.JoinOpen {
+        expression
+    }
+
+    /// A JOIN continues the immediately preceding FROM source in the same item.
+    public static func buildPartialBlock<Attachment: AttachmentState, Current: CurrentState>(
+        accumulated: Partial<Attachment, Current>,
+        next: JoinBuilder.JoinOpen
+    ) -> Partial<Attachment, JoinBuilder.JoinOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: next.addingBaseSource(accumulated.current.finalize().parts)
+        )
+    }
+
+    /// A fluent/operator alias is received already in the same typed phase as sibling `As`.
+    public static func buildPartialBlock<Attachment: AttachmentState, Current: CurrentState>(
+        accumulated: Partial<Attachment, Current>,
+        next: JoinBuilder.JoinSourceAliased
+    ) -> Partial<Attachment, JoinBuilder.JoinSourceAliased> {
+        Partial(
+            completed: accumulated.completed,
+            current: next.addingBaseSource(accumulated.current.finalize().parts)
+        )
+    }
+
+    public static func buildExpression(_ request: JoinBuilder.OnRequest) -> JoinBuilder.OnRequest {
+        request
+    }
+
+    public static func buildExpression(_ request: JoinBuilder.UsingRequest) -> JoinBuilder.UsingRequest {
+        request
+    }
+
+    public static func buildPartialBlock<Attachment: AttachmentState>(
+        accumulated: Partial<Attachment, JoinBuilder.JoinOpen>,
+        next: JoinBuilder.OnRequest
+    ) -> Partial<Attachment, JoinBuilder.JoinOnQualified> {
+        Partial(
+            completed: accumulated.completed,
+            current: accumulated.current.addingOn(next.parts)
+        )
+    }
+
+    public static func buildPartialBlock<Attachment: AttachmentState>(
+        accumulated: Partial<Attachment, JoinBuilder.JoinSourceAliased>,
+        next: JoinBuilder.OnRequest
+    ) -> Partial<Attachment, JoinBuilder.JoinOnQualified> {
+        Partial(
+            completed: accumulated.completed,
+            current: accumulated.current.addingOn(next.parts)
+        )
+    }
+
+    public static func buildPartialBlock<Attachment: AttachmentState>(
+        accumulated: Partial<Attachment, JoinBuilder.JoinOpen>,
+        next: JoinBuilder.UsingRequest
+    ) -> Partial<Attachment, JoinBuilder.JoinUsing> {
+        Partial(
+            completed: accumulated.completed,
+            current: accumulated.current.addingUsing(next.names)
+        )
+    }
+
+    public static func buildPartialBlock<Attachment: AttachmentState>(
+        accumulated: Partial<Attachment, JoinBuilder.JoinSourceAliased>,
+        next: JoinBuilder.UsingRequest
+    ) -> Partial<Attachment, JoinBuilder.JoinUsing> {
+        Partial(
+            completed: accumulated.completed,
+            current: accumulated.current.addingUsing(next.names)
+        )
+    }
+
+    public static func buildPartialBlock<Attachment: AttachmentState>(
+        accumulated: Partial<Attachment, JoinBuilder.JoinUsing>,
+        next: SQLBuilder.AliasRequest
+    ) -> Partial<Attachment, JoinBuilder.JoinUsingAliased> {
+        Partial(completed: accumulated.completed, current: accumulated.current.addingAlias(next.name))
+    }
+}

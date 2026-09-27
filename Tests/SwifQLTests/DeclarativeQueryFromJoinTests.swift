@@ -529,4 +529,276 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
         // D4 observation only: an absent optional source is invalid caller input.
         #expect(absent.prepare(.psql).plain == "FROM ")
     }
+
+    private func expectSiblingAndNested(
+        _ sibling: SwifQLable,
+        _ nested: SwifQLable,
+        dialect: SQLDialect,
+        expectedPlain: String,
+        expectedQuery: String,
+        expectedValues: [String]
+    ) {
+        let siblingPrepared = sibling.prepare(dialect)
+        let nestedPrepared = nested.prepare(dialect)
+
+        #expect(siblingPrepared.plain == expectedPlain)
+        #expect(nestedPrepared.plain == expectedPlain)
+        #expect(siblingPrepared.splitted.query == expectedQuery)
+        #expect(nestedPrepared.splitted.query == expectedQuery)
+        #expect(siblingPrepared.splitted.values.map { String(describing: $0) } == expectedValues)
+        #expect(nestedPrepared.splitted.values.map { String(describing: $0) } == expectedValues)
+        #expect(siblingPrepared.plain == nestedPrepared.plain)
+        #expect(siblingPrepared.splitted.query == nestedPrepared.splitted.query)
+        #expect(siblingPrepared.splitted.values.map { String(describing: $0) } == nestedPrepared.splitted.values.map { String(describing: $0) })
+    }
+
+    @Test("D04-S38 sibling JOIN matches nested SQL and binds on every dialect")
+    func s38SiblingJoinMatchesNestedAcrossDialects() {
+        let sibling = SwifQL {
+            From { Path.Table("User") }
+            Join(.left, Path.Table("Profile"))
+            On(Path.Table("User").column("id") == 41)
+        }
+        let nested = SwifQL {
+            From {
+                Path.Table("User")
+                Join(.left, Path.Table("Profile"))
+                On(Path.Table("User").column("id") == 41)
+            }
+        }
+
+        expectSiblingAndNested(
+            sibling,
+            nested,
+            dialect: .psql,
+            expectedPlain: #"FROM "User" LEFT JOIN "Profile" ON "User"."id" = 41"#,
+            expectedQuery: #"FROM "User" LEFT JOIN "Profile" ON "User"."id" = $1"#,
+            expectedValues: ["41"]
+        )
+        expectSiblingAndNested(
+            sibling,
+            nested,
+            dialect: .mysql,
+            expectedPlain: "FROM User LEFT JOIN Profile ON User.id = 41",
+            expectedQuery: "FROM User LEFT JOIN Profile ON User.id = ?",
+            expectedValues: ["41"]
+        )
+        expectSiblingAndNested(
+            sibling,
+            nested,
+            dialect: .duck,
+            expectedPlain: #"FROM "User" LEFT JOIN "Profile" ON "User"."id" = 41"#,
+            expectedQuery: #"FROM "User" LEFT JOIN "Profile" ON "User"."id" = $1"#,
+            expectedValues: ["41"]
+        )
+    }
+
+    @Test("D04-S39 concrete guaranteed From carries two sibling JOINs and alias owners")
+    func s39ConcreteFromWithMultipleSiblingJoins() {
+        let from = From { Path.Table("User") }
+        let guaranteed: FromBuilder.GuaranteedResult = from
+        let sibling = SwifQL {
+            from
+            Join(.left, Path.Table("Profile")).as("profile")
+            On(true)
+            Join(.inner, Path.Table("Organization"))
+            Using("id")
+            As("organizationKeys")
+        }
+        let nested = SwifQL {
+            From {
+                Path.Table("User")
+                Join(.left, Path.Table("Profile")).as("profile")
+                On(true)
+                Join(.inner, Path.Table("Organization"))
+                Using("id")
+                As("organizationKeys")
+            }
+        }
+        let expectedPsql = #"FROM "User" LEFT JOIN "Profile" AS "profile" ON TRUE INNER JOIN "Organization" USING ("id") AS "organizationKeys""#
+        let expectedMysql = "FROM User LEFT JOIN Profile AS profile ON TRUE INNER JOIN Organization USING (id) AS organizationKeys"
+
+        expectSiblingAndNested(sibling, nested, dialect: .psql, expectedPlain: expectedPsql, expectedQuery: expectedPsql, expectedValues: [])
+        expectSiblingAndNested(sibling, nested, dialect: .mysql, expectedPlain: expectedMysql, expectedQuery: expectedMysql, expectedValues: [])
+        expectSiblingAndNested(sibling, nested, dialect: .duck, expectedPlain: expectedPsql, expectedQuery: expectedPsql, expectedValues: [])
+        #expect(guaranteed.prepare(.psql).plain == #"FROM "User""#)
+    }
+
+    @Test("D04-S40 explicit legacy Result variables and helpers remain completed FROM clauses")
+    func s40ExplicitLegacyResultCompatibility() {
+        let standalone: FromBuilder.Result = From { Path.Table("User") }
+        func helper() -> FromBuilder.Result {
+            From { Path.Table("Profile") }
+        }
+
+        #expect(standalone.prepare(.psql).plain == #"FROM "User""#)
+        #expect(helper().prepare(.psql).plain == #"FROM "Profile""#)
+    }
+
+    @Test("D04-S41 maybe-empty FROM bodies remain legacy completed clauses")
+    func s41NoGuaranteeFromBodiesRemainLegacy() {
+        let includeUser = true
+        let omitUser = false
+        let loopOnly: FromBuilder.Result = From {
+            for name in ["User", "Profile"] {
+                Path.Table(name)
+            }
+        }
+        let optionalPresent: FromBuilder.Result = From {
+            if includeUser {
+                Path.Table("User")
+            }
+        }
+        let optionalEmpty: FromBuilder.Result = From {
+            if omitUser {
+                Path.Table("User")
+            }
+        }
+        let emptyLoop: FromBuilder.Result = From {
+            for name in [String]() {
+                Path.Table(name)
+            }
+        }
+
+        #expect(loopOnly.prepare(.psql).plain == #"FROM "User", "Profile""#)
+        #expect(optionalPresent.prepare(.psql).plain == #"FROM "User""#)
+        #expect(optionalEmpty.prepare(.psql).plain == "FROM ")
+        #expect(emptyLoop.prepare(.psql).plain == "FROM ")
+
+        let includeProfile = true
+        let names = ["Profile"]
+        let optionalThenGuaranteed = From {
+            if includeProfile {
+                Path.Table("Profile")
+            }
+            Path.Table("User")
+        }
+        let loopThenGuaranteed = From {
+            for name in names {
+                Path.Table(name)
+            }
+            Path.Table("User")
+        }
+        let optionalSibling = SwifQL {
+            optionalThenGuaranteed
+            Join(.left, Path.Table("Account"))
+            On(true)
+        }
+        let optionalNested = SwifQL {
+            From {
+                if includeProfile { Path.Table("Profile") }
+                Path.Table("User")
+                Join(.left, Path.Table("Account"))
+                On(true)
+            }
+        }
+        let loopSibling = SwifQL {
+            loopThenGuaranteed
+            Join(.left, Path.Table("Account"))
+            On(true)
+        }
+        let loopNested = SwifQL {
+            From {
+                for name in names { Path.Table(name) }
+                Path.Table("User")
+                Join(.left, Path.Table("Account"))
+                On(true)
+            }
+        }
+        let expected = #"FROM "Profile", "User" LEFT JOIN "Account" ON TRUE"#
+        let expectedMysql = "FROM Profile, User LEFT JOIN Account ON TRUE"
+        let dialectExpectations: [(SQLDialect, String)] = [
+            (.psql, expected),
+            (.mysql, expectedMysql),
+            (.duck, expected)
+        ]
+        for (dialect, expectedDialect) in dialectExpectations {
+            expectSiblingAndNested(optionalSibling, optionalNested, dialect: dialect, expectedPlain: expectedDialect, expectedQuery: expectedDialect, expectedValues: [])
+            expectSiblingAndNested(loopSibling, loopNested, dialect: dialect, expectedPlain: expectedDialect, expectedQuery: expectedDialect, expectedValues: [])
+        }
+    }
+
+    @Test("D04-S42 nested S11-S14 FROM bridge keeps exact dialect SQL")
+    func s42NestedFromBridgeCompatibilityAcrossDialects() {
+        let nestedSelectAlias = From {
+            Select { Path.Table("Order").column("userId") }
+            From { Path.Table("Order") }
+            As("orders")
+        }
+        let nestedThenSource = From {
+            Select { Path.Table("Order").column("id") }
+            From { Path.Table("Order") }
+            Path.Table("Organization")
+        }
+        let conditionalNested = From {
+            if true {
+                Select { Path.Table("Order").column("userId") }
+                From { Path.Table("Order") }
+                As("orders")
+            }
+            Path.Table("Organization")
+        }
+        let explicitRoot = SwifQL {
+            Select { Path.Table("Order").column("id") }
+            From { Path.Table("Order") }
+        }
+        let explicitRootSource = From { explicitRoot; As("orders") }
+
+        let psql = [
+            #"FROM (SELECT "Order"."userId" FROM "Order") AS "orders""#,
+            #"FROM (SELECT "Order"."id" FROM "Order"), "Organization""#,
+            #"FROM (SELECT "Order"."userId" FROM "Order") AS "orders", "Organization""#,
+            #"FROM (SELECT "Order"."id" FROM "Order") AS "orders""#
+        ]
+        let mysql = [
+            "FROM (SELECT Order.userId FROM Order) AS orders",
+            "FROM (SELECT Order.id FROM Order), Organization",
+            "FROM (SELECT Order.userId FROM Order) AS orders, Organization",
+            "FROM (SELECT Order.id FROM Order) AS orders"
+        ]
+        let queries: [SwifQLable] = [nestedSelectAlias, nestedThenSource, conditionalNested, explicitRootSource]
+
+        for index in queries.indices {
+            let query = queries[index]
+            let expectedPsql = psql[index]
+            let expectedMysql = mysql[index]
+            #expect(query.prepare(.psql).plain == expectedPsql)
+            #expect(query.prepare(.psql).splitted.query == expectedPsql)
+            #expect(query.prepare(.psql).splitted.values.isEmpty)
+            #expect(query.prepare(.mysql).plain == expectedMysql)
+            #expect(query.prepare(.mysql).splitted.query == expectedMysql)
+            #expect(query.prepare(.mysql).splitted.values.isEmpty)
+            #expect(query.prepare(.duck).plain == expectedPsql)
+            #expect(query.prepare(.duck).splitted.query == expectedPsql)
+            #expect(query.prepare(.duck).splitted.values.isEmpty)
+        }
+    }
+
+    @Test("D04-S43 later SELECT closes sibling JOIN ownership")
+    func s43LaterSelectClosesSiblingJoinOwnership() {
+        let sibling = SwifQL {
+            Select { Path.Table("User").column("id") }
+            From { Path.Table("User") }
+            Join(.left, Path.Table("Profile"))
+            On(true)
+            Select { Path.Table("User").column("name") }
+        }
+        let nested = SwifQL {
+            Select { Path.Table("User").column("id") }
+            From {
+                Path.Table("User")
+                Join(.left, Path.Table("Profile"))
+                On(true)
+            }
+            Select { Path.Table("User").column("name") }
+        }
+        let psql = #"SELECT "User"."id" FROM "User" LEFT JOIN "Profile" ON TRUE SELECT "User"."name""#
+        let mysql = "SELECT User.id FROM User LEFT JOIN Profile ON TRUE SELECT User.name"
+
+        expectSiblingAndNested(sibling, nested, dialect: .psql, expectedPlain: psql, expectedQuery: psql, expectedValues: [])
+        expectSiblingAndNested(sibling, nested, dialect: .mysql, expectedPlain: mysql, expectedQuery: mysql, expectedValues: [])
+        expectSiblingAndNested(sibling, nested, dialect: .duck, expectedPlain: psql, expectedQuery: psql, expectedValues: [])
+        #expect(sibling.prepare(.psql).plain.components(separatedBy: " FROM ").count - 1 == 1)
+        #expect(sibling.prepare(.psql).plain.components(separatedBy: " JOIN ").count - 1 == 1)
+    }
 }
