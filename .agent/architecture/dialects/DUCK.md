@@ -886,6 +886,48 @@ multiple-file list representation was required or frozen. The first Duck
 closure is complete and `.duck` is now part of `SQLDialect.all`; the
 COPY/table-function support/non-claim boundary above remains exact.
 
+### DUCK-030 - Expression Frontier quantified/aggregate native boundary
+
+DuckDB v1.5.5 (`d8cdaa3`, `Variegata`) was natively probed for the declarative expression frontier before any production implementation.
+
+Quantified comparison support is positive for all of the following exact shapes:
+
+```sql
+2 = ANY (SELECT ...)
+2 = SOME (SELECT ...)
+2 > ALL (SELECT ...)
+
+2 = ANY ([1, 2, 3])
+2 = SOME ([1, 2, 3])
+4 > ALL ([1, 2, 3])
+
+2 = ANY (array_value(1, 2, 3))
+4 > ALL (array_value(1, 2, 3))
+
+2 = ANY (ARRAY(SELECT ...))
+4 > ALL (ARRAY(SELECT ...))
+```
+
+Typed empty LIST semantics matched quantified SQL expectations in the pinned runtime: `ANY` over an empty rhs returned false and `ALL` returned true. PostgreSQL-shaped row-valued quantified subqueries such as `row(1, 2) = ANY (SELECT a, b ...)` also parsed, bound, and executed successfully.
+
+This does **not** make PostgreSQL `ARRAY[...]`, Duck LIST literals, and Duck fixed ARRAY constructors one portable constructor. The public DSL must preserve their exact SQL/type identities while allowing the same quantified-comparison semantic family to accept dialect-supported operand forms.
+
+Ordered-set and hypothetical-set support is intentionally asymmetric:
+
+- `percentile_cont(...) WITHIN GROUP (ORDER BY ...)`, `percentile_disc(...)`, and `mode()` executed successfully;
+- hypothetical-set `rank(...)`, `dense_rank(...)`, `percent_rank(...)`, and `cume_dist(...)` with `WITHIN GROUP` were parser-rejected as unknown ordered aggregates.
+
+Do not rewrite the rejected hypothetical-set forms to differently named Duck functions or window functions.
+
+Aggregate modifier behavior in the pinned runtime also confirms:
+
+- `FILTER (WHERE predicate)` and `FILTER (predicate)` both execute;
+- comma-separated FILTER predicates are parser-invalid;
+- `array_agg(DISTINCT x ORDER BY x DESC)` executes;
+- with aggregate DISTINCT, an ORDER BY expression not present in the DISTINCT argument list is binder-rejected.
+
+These facts refine capability claims only. They do not authorize source mutation, change the SQL-first ownership defined by DESIGN-025, or make every PostgreSQL aggregate/window combination a Duck equivalent.
+
 ## Catalog paths
 
 ### DUCK-021 - Catalog is a SQL namespace concept, not a Duck-branded user concept

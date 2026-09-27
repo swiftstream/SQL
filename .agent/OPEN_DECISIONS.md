@@ -13,3 +13,4 @@ This file records genuinely unresolved choices, not settled architecture rules o
 
 ## Active decisions
 
+None. All declarative-query architecture decisions are closed as of 2026-09-21. Any new unresolved choice requires a new decision ID and explicit architecture scope.

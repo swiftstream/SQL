@@ -71,7 +71,129 @@ Historical-schema-safe authoring uses explicit string table/schema/column identi
 
 This accepted checkpoint unblocks consumers such as SwiftDuckDB to build their own migration-plan/execution layer around SwifQL DDL values. SwiftDuckDB migration version/history/transaction semantics remain outside SwifQL.
 
-The broader future `SwifQL { Select / From / Where / ... }` result-builder authoring slice remains separate and may be researched independently without reopening the accepted DDL contracts.
+The broader declarative query result-builder authoring slice remains separate and does not reopen the accepted DDL contracts. This query-authoring wave is now the current design/research priority. Its final major-version UX must remain direct SQL in Swift, reuse the existing parts/preparation/binding engine, preserve existing raw/fluent composition wherever cleanly possible, and prefer clause-local result builders such as `Select { ... }`, `From { ... }`, `Where { ... }`, `GroupBy { ... }`, `Having { ... }`, `OrderBy { ... }`, nested query/set-operation builders, and other SQL-shaped forms that are accepted through design review. Exact Swift -> SQL examples are mandatory during design.
+
+## Major-version roadmap after declarative query authoring
+
+The durable sequence after the declarative query-authoring capability is accepted is:
+
+1. **Reusable query components (`SQLQuery`):** add a SwiftUI-style protocol/value pattern for reusable parameterized query structs built from the same result-builder DSL. A conforming value should expose its query declaratively, prepare directly through the ordinary SQL preparation pipeline, and itself be usable compositionally as a nested/subquery source wherever an ordinary SQL query is accepted. Do not create a parallel query engine or execution abstraction.
+2. **Major naming/package/repository migration:** move the primary public identity from `SwifQL` to `SQL`, including the root query namespace/result-builder spelling `SQL { ... }`, `SwifQLable -> SQLable`, and the corresponding reviewed renames of other public/internal `SwifQL...` symbols where the old project name is no longer appropriate. The repository/public package destination is planned as `github.com/swiftstream/SQL`. This is an intentional major-version migration wave, not an incidental search/replace.
+3. **Compatibility and migration closure:** inventory every source-breaking rename or behavior correction before implementation, record literal `was -> became` migration guidance, assess compatibility bridges/deprecations where they materially reduce user pain, update migration/release/public-content material, and provide coding-agent/LLM migration guidance. Do not let a breaking change exist only in an implementation diff or transient artifact.
+4. **SQL conversion skill:** provide a maintained downstream skill that can transform raw SQL into the final result-builder representation and into the final raw/fluent SQL DSL representation. The final published skill should target the post-migration `SQL` API; during its design it should also preserve enough legacy knowledge to help migrate existing SwifQL call sites. Avoid publishing a skill against a namespace that is immediately renamed and then having to rewrite its canonical examples.
+5. **Documentation/publication consolidation:** promote accepted declarative-query examples, reusable-query examples, migration examples, compatibility notes, and major-version stories into README/public docs/release notes as appropriate, using the public-content capture workflow rather than trying to reconstruct them after release.
+
+The `SQLQuery` capability is conceptually the immediate follow-up to result-builder query authoring because it packages that grammar into reusable parameterized values. Its final public spelling should be `SQLQuery`; if implementation sequencing makes the `SwifQL -> SQL` namespace migration happen first or in the same wave, do that rather than publishing a temporary public `SwifQLQuery` name that would immediately be renamed.
+
+The target developer experience must preserve the following shape in detail:
+
+```swift
+struct UsersQuery: SQLQuery {
+    let active: Bool
+    let email: String?
+    let roles: [Role]?
+
+    var query: SQL {
+        Select {
+            User.$id
+            User.$email.as("emailAddress")
+            User.$createdAt
+        }
+
+        From {
+            User.table
+        }
+
+        Where {
+            User.$isActive == active
+
+            if let email {
+                User.$email == email
+            }
+
+            if let roles {
+                Or {
+                    for role in roles {
+                        User.$role == role
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+This exact SwiftUI-style getter shape is the canonical target. The final `SQLQuery` protocol should expose a result-builder-attributed `query` requirement so conforming getters inherit the SQL builder transform and do not need an explicit nested `SQL { ... }` wrapper. If the concrete `SQL` result type requires an associated type or another generic detail internally, keep that complexity out of ordinary conformer source.
+
+A query value must then be directly preparable:
+
+```swift
+let users = UsersQuery(
+    active: true,
+    email: "john@example.com",
+    roles: [.admin, .moderator]
+)
+
+let prepared = users.prepare(.psql)
+```
+
+and must lower to the same SQL/binding pipeline as writing the body directly:
+
+```sql
+SELECT
+    "User"."id",
+    "User"."email" AS "emailAddress",
+    "User"."createdAt"
+FROM "User"
+WHERE "User"."isActive" = TRUE
+  AND "User"."email" = 'john@example.com'
+  AND (
+      "User"."role" = 'admin'
+      OR "User"."role" = 'moderator'
+  )
+```
+
+The `SQLQuery` value itself must also compose as a subquery inside another declarative query, rather than requiring callers to unwrap `.query` manually. Alias/source ownership must remain explicit at the composition site, for example:
+
+```swift
+From {
+    UsersQuery(active: true, email: nil, roles: nil)
+        .as("activeUsers")
+}
+```
+
+targeting:
+
+```sql
+FROM (
+    SELECT
+        "User"."id",
+        "User"."email" AS "emailAddress",
+        "User"."createdAt"
+    FROM "User"
+    WHERE "User"."isActive" = TRUE
+) AS "activeUsers"
+```
+
+Likewise a reusable `SQLQuery` must be acceptable anywhere the relevant grammar permits a nested query, including JOIN/subquery/EXISTS/IN contexts after those clause-specific APIs are finalized.
+
+Do not make `SQLQuery` an executor, ORM repository, mutable builder object, or separate AST. It is a reusable SQL-producing value over the same `SQLable`/parts/preparation contract.
+
+The ordering above intentionally finalizes the `SQL` namespace before the conversion skill becomes canonical public guidance. If an internal/provisional conversion skill is useful while result builders are being designed, it may exist as disposable/research tooling, but the stable downstream skill targets the final `SQL` surface.
+
+### Major-version migration ledger discipline
+
+For this major-version line, every accepted source-breaking public change must be recorded before implementation with:
+
+- old spelling/behavior;
+- new spelling/behavior;
+- why the break is justified;
+- migration example;
+- compatibility/deprecation bridge decision;
+- downstream extension impact;
+- README/MIGRATION/CHANGELOG/release-note/public-content follow-up.
+
+`MASTER_PLAN.md` owns the durable roadmap and high-level accepted breaking migrations. Detailed migration design belongs in the relevant architecture owner and implementation artifacts; future public explanation/examples are captured through `PUBLIC_CONTENT_IDEAS.md` and its focused shards. No major-version breaking change may rely on chat history as its only record.
 
 ## Duck direction
 

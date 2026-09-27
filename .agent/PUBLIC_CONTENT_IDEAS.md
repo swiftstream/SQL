@@ -65,6 +65,7 @@ Current shards:
 - `public-content-ideas/DIALECT_TRANSPARENT_DSL.md` - dialect-transparent DSL, semantic render scopes, incremental composition, extension architecture, and related developer-experience stories.
 - `public-content-ideas/COMPATIBILITY_EVOLUTION.md` - source-compatible evolution, major-version philosophy, downstream Swift extensions, migration discipline, and the story of modernizing SwifQL without making users rewrite thousands of established queries.
 - `public-content-ideas/SHARED_SEMANTIC_VALUES.md` - cross-database civil values, exact dialect boundaries, and future publication material for the shared value layer.
+- `public-content-ideas/DECLARATIVE_QUERY_AUTHORING.md` - future result-builder query DSL examples, SQL-shaped clause ergonomics, the planned `SwifQL -> SQL` identity migration, and raw-SQL conversion-skill material.
 
 Create a new shard only when a topic becomes independently useful enough that adding it to an existing shard would create context noise. Prefer stable topic names over one file per tiny idea.
 

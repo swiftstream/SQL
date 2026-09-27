@@ -287,3 +287,38 @@ This creates a strong explanation of why a breaking internal/public representati
 ### Publication caveat
 
 The structural SQL-region frames, `SwifQLClauseOwner` / `SwifQLClauseKind`, owner-sensitive clauses, and `structurallyAppending(_:)` are implemented, validated, and published in `2.0.0-beta.5.0.0`. Public material may present them as current SwifQL 2 pre-release behavior while still distinguishing the pre-release from a future final stable `2.0.0` declaration.
+
+## Planned major identity migration: SwifQL -> SQL
+
+Status: roadmap-approved, not implemented
+Good for: migration guide | release notes | README | article | maintainer post
+
+### Why users should care
+
+The final major-version public identity is planned to become shorter and more literal:
+
+```swift
+import SQL
+
+let query: SQLable = SQL {
+    Select {
+        User.$id
+        User.$email
+    }
+    From {
+        User.table
+    }
+}
+```
+
+The migration scope includes the root `SwifQL -> SQL` identity, `SwifQLable -> SQLable`, reviewed corresponding `SwifQL...` symbols, package/module naming, and repository relocation to `github.com/swiftstream/SQL`.
+
+### Migration discipline
+
+This is a deliberate source-breaking major-version wave. Before implementation, every concrete rename must be inventoried with literal `was -> became` examples, downstream extension impact, and a decision on whether a compatibility alias/deprecated bridge is valuable or would create more confusion than benefit.
+
+A dedicated coding-agent/LLM migration workflow should be part of the release story so large codebases can update mechanically rather than by hand.
+
+### Publication caveat
+
+Current source and released pre-releases are still SwifQL. Do not present `import SQL`, `SQL { ... }`, `SQLable`, or the `swiftstream/SQL` repository as shipped until the dedicated migration wave is implemented, validated, audited, and published.
