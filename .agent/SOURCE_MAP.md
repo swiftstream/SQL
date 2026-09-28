@@ -28,7 +28,16 @@ This is a navigation aid, not an architecture contract. Use it to locate the sma
 - `Tests/SwifQLTests/CreateTableTests.swift` — exact CREATE TABLE PostgreSQL/MySQL/Duck SQL, GeneratedColumn participation, snapshot semantics, bind neutrality, and no-semicolon coverage.
 - `Tests/SwifQLTests/AlterTableTests.swift` — exact AddColumn/ALTER TABLE PostgreSQL/MySQL/Duck SQL, one-statement ordering, schema qualification, and no-semicolon coverage.
 
-Historical-schema-safe declarative DDL uses explicit string identifiers. It does not derive migration-facing table/column names from current models or key paths. The broader future runtime query-authoring result-builder slice remains separate.
+Historical-schema-safe declarative DDL uses explicit string identifiers. It does not derive migration-facing table/column names from current models or key paths. Runtime query authoring is a separate source family.
+
+## Declarative query authoring
+
+- `Sources/SwifQL/DeclarativeQuery/Core/SQLBuilder.swift` — typed root/current states, SELECT/FROM/JOIN and core-clause transitions.
+- `Sources/SwifQL/DeclarativeQuery/Core/IdentifierListBuilder.swift` — identifier-name intake, including structural column paths.
+- `Sources/SwifQL/DeclarativeQuery/From/FromBuilder.swift` — FROM sources, source continuations, nested statements, and nested core clauses.
+- `Sources/SwifQL/DeclarativeQuery/Values/**` — semantic Row/VALUES builders and narrow INSERT ownership of DEFAULT.
+- `Sources/SwifQL/DeclarativeQuery/Clauses/**` — typed WHERE/GROUP BY/HAVING/QUALIFY/ORDER BY/LIMIT/OFFSET requests and builders.
+- `Tests/SwifQLTests/DeclarativeQuery*Tests.swift` — focused SQL, bind-order, composition, and source-ownership regressions.
 
 ## Dialects
 
