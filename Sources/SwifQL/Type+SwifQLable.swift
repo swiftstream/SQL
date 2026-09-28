@@ -17,6 +17,7 @@ extension Optional: SwifQLable, CustomStringConvertible where Wrapped: SwifQLabl
         }
     }
 }
+extension Optional: RowField where Wrapped: SwifQLable {}
 extension String: SwifQLable {
     public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
 }

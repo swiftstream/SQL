@@ -43,6 +43,17 @@ public enum FromBuilder {
         func addingAlias(_ name: String) -> Aliased
     }
 
+    /// Open nested SELECT states expose their structural statement children to
+    /// typed clause continuations without exposing a general mutable owner.
+    public protocol NestedStatementCurrent: AliasableCurrent {
+        var statementParts: [SwifQLPart] { get }
+    }
+
+    public protocol NestedGroupAttachable: NestedStatementCurrent {}
+    public protocol NestedOrderByAttachable: NestedStatementCurrent {}
+    public protocol NestedLimitAttachable: NestedStatementCurrent {}
+    public protocol NestedOffsetAttachable: NestedStatementCurrent {}
+
     public protocol AliasableSourceState: SourceState {
         associatedtype Aliased: SourceState
     }
@@ -85,8 +96,8 @@ public enum FromBuilder {
     }
 
     /// Open direct nested SELECT item before its FROM continuation.
-    public struct NestedSelectOpen: AliasableCurrent {
-        let statementParts: [SwifQLPart]
+    public struct NestedSelectOpen: NestedGroupAttachable, NestedOrderByAttachable, NestedLimitAttachable, NestedOffsetAttachable {
+        public let statementParts: [SwifQLPart]
 
         init(statementParts: [SwifQLPart]) {
             self.statementParts = statementParts
@@ -102,12 +113,103 @@ public enum FromBuilder {
     }
 
     /// Direct nested SELECT after its same-name FROM continuation.
-    public struct NestedFromOpen: AliasableCurrent {
-        let statementParts: [SwifQLPart]
+    public struct NestedFromOpen: NestedGroupAttachable, NestedOrderByAttachable, NestedLimitAttachable, NestedOffsetAttachable {
+        public let statementParts: [SwifQLPart]
 
         init(statementParts: [SwifQLPart]) {
             self.statementParts = statementParts
         }
+
+        public func finalize() -> SwifQLable {
+            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
+        }
+
+        public func addingAlias(_ name: String) -> NestedAliased {
+            NestedAliased(statementParts: statementParts, alias: name)
+        }
+    }
+
+    /// Direct nested SELECT after WHERE and still open for later clauses or As.
+    public struct NestedWhereOpen: NestedGroupAttachable, NestedOrderByAttachable, NestedLimitAttachable, NestedOffsetAttachable {
+        public let statementParts: [SwifQLPart]
+
+        public func finalize() -> SwifQLable {
+            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
+        }
+
+        public func addingAlias(_ name: String) -> NestedAliased {
+            NestedAliased(statementParts: statementParts, alias: name)
+        }
+    }
+
+    /// Direct nested SELECT after GROUP BY and still open for later clauses or As.
+    public struct NestedGroupOpen: NestedOrderByAttachable, NestedLimitAttachable, NestedOffsetAttachable {
+        public let statementParts: [SwifQLPart]
+
+        public func finalize() -> SwifQLable {
+            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
+        }
+
+        public func addingAlias(_ name: String) -> NestedAliased {
+            NestedAliased(statementParts: statementParts, alias: name)
+        }
+    }
+
+    /// Direct nested SELECT after HAVING and still open for QUALIFY or As.
+    public struct NestedHavingOpen: NestedOrderByAttachable, NestedLimitAttachable, NestedOffsetAttachable {
+        public let statementParts: [SwifQLPart]
+
+        public func finalize() -> SwifQLable {
+            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
+        }
+
+        public func addingAlias(_ name: String) -> NestedAliased {
+            NestedAliased(statementParts: statementParts, alias: name)
+        }
+    }
+
+    /// Direct nested SELECT after QUALIFY and still open for As.
+    public struct NestedQualifyOpen: NestedOrderByAttachable, NestedLimitAttachable, NestedOffsetAttachable {
+        public let statementParts: [SwifQLPart]
+
+        public func finalize() -> SwifQLable {
+            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
+        }
+
+        public func addingAlias(_ name: String) -> NestedAliased {
+            NestedAliased(statementParts: statementParts, alias: name)
+        }
+    }
+
+    /// Direct nested SELECT after ORDER BY and still open for LIMIT/OFFSET or As.
+    public struct NestedOrderOpen: NestedLimitAttachable, NestedOffsetAttachable {
+        public let statementParts: [SwifQLPart]
+
+        public func finalize() -> SwifQLable {
+            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
+        }
+
+        public func addingAlias(_ name: String) -> NestedAliased {
+            NestedAliased(statementParts: statementParts, alias: name)
+        }
+    }
+
+    /// Direct nested SELECT after LIMIT and still open for OFFSET or As.
+    public struct NestedLimitOpen: NestedOffsetAttachable {
+        public let statementParts: [SwifQLPart]
+
+        public func finalize() -> SwifQLable {
+            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
+        }
+
+        public func addingAlias(_ name: String) -> NestedAliased {
+            NestedAliased(statementParts: statementParts, alias: name)
+        }
+    }
+
+    /// Direct nested SELECT after OFFSET and still open for As.
+    public struct NestedOffsetOpen: AliasableCurrent {
+        public let statementParts: [SwifQLPart]
 
         public func finalize() -> SwifQLable {
             SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
@@ -229,6 +331,14 @@ public enum FromBuilder {
         request
     }
 
+    public static func buildExpression(_ request: WhereClause) -> WhereClause { request }
+    public static func buildExpression(_ request: HavingClause) -> HavingClause { request }
+    public static func buildExpression(_ request: QualifyClause) -> QualifyClause { request }
+    public static func buildExpression(_ request: GroupByClause) -> GroupByClause { request }
+    public static func buildExpression(_ request: OrderByClause) -> OrderByClause { request }
+    public static func buildExpression(_ request: LimitClause) -> LimitClause { request }
+    public static func buildExpression(_ request: OffsetClause) -> OffsetClause { request }
+
     public static func buildExpression(_ request: WithOrdinalityRequest) -> WithOrdinalityRequest {
         request
     }
@@ -297,6 +407,210 @@ public enum FromBuilder {
         statementParts.appendSpaceIfNeeded()
         statementParts.append(contentsOf: children)
         return Partial(completed: accumulated.completed, current: NestedFromOpen(statementParts: statementParts))
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen>,
+        next: WhereClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedWhereOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.where($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedFromOpen>,
+        next: WhereClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedWhereOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.where($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedFromOpen>,
+        next: HavingClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedHavingOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.having($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen>,
+        next: HavingClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedHavingOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.having($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedFromOpen>,
+        next: QualifyClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedQualifyOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.qualify($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen>,
+        next: QualifyClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedQualifyOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.qualify($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen>,
+        next: QualifyClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedQualifyOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.qualify($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock<Current: NestedGroupAttachable>(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
+        next: GroupByClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedGroupOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedGroupOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    applying: { _fromAddingGroupBy(next, to: $0) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedGroupOpen>,
+        next: HavingClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedHavingOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.having($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedGroupOpen>,
+        next: QualifyClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedQualifyOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.qualify($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock<Current: NestedOrderByAttachable>(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
+        next: OrderByClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedOrderOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedOrderOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    applying: { _fromAddingOrderBy(next, to: $0) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock<Current: NestedLimitAttachable>(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
+        next: LimitClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedLimitOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedLimitOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    applying: { _fromAddingLimit(next, to: $0) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock<Current: NestedOffsetAttachable>(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
+        next: OffsetClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedOffsetOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedOffsetOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    applying: { _fromAddingOffset(next, to: $0) }
+                )
+            )
+        )
     }
 
     public static func buildPartialBlock<Attachment: AttachmentState, Current: AliasableCurrent>(
@@ -605,6 +919,11 @@ public enum GuaranteedFromBuilder {
     public typealias SourceState = FromBuilder.SourceState
     public typealias CurrentState = FromBuilder.CurrentState
     public typealias AliasableCurrent = FromBuilder.AliasableCurrent
+    public typealias NestedStatementCurrent = FromBuilder.NestedStatementCurrent
+    public typealias NestedGroupAttachable = FromBuilder.NestedGroupAttachable
+    public typealias NestedOrderByAttachable = FromBuilder.NestedOrderByAttachable
+    public typealias NestedLimitAttachable = FromBuilder.NestedLimitAttachable
+    public typealias NestedOffsetAttachable = FromBuilder.NestedOffsetAttachable
     public typealias AliasableSourceState = FromBuilder.AliasableSourceState
     public typealias ColumnListSourceState = FromBuilder.ColumnListSourceState
     public typealias SourceOpen = FromBuilder.SourceOpen
@@ -616,6 +935,13 @@ public enum GuaranteedFromBuilder {
     public typealias Source<State: SourceState> = FromBuilder.Source<State>
     public typealias NestedSelectOpen = FromBuilder.NestedSelectOpen
     public typealias NestedFromOpen = FromBuilder.NestedFromOpen
+    public typealias NestedWhereOpen = FromBuilder.NestedWhereOpen
+    public typealias NestedGroupOpen = FromBuilder.NestedGroupOpen
+    public typealias NestedHavingOpen = FromBuilder.NestedHavingOpen
+    public typealias NestedQualifyOpen = FromBuilder.NestedQualifyOpen
+    public typealias NestedOrderOpen = FromBuilder.NestedOrderOpen
+    public typealias NestedLimitOpen = FromBuilder.NestedLimitOpen
+    public typealias NestedOffsetOpen = FromBuilder.NestedOffsetOpen
     public typealias NestedAliased = FromBuilder.NestedAliased
     public typealias Partial<A: AttachmentState, C: CurrentState> = FromBuilder.Partial<A, C>
     public typealias FinalizedGroup<A: AttachmentState> = FromBuilder.FinalizedGroup<A>
@@ -653,6 +979,14 @@ public enum GuaranteedFromBuilder {
     public static func buildExpression(_ request: SQLBuilder.AliasRequest) -> SQLBuilder.AliasRequest {
         request
     }
+
+    public static func buildExpression(_ request: WhereClause) -> WhereClause { request }
+    public static func buildExpression(_ request: HavingClause) -> HavingClause { request }
+    public static func buildExpression(_ request: QualifyClause) -> QualifyClause { request }
+    public static func buildExpression(_ request: GroupByClause) -> GroupByClause { request }
+    public static func buildExpression(_ request: OrderByClause) -> OrderByClause { request }
+    public static func buildExpression(_ request: LimitClause) -> LimitClause { request }
+    public static func buildExpression(_ request: OffsetClause) -> OffsetClause { request }
 
     public static func buildExpression(_ request: WithOrdinalityRequest) -> WithOrdinalityRequest {
         request
@@ -722,6 +1056,210 @@ public enum GuaranteedFromBuilder {
         statementParts.appendSpaceIfNeeded()
         statementParts.append(contentsOf: children)
         return Partial(completed: accumulated.completed, current: NestedFromOpen(statementParts: statementParts))
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen>,
+        next: WhereClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedWhereOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.where($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedFromOpen>,
+        next: WhereClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedWhereOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.where($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedFromOpen>,
+        next: HavingClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedHavingOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.having($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen>,
+        next: HavingClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedHavingOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.having($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedFromOpen>,
+        next: QualifyClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedQualifyOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.qualify($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen>,
+        next: QualifyClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedQualifyOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.qualify($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen>,
+        next: QualifyClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedQualifyOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.qualify($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock<Current: NestedGroupAttachable>(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
+        next: GroupByClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedGroupOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedGroupOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    applying: { _fromAddingGroupBy(next, to: $0) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedGroupOpen>,
+        next: HavingClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedHavingOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.having($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedGroupOpen>,
+        next: QualifyClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedQualifyOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    appending: next.predicateParts,
+                    with: { $0.qualify($1) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock<Current: NestedOrderByAttachable>(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
+        next: OrderByClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedOrderOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedOrderOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    applying: { _fromAddingOrderBy(next, to: $0) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock<Current: NestedLimitAttachable>(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
+        next: LimitClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedLimitOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedLimitOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    applying: { _fromAddingLimit(next, to: $0) }
+                )
+            )
+        )
+    }
+
+    public static func buildPartialBlock<Current: NestedOffsetAttachable>(
+        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
+        next: OffsetClause
+    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedOffsetOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedOffsetOpen(
+                statementParts: _nestedStatementParts(
+                    accumulated.current.statementParts,
+                    applying: { _fromAddingOffset(next, to: $0) }
+                )
+            )
+        )
     }
 
     public static func buildPartialBlock<Attachment: AttachmentState, Current: AliasableCurrent>(
@@ -1034,6 +1572,52 @@ private extension FromBuilder.NestedSelectOpen {
         }
         return parts
     }
+}
+
+private func _nestedStatementParts(
+    _ statementParts: [SwifQLPart],
+    appending predicateParts: [SwifQLPart],
+    with appendClause: (SwifQLable, SwifQLable) -> SwifQLable
+) -> [SwifQLPart] {
+    guard !predicateParts.isEmpty else { return statementParts }
+
+    let frame = SwifQLStructuralFramePart(region: .statement, children: statementParts)
+    let statement = SwifQLableParts(parts: [frame])
+    let appended = appendClause(statement, SwifQLableParts(rawParts: predicateParts))
+    return (appended.parts.first as? SwifQLStructuralFramePart)?.children ?? appended.parts
+}
+
+private func _nestedStatementParts(
+    _ statementParts: [SwifQLPart],
+    applying appendClause: (SwifQLable) -> SwifQLable
+) -> [SwifQLPart] {
+    let frame = SwifQLStructuralFramePart(region: .statement, children: statementParts)
+    let statement = SwifQLableParts(parts: [frame])
+    let appended = appendClause(statement)
+    return (appended.parts.first as? SwifQLStructuralFramePart)?.children ?? appended.parts
+}
+
+private func _fromAddingGroupBy(_ request: GroupByClause, to statement: SwifQLable) -> SwifQLable {
+    let expressions = request.expressionParts
+        .filter { !$0.isEmpty }
+        .map { SwifQLableParts(rawParts: $0) as SwifQLable }
+    guard !expressions.isEmpty else { return statement }
+    return statement.groupBy(expressions)
+}
+
+private func _fromAddingOrderBy(_ request: OrderByClause, to statement: SwifQLable) -> SwifQLable {
+    guard !request.items.isEmpty else { return statement }
+    return statement.orderBy(request.items)
+}
+
+private func _fromAddingLimit(_ request: LimitClause, to statement: SwifQLable) -> SwifQLable {
+    guard !request.countParts.isEmpty else { return statement }
+    return statement.limit(SwifQLableParts(rawParts: request.countParts))
+}
+
+private func _fromAddingOffset(_ request: OffsetClause, to statement: SwifQLable) -> SwifQLable {
+    guard !request.countParts.isEmpty else { return statement }
+    return statement.offset(SwifQLableParts(rawParts: request.countParts))
 }
 
 

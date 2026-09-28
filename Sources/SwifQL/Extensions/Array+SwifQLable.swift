@@ -23,6 +23,8 @@ extension Array: SwifQLable where Element: SwifQLable {
     }
 }
 
+extension Array: RowField where Element: SwifQLable {}
+
 extension Array where Element: SwifQLable {
     public func separator(_ separator: SwifQLableArraySeparator) -> SwifQLable {
         var parts: [SwifQLPart] = []

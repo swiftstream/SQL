@@ -38,6 +38,21 @@ public enum IdentifierListBuilder {
         Components(names: [name])
     }
 
+    public static func buildExpression(
+        _ path: any SwifQLable
+    ) -> Components {
+        let parts = path.parts
+        guard parts.count == 1,
+              let keyPath = parts.first as? SwifQLPartKeyPath,
+              !keyPath.asText,
+              let name = keyPath.paths.last,
+              !name.isEmpty else {
+            preconditionFailure("Identifier lists accept only a single structural column path or a String name.")
+        }
+
+        return Components(names: [name])
+    }
+
     public static func buildBlock(
         _ components: Components...
     ) -> Components {

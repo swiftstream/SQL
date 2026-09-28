@@ -7,11 +7,13 @@
 
 import Foundation
 
-public protocol SwifQLable: CustomStringConvertible {
+public protocol SwifQLable: CustomStringConvertible, RowField {
     var parts: [SwifQLPart] { get }
 }
 
 extension SwifQLable {
+    public var rowFieldValue: RowFieldValue { .expression(parts) }
+
     public var description: String { prepare(.psql).plain }
 }
 

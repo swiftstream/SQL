@@ -51,6 +51,27 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
         #expect(query.prepare(.psql).splitted.values.isEmpty)
     }
 
+    @Test("D04 Values source receives one derived wrapper before As and Columns")
+    func valuesSourceAliasAndColumns() {
+        let query = SwifQL {
+            From {
+                Values { Row("admin", 100) }
+                As("rp")
+                Columns { Path.Column("role"); Path.Column("priority") }
+            }
+        }
+
+        let psql = query.prepare(.psql)
+        #expect(psql.plain == #"FROM (VALUES ('admin', 100)) AS "rp" ("role", "priority")"#)
+        #expect(psql.splitted.query == #"FROM (VALUES ($1, $2)) AS "rp" ("role", "priority")"#)
+        #expect(psql.splitted.values.map { String(describing: $0) } == ["admin", "100"])
+
+        let mysql = query.prepare(.mysql)
+        #expect(mysql.plain == "FROM (VALUES ROW('admin', 100)) AS rp (role, priority)")
+        #expect(mysql.splitted.query == "FROM (VALUES ROW(?, ?)) AS rp (role, priority)")
+        #expect(mysql.splitted.values.map { String(describing: $0) } == ["admin", "100"])
+    }
+
     @Test("D04-S05 dynamic Columns includes its true branch")
     func s05DynamicColumnsTrueBranch() {
         let includeName = true

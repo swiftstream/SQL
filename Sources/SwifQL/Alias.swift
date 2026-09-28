@@ -100,6 +100,8 @@ extension KeyPath: SwifQLable, CustomStringConvertible where Root: ColumnRoot, V
     }
 }
 
+extension KeyPath: RowField where Root: ColumnRoot, Value: ColumnRootNameable {}
+
 // MARK: - Aliasable
 
 public protocol Aliasable: ColumnRoot, Codable {
