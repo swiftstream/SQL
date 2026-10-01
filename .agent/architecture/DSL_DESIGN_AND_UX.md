@@ -3800,10 +3800,10 @@ UnionByName { ... }
 UnionAllByName { ... }
 ```
 
-`SetUnion` emits the exact SQL `UNION` operator. This one name differs from the SQL keyword because the released public `Union` class already occupies that Swift declaration name. Keep the direct trailing-closure rule for every operation; do not replace the primary branch body with labeled closure forms. A direct operation closure uses a dedicated complete-query builder, and the formed-result request takes a nominal `CompleteQuery` value:
+`SetUnion` emits the exact SQL `UNION` operator. This one name differs from the SQL keyword because the released public `Union` class already occupies that Swift declaration name. Keep the direct trailing-closure rule for every operation; do not replace the primary branch body with labeled closure forms. A separately assembled right operand uses ordinary `SwifQL` / `SwifQLable` composition rather than a second public query-wrapper concept:
 
 ```swift
-let rhs = CompleteQuery {
+let rhs = SwifQL {
     Select { ArchivedUser.$id }
     From { ArchivedUser.table }
 }
@@ -3815,7 +3815,7 @@ SwifQL {
 }
 ```
 
-`CompleteQuery` proves that the restricted builder captured one structurally complete query result. It may expose the normal `SwifQLable.parts` after completion, but it has no public initializer from `SwifQLable`; an erased fragment or ordinary part cannot be promoted into a completed query by assertion. This ownership proof is not a SQL parser or a guarantee of dialect validity. The existing non-generic `SelectBuilder.Result` may represent a SELECT with no surviving projection, including a header-only or empty optional-projection path. Such a value remains a typed SELECT result and may still produce SQL rejected by a database parser; DQ-06 does not change or strengthen that existing projection contract.
+This is intentional under DESIGN-001 and DESIGN-015. The declarative type-state layer owns whether a set-operation continuation may attach to the current left query result and how the resulting set expression is grouped. It does not certify that an arbitrary right-hand `SwifQLable` is a database-valid complete query. A caller may supply a fragment or otherwise invalid SQL as the operand; target-dialect/database validation may reject the rendered result. Extracting an inline right operand into a variable, helper, or separate file must not require switching from `SwifQL` to a second public “complete query” abstraction.
 
 ### Existing Union compatibility remains intact
 
@@ -3838,10 +3838,10 @@ SetUnion {
 }
 ```
 
-The formed-result request has a distinct name and type. `SwifQL { ... }` continues to return `SwifQLable`, so its value cannot serve as proof of a complete query. Use `CompleteQuery { ... }` when the RHS is assembled separately:
+The continuation request keeps its distinct `SetUnion` name/type, but its right operand may be an ordinary `SwifQLable`. `SwifQL { ... }` is the canonical way to assemble a separate right operand:
 
 ```swift
-let rhs = CompleteQuery {
+let rhs = SwifQL {
     Select { ArchivedUser.$id }
     From { ArchivedUser.table }
 }
@@ -3853,7 +3853,7 @@ SwifQL {
 }
 ```
 
-The exact public overloads and their result-builder selection must pass a fresh imported-module feasibility gate before implementation. `CompleteQuery { Path.Table("t") }`, `SetUnion(Path.Table("t"))`, and `SetUnion(erasedSwifQLable)` must fail to compile. Do not add a permissive overload to retain the old `let rhs = SwifQL { ... }` example: it would also accept arbitrary or erased fragments and remove the declared static guarantee.
+The exact public overloads and their result-builder selection must still pass a fresh imported-module feasibility gate before implementation. That gate must validate the `Union` name collision boundary, released constructor coexistence, all eight operation transitions, optional continuation behavior, and left-side ownership negatives. It does not require arbitrary or erased `SwifQLable` operands to fail at compile time. Accepting such operands is a deliberate SQL-first/composition tradeoff: SwifQL preserves the requested structure, while the caller and target database remain responsible for whether the resulting SQL is meaningful and valid.
 
 ### Set continuation applies only to a complete open query result
 
@@ -3873,14 +3873,13 @@ SwifQL {
 }
 ```
 
-Invalid ownership includes:
+Invalid continuation ownership includes:
 
 - orphan `SetUnion` / `UnionAll` / `Intersect` / `Except` continuations without a left query result;
 - two adjacent base results without a set operator;
-- an empty right-hand branch;
 - continuation into a finalized/closed nested result.
 
-An empty branch here means the absence of one typed complete query root. It does not mean a `SelectBuilder.Result` with no surviving projection: that existing value is still a typed SELECT root, although its generated SQL may be rejected by a database parser. `CompleteQuery` makes no projection-validity or dialect-validity claim. This ownership is encoded structurally through the DESIGN-028 typed-current principle rather than through runtime token inspection.
+These are left-side ownership errors: the builder must know which open query result receives the continuation. Right-operand SQL validity is deliberately outside that guarantee. The design does not require compile-time rejection of an empty or otherwise nonsensical right operand when ordinary `SwifQLable` composition can represent it; such input may render SQL rejected by the target database. Left-side continuation ownership remains encoded structurally through the DESIGN-028 typed-current principle rather than through runtime token inspection.
 
 ### Chaining is deterministic left fold
 
@@ -3969,7 +3968,7 @@ This is structural ownership, not hidden precedence inference.
 
 ### Every binary operand is structurally parenthesized
 
-Each set-operation operand lowers through the existing statement/set-result frame model as a complete parenthesized query result.
+Each supplied set-operation operand lowers through the existing statement/set-result frame model as its own parenthesized operand. Valid SQL use expects that operand to represent a query result, but SwifQL does not add a separate public completeness proof for the right-hand value.
 
 This preserves branch-local ownership of:
 
@@ -3983,7 +3982,7 @@ Final `ORDER BY` / `LIMIT` after the chain belong to the outer `.setResult` root
 
 No new precedence table, token scan, or set-result AST is required.
 
-### Optional complete continuation is supported
+### Optional continuation is supported
 
 A dynamic branch may own the continuation itself:
 
@@ -4005,13 +4004,11 @@ The optional request must remain statically owned through a dedicated continuati
 
 This differs from placing the owner inside a finalized branch and attempting to continue it from outside, which remains invalid under DESIGN-028.
 
-### Right operand may be value-erased after completion
+### Right operand uses ordinary SwifQL composition
 
-The `SetUnion` request stores only its complete right operand. A right operand may be erased or boxed only after its query ownership is closed and represented by `CompleteQuery`.
+The `SetUnion` request may carry its right operand as ordinary `SwifQLable` / parts composition. No second public “complete query” carrier is required.
 
-The dedicated builder proves that the operand is one typed, structurally complete query result before it becomes a continuation payload. The wrapper then stores only the ordinary completed `SwifQLable`/parts representation. It does not validate the internal SELECT projection or SQL dialect grammar.
-
-The left/current result state and set-operation kind remain statically typed through ownership-sensitive attachment. No runtime owner lookup or continuation validation is introduced.
+This value erasure is acceptable because the right operand is payload, not the current continuation owner. The left/current result state and set-operation kind remain statically typed through ownership-sensitive attachment, which is the DESIGN-028 guarantee that matters here. No runtime owner lookup or continuation validation is introduced, and no right-operand provenance type leaks into the public developer experience.
 
 ### UNION BY NAME is Duck-specific exact grammar
 
@@ -4021,7 +4018,7 @@ Do not map them to name-alignment rewrites in PostgreSQL/MySQL or synthesize NUL
 
 ### Compiler evidence boundary
 
-The public nominal `Union` type prevents a separate same-spelled top-level continuation factory: Swift 6.3.3 reports `invalid redeclaration of 'Union'`. A closure initializer on that class has static type `Union`, just like the released constructors. This is insufficient evidence for typed attachment. Use a distinct `SetUnion` request type; its RHS closure and formed-result overload must be restricted to the `CompleteQuery` nominal result. Validate the exact overloads, all eight operator transitions, existing constructor compatibility, optional branches, and ownership negatives through fresh external `import SwifQL` clients before implementation. The 2026-09-29 probes show that the prior `SetUnion(SwifQLable)` formed-RHS candidate is too permissive and that the rest of its compiler matrix remains unrun; they do not pass the corrected gate.
+The public nominal `Union` type prevents a separate same-spelled top-level continuation factory: Swift 6.3.3 reports `invalid redeclaration of 'Union'`. A closure initializer on that class has static type `Union`, just like the released constructors. This is insufficient evidence for distinct typed attachment, so use a separate `SetUnion` request type. Its right operand may use ordinary `SwifQLable` composition. Validate the exact overloads, all eight operator transitions, existing constructor compatibility, optional branches, and left-side ownership negatives through fresh external `import SwifQL` clients before implementation. The 2026-09-29 evidence that `SetUnion(SwifQLable)` accepts arbitrary or erased fragments remains factually useful, but that permissiveness is no longer classified as an API defect: this correction deliberately preserves direct SwifQL composition and leaves right-operand SQL validity to the caller and target database.
 
 ### SELECT / Set-Result Frontier 04 closure
 
