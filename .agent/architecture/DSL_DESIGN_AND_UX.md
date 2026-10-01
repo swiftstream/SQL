@@ -4261,7 +4261,15 @@ WITH "regionalSales" AS (...),
 SELECT ...
 ```
 
-Each sibling `With(name) { ... }` is one named WITH item. Consecutive typed WITH items at statement start coalesce structurally into one clause. Once the primary statement/result begins, another same-level `With` is invalid.
+Every expression that reaches the statement prefix with concrete static type `With` is one ordinary CTE item, regardless of which `With` initializer created it. Consecutive concrete `With` items at statement start coalesce structurally into one clause. Once the primary statement/result begins, another same-level `With` is invalid.
+
+The compile-time proof is therefore about prefix position and sequencing:
+
+```text
+this concrete With occupies a legal WITH-prefix position
+```
+
+It is not proof of initializer provenance.
 
 ### Existing `With` nominal compatibility remains authoritative
 
@@ -4273,6 +4281,8 @@ With(table, columns: [...], query)
 
 and fluent multi-item attachment through `.with(...)`.
 
+The historical initializer remains broad: its table/name, columns, and query payload are ordinary released `SwifQLable` composition. Do not narrow, relabel, or reinterpret that initializer merely to make the new declarative root stricter.
+
 Compiler evidence proves the same public nominal type can gain a declarative initializer:
 
 ```swift
@@ -4281,11 +4291,42 @@ With("name") {
 }
 ```
 
-without ambiguity while preserving a general `SwifQLable` first parameter for the legacy initializer.
+without ambiguity while preserving the released initializer and fluent compatibility.
 
-Swift does not permit a free `func With` to coexist with the existing `class With` in the same module. Therefore the declarative call is an initializer on the released nominal type, not a parallel free function.
+Swift does not permit a free `func With` to coexist with the existing `class With` in the same module. Therefore the declarative call is an initializer on the released nominal type, not a parallel free function or a second public ordinary-WITH wrapper.
 
-Do not narrow or replace the historical initializer merely to simplify overload resolution.
+After either initializer returns, the static type is the same `With`. The declarative root must not attempt to recover which initializer created the value through runtime provenance flags, rendered-token inspection, `parts` inspection, or ambient mutable state.
+
+A released legacy `With` deliberately placed at the beginning of the new declarative root is therefore also one ordinary prefix item:
+
+```swift
+let legacy: With = With(
+    Table("activeUsers"),
+    oldQuery
+)
+
+SQL {
+    legacy
+    Select { ... }
+}
+```
+
+This changes only the unreleased declarative-root interaction. It does not change released `With(...)` construction or fluent `.with(...)` behavior.
+
+### Explicit erasure loses WITH-prefix proof
+
+The WITH-prefix role depends on the expression reaching the result builder as concrete static type `With`.
+
+If the caller deliberately erases that value:
+
+```swift
+let concrete: With = ...
+let erased: SwifQLable = concrete
+```
+
+the erased value follows ordinary `SwifQLable` composition and does not retain a WITH-prefix ownership proof.
+
+The builder must not inspect runtime type, rendered SQL, or stored parts to recover that proof. This follows DESIGN-028's general rule that deliberate type erasure may lose ownership-sensitive continuation state.
 
 ### `WithRecursive` is a distinct clause-start state
 
@@ -4316,7 +4357,7 @@ WITH RECURSIVE "base" AS (...),
 SELECT ...
 ```
 
-`WithRecursive(name)` means: start a `WITH RECURSIVE` clause whose first item has this name. It does not claim the first item itself self-references.
+`WithRecursive(name)` means: start a `WITH RECURSIVE` clause whose first item has this name. It does not claim the first item itself self-references and is not an initializer-provenance marker for ordinary `With`.
 
 The typed prefix state therefore distinguishes at least:
 
@@ -4327,11 +4368,11 @@ optional finalized prefix group
 complete primary statement
 ```
 
-`WithRecursive` is legal only as the first prefix item. A later or repeated `WithRecursive` is invalid. Ordinary `With` items may extend either ordinary or recursive prefixes.
+`WithRecursive` is legal only as the first prefix item. A later or repeated `WithRecursive` is invalid. Ordinary concrete `With` items may extend either ordinary or recursive prefixes.
 
-### WITH item headers are typed before the item body
+### Declarative WITH item headers are typed before the body payload
 
-An item may declare output-column names before its complete body:
+The declarative initializer may declare output-column names before its body:
 
 ```swift
 With("regionalSales") {
@@ -4378,13 +4419,17 @@ With("regionalSales") {
 }
 ```
 
-Header states are typed. Repeated `Columns`, both materialization modes, header nodes after the body starts, and an empty item body are invalid.
+The declarative item-construction builder may keep header states typed. Repeated `Columns`, both materialization modes, header nodes after the body starts, and a syntactically empty declarative body are invalid construction shapes.
+
+These guarantees are local to the declarative initializer call. Once construction returns `With`, the nominal carries no permanent proof that it originated from this stricter builder.
 
 `Materialized` / `NotMaterialized` are exact PostgreSQL/Duck item grammar. Do not translate them to MySQL optimizer hints or otherwise claim equivalent MySQL syntax.
 
-### One WITH item owns one complete query/result body
+### One WITH item carries one body payload
 
-After optional item-header nodes, a WITH item owns exactly one complete statement/query-result value.
+Semantically, each WITH item contributes one body payload inside `AS (...)`.
+
+The declarative initializer requires a body expression/payload to be present, but SwifQL does not introduce a second public “complete query” wrapper to certify that arbitrary body SQL is database-valid. Preassembled/helper query-producing `SwifQLable` composition should remain practical.
 
 This naturally composes with DESIGN-030:
 
@@ -4400,11 +4445,13 @@ With("ids") {
 }
 ```
 
-The item body is finalized before it becomes a WITH prefix item. Complete item results may be boxed/materialized only after their internal continuation ownership is closed.
+Ownership-sensitive continuations inside a declaratively built body may remain typed until that body expression is formed. After construction, the enclosing value is simply `With`.
 
-Dialect support for data-modifying WITH bodies remains exact: shared Swift identity does not imply every body kind is valid on every target database.
+The released legacy initializer remains broader and may contain a historical `SwifQLable` payload that was not produced by the declarative item builder. Accepting that concrete `With` as a prefix item does not retroactively certify its body.
 
-### Optional complete WITH items preserve prefix ownership
+Dialect support for data-modifying WITH bodies remains exact: shared Swift identity does not imply every body kind is valid on every target database. SwifQL does not promise parser, dialect, projection, or database-validity proof for arbitrary body payloads.
+
+### Optional WITH items preserve prefix ownership
 
 Dynamic presence is supported at item boundaries:
 
@@ -4424,7 +4471,7 @@ SQL {
 }
 ```
 
-The optional branch contains one already-complete WITH item/group. It may be appended to an open ordinary or recursive prefix without erasing that prefix's ownership-sensitive static state.
+The optional branch contains one finalized prefix item/group. It may be appended to an open ordinary or recursive prefix without erasing that prefix's ownership-sensitive static state.
 
 An optional first/only WITH item is also structurally representable:
 
@@ -4444,18 +4491,20 @@ If the branch is absent, the primary statement remains a statement without WITH.
 
 ### Prefix ownership is compile-time structural
 
-The following are invalid by missing typed transitions rather than runtime repair:
+The following remain invalid by missing typed transitions rather than runtime repair:
 
 - `With` after the primary statement/result;
 - `WithRecursive` after an ordinary `With` prefix has started;
 - repeated `WithRecursive`;
 - a WITH-only statement without a primary result;
 - two adjacent primary results;
-- repeated WITH-item headers;
-- item header after the item body;
-- empty WITH-item body.
+- repeated declarative WITH-item headers;
+- declarative item header after the body starts;
+- syntactically empty declarative item body.
 
-No rendered-token scan or ambient mutable `current CTE` state is used.
+These rules do not include initializer-provenance discrimination. Any concrete static `With` may occupy an otherwise legal ordinary prefix-item position.
+
+No rendered-token scan, runtime provenance mode, runtime owner recovery, or ambient mutable `current CTE` state is used.
 
 ### Dialect-specific recursive extensions remain separate
 
@@ -4473,15 +4522,24 @@ Prompt SHA-256:
 
 `919008e110243ec08f0407f1dee81c28fea452b9c9023263794364eafa020bb5`
 
-The probe returns `WITH_STRONG_PASS` across Swift 6.2.3, Xcode/Swiftly Swift 6.3.3, and Swift 6.4:
+The probe returns `WITH_STRONG_PASS` across Swift 6.2.3, Xcode/Swiftly Swift 6.3.3, and Swift 6.4.
 
-- 12/12 positive clients compile and run;
-- 9/9 ownership negatives reject at compile time;
-- legacy `With` initializer/fluent compatibility remains intact;
-- ordinary and recursive prefix states remain statically typed;
-- item-header states remain statically typed until body completion;
-- complete set-result bodies compose;
-- optional complete WITH items compose without early type erasure.
+That evidence supports:
+
+- released and declarative initializer coexistence on the same `With` nominal;
+- released fluent `.with` coexistence;
+- broad concrete-`With` prefix intake;
+- statically typed ordinary, recursive, and optional prefix states;
+- statically typed declarative item-header sequencing;
+- WITH-only, late/repeated recursive, second-primary, duplicate/late-header, and empty-declarative-body negatives;
+- optional WITH items and set-result body composition in the fixture;
+- no runtime owner/token scan in the fixture.
+
+The probe did not distinguish legacy from declarative `With` after construction. Its root transitions accepted the concrete `With` nominal regardless of initializer provenance.
+
+A later DQ-06 Plan 03 requirement, R39, attempted to require declarative `With` to compile in prefix position while an otherwise concrete legacy `With` statically rejected there. That requirement is superseded: it was a planning restriction, not an independent SQL semantic, and it is impossible to satisfy from the shared static type without adding a second static carrier or runtime provenance.
+
+No new compiler probe is required to establish this stable architecture correction. Production implementation remains gated by fresh imported-module evidence against the current live `SQLBuilder`, including concrete-`With` versus erased-`SwifQLable` intake, initializer coexistence, ordinary/recursive/optional transitions, primary finalization, helper/preassembled body composition, exact lowering/bind order, and the structural negatives above. That future gate must not reintroduce R39 or a public completeness wrapper.
 
 ### Statement Tail Frontier 05 closure
 
@@ -4490,7 +4548,7 @@ Statement Tail Frontier 05 is architecture-complete under DESIGN-031 and DESIGN-
 Closed decisions:
 
 - QUERY-RB-004 — row-locking clause ownership/spelling;
-- QUERY-RB-005 — multi-WITH naming, recursive prefix ownership, and item-header grammar.
+- QUERY-RB-005 — multi-WITH naming, same-nominal concrete-`With` prefix policy, recursive prefix ownership, and declarative item-header/body-presence grammar.
 
 Production implementation remains unauthorized. Remaining declarative-query architecture decisions continue before implementation planning is frozen.
 
