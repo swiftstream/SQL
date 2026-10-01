@@ -3783,7 +3783,7 @@ Set operations belong to complete query results, not select-list expressions or 
 The canonical declarative continuation vocabulary is:
 
 ```swift
-Union { ... }
+SetUnion { ... }
 UnionAll { ... }
 
 Intersect { ... }
@@ -3800,7 +3800,22 @@ UnionByName { ... }
 UnionAllByName { ... }
 ```
 
-These names mirror exact SQL compound operators while preserving the project's direct trailing-closure rule. Do not replace the primary branch body with labeled closure forms.
+`SetUnion` emits the exact SQL `UNION` operator. This one name differs from the SQL keyword because the released public `Union` class already occupies that Swift declaration name. Keep the direct trailing-closure rule for every operation; do not replace the primary branch body with labeled closure forms. A direct operation closure uses a dedicated complete-query builder, and the formed-result request takes a nominal `CompleteQuery` value:
+
+```swift
+let rhs = CompleteQuery {
+    Select { ArchivedUser.$id }
+    From { ArchivedUser.table }
+}
+
+SwifQL {
+    Select { User.$id }
+    From { User.table }
+    SetUnion(rhs)
+}
+```
+
+`CompleteQuery` proves that the restricted builder captured one structurally complete query result. It may expose the normal `SwifQLable.parts` after completion, but it has no public initializer from `SwifQLable`; an erased fragment or ordinary part cannot be promoted into a completed query by assertion. This ownership proof is not a SQL parser or a guarantee of dialect validity. The existing non-generic `SelectBuilder.Result` may represent a SELECT with no surviving projection, including a header-only or empty optional-projection path. Such a value remains a typed SELECT result and may still produce SQL rejected by a database parser; DQ-06 does not change or strengthen that existing projection contract.
 
 ### Existing Union compatibility remains intact
 
@@ -3809,33 +3824,36 @@ Released compatibility such as:
 ```swift
 Union(lhs, rhs)
 Union(all: lhs, rhs)
+Union([lhs, rhs])
 ```
 
-remains valid.
+remains valid and continues to produce a complete `Union` result. Existing one-argument `Union(completeResult)` calls also remain legacy construction of a `Union` value; they are not typed set-operation requests.
 
-Compiler evidence proves the existing public `Union` nominal type can coexist with a trailing-result-builder initializer:
+An initializer with a trailing result-builder closure can be added to `Union`, but it returns the same static `Union` type as its released constructors. It therefore cannot serve as the distinct typed continuation request while preserving their meaning. In a Swift 6.3.3 imported-module feasibility probe, a top-level factory returning a separate continuation type failed with `invalid redeclaration of 'Union'`. Do not add a closure initializer to `Union` as a substitute for the separate request type.
 
 ```swift
-Union {
+SetUnion {
     Select { ... }
     From { ... }
 }
 ```
 
-without overload ambiguity across Swift 6.2.3, Xcode/Swiftly Swift 6.3.3, and Swift 6.4.
-
-The already-formed-result shorthand can coexist under the same nominal type:
+The formed-result request has a distinct name and type. `SwifQL { ... }` continues to return `SwifQLable`, so its value cannot serve as proof of a complete query. Use `CompleteQuery { ... }` when the RHS is assembled separately:
 
 ```swift
-let rhs = SQL { ... }
+let rhs = CompleteQuery {
+    Select { ArchivedUser.$id }
+    From { ArchivedUser.table }
+}
 
-SQL {
-    lhs
-    Union(rhs)
+SwifQL {
+    Select { User.$id }
+    From { User.table }
+    SetUnion(rhs)
 }
 ```
 
-A labeled `Union(operand: rhs)` form is compiler-clean but is not required as canonical syntax when the concise form remains unambiguous.
+The exact public overloads and their result-builder selection must pass a fresh imported-module feasibility gate before implementation. `CompleteQuery { Path.Table("t") }`, `SetUnion(Path.Table("t"))`, and `SetUnion(erasedSwifQLable)` must fail to compile. Do not add a permissive overload to retain the old `let rhs = SwifQL { ... }` example: it would also accept arbitrary or erased fragments and remove the declared static guarantee.
 
 ### Set continuation applies only to a complete open query result
 
@@ -3844,11 +3862,11 @@ A declarative set-operation continuation requires one complete open query result
 Valid:
 
 ```swift
-SQL {
+SwifQL {
     Select { User.$id }
     From { User.table }
 
-    Union {
+    SetUnion {
         Select { ArchivedUser.$id }
         From { ArchivedUser.table }
     }
@@ -3857,12 +3875,12 @@ SQL {
 
 Invalid ownership includes:
 
-- orphan `Union` / `Intersect` / `Except` without a left query result;
+- orphan `SetUnion` / `UnionAll` / `Intersect` / `Except` continuations without a left query result;
 - two adjacent base results without a set operator;
 - an empty right-hand branch;
 - continuation into a finalized/closed nested result.
 
-This ownership is encoded structurally through the DESIGN-028 typed-current principle rather than through runtime token inspection.
+An empty branch here means the absence of one typed complete query root. It does not mean a `SelectBuilder.Result` with no surviving projection: that existing value is still a typed SELECT root, although its generated SQL may be rejected by a database parser. `CompleteQuery` makes no projection-validity or dialect-validity claim. This ownership is encoded structurally through the DESIGN-028 typed-current principle rather than through runtime token inspection.
 
 ### Chaining is deterministic left fold
 
@@ -3871,10 +3889,10 @@ Source-order continuation means the next set operation applies to the complete r
 For:
 
 ```swift
-SQL {
+SwifQL {
     QueryA
 
-    Union {
+    SetUnion {
         QueryB
     }
 
@@ -3922,10 +3940,10 @@ Rationale:
 If the user wants the right side to be a nested set result, they express that structure directly:
 
 ```swift
-SQL {
+SwifQL {
     QueryA
 
-    Union {
+    SetUnion {
         QueryB
 
         Intersect {
@@ -3970,11 +3988,11 @@ No new precedence table, token scan, or set-result AST is required.
 A dynamic branch may own the continuation itself:
 
 ```swift
-SQL {
+SwifQL {
     QueryA
 
     if includeArchive {
-        Union {
+        SetUnion {
             QueryB
         }
     }
@@ -3983,15 +4001,15 @@ SQL {
 
 When present, the continuation applies to the immediately open outer query result. When absent, that result remains unchanged.
 
-Compiler evidence proves this can remain statically owned through a dedicated optional continuation/result state; the left result is not erased before attachment.
+The optional request must remain statically owned through a dedicated continuation/result state; the left result cannot be erased before attachment. Verify this exact spelling and transition with the fresh imported-module feasibility gate.
 
 This differs from placing the owner inside a finalized branch and attempting to continue it from outside, which remains invalid under DESIGN-028.
 
 ### Right operand may be value-erased after completion
 
-The released non-generic `Union` compatibility type may need to store an arbitrary complete right operand through an existential/boxed `QueryResult`.
+The `SetUnion` request stores only its complete right operand. A right operand may be erased or boxed only after its query ownership is closed and represented by `CompleteQuery`.
 
-That is allowed because the right operand is already structurally finalized before it becomes a continuation payload.
+The dedicated builder proves that the operand is one typed, structurally complete query result before it becomes a continuation payload. The wrapper then stores only the ordinary completed `SwifQLable`/parts representation. It does not validate the internal SELECT projection or SQL dialect grammar.
 
 The left/current result state and set-operation kind remain statically typed through ownership-sensitive attachment. No runtime owner lookup or continuation validation is introduced.
 
@@ -4001,26 +4019,9 @@ The left/current result state and set-operation kind remain statically typed thr
 
 Do not map them to name-alignment rewrites in PostgreSQL/MySQL or synthesize NULL-filling behavior outside the database's exact construct.
 
-### Stable compiler evidence
+### Compiler evidence boundary
 
-Focused set-result continuation evidence:
-
-`.artifacts/research/declarative-query-set-result-continuation-probe-2026-09-21/PROBE_REPORT.md`
-
-Prompt SHA-256:
-
-`0174346535fa62fc35126e217232fb3bff574f1e0ae7b0818bb85bbd78826785`
-
-The probe returns `SET_STRONG_PASS` across Swift 6.2.3, Xcode/Swiftly Swift 6.3.3, and Swift 6.4 for:
-
-- legacy `Union(...)` coexistence;
-- all eight canonical continuation names;
-- explicit left-fold chaining;
-- explicitly nested right-hand set results;
-- orphan/two-base/empty/finalized-branch ownership negatives;
-- already-formed result attachment;
-- optional complete continuation;
-- static left-result ownership without pre-attachment erasure.
+The public nominal `Union` type prevents a separate same-spelled top-level continuation factory: Swift 6.3.3 reports `invalid redeclaration of 'Union'`. A closure initializer on that class has static type `Union`, just like the released constructors. This is insufficient evidence for typed attachment. Use a distinct `SetUnion` request type; its RHS closure and formed-result overload must be restricted to the `CompleteQuery` nominal result. Validate the exact overloads, all eight operator transitions, existing constructor compatibility, optional branches, and ownership negatives through fresh external `import SwifQL` clients before implementation. The 2026-09-29 probes show that the prior `SetUnion(SwifQLable)` formed-RHS candidate is too permissive and that the rest of its compiler matrix remains unrun; they do not pass the corrected gate.
 
 ### SELECT / Set-Result Frontier 04 closure
 
@@ -4031,7 +4032,7 @@ Closed decisions:
 - QUERY-RB-001 — SELECT `DISTINCT` / `DISTINCT ON` ownership;
 - QUERY-RB-007 — declarative `UNION` / `INTERSECT` / `EXCEPT` ownership and deterministic grouping.
 
-Production implementation remains unauthorized. Remaining declarative-query architecture decisions continue before implementation planning is frozen.
+Implementation remains subject to the repository's research, plan, independent audit, task, and source-review gates. Other declarative-query decisions continue under their owning architecture sections.
 
 ## DESIGN-031 - Row locking is one typed `For { ... }` clause per exact SQL locking clause
 
