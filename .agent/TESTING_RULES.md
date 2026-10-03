@@ -95,6 +95,16 @@ When binding behavior changes, validate the bind placeholder query, values order
 - New dialect work must not repair a compatibility regression by changing an old PostgreSQL/MySQL expected string.
 - Governance does not impose TDD or a blanket coverage percentage.
 
+## Compile-time API regressions
+
+DESIGN-037 keeps SQL composition fragment-first. Do not create compile-negative tests merely to enforce whole-statement SQL validity, clause ordering, statement completeness, or the standalone placement of a renderable SQL fragment; those concerns belong to the target database/parser/driver.
+
+The normal SwifQL test target is the default durable home for compile-positive API and exact rendering/binding regressions. A separate normal-import downstream fixture is required when repository-local tests cannot observe the same cross-module overload or result-builder boundary.
+
+A dedicated compile-negative harness is exceptional, not a default layer. Add one only after a concrete Swift/API invariant has been independently confirmed, cannot be represented as an ordinary positive/runtime regression, and cannot be protected adequately by a normal-import external fixture. Exact compiler diagnostic wording is never the contract, and compiler/toolchain/module infrastructure failure must never be accepted as an expected semantic rejection.
+
+The current DESIGN-037 re-adjudication found no justified compile-negative contract among the former R3 N01-N33 matrix; those cases belong in ordinary positive compilation/rendering coverage. Runtime tests remain separately required for generated SQL, values, bind ordering, and other executable semantics.
+
 ## Downstream compatibility fixtures
 
 Repository-local tests cannot see private extension code used by real consumers. Substantial changes to core composition, public protocols, operators, path types, `SwifQLable.parts`, or dialect hooks therefore require a temporary external consumer fixture when compatibility risk is material.

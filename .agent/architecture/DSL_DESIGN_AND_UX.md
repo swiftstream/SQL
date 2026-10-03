@@ -5320,3 +5320,100 @@ QUERY-RB-019 is closed.
 All declarative-query architecture decisions tracked in `OPEN_DECISIONS.md` are now closed.
 
 Production implementation remains unauthorized. The next phase is a frozen implementation plan covering the complete accepted declarative-query architecture, followed by an independent Sol plan audit before any production source mutation.
+
+## DESIGN-037 - SwifQL preserves fragment-first composition; the database owns whole-statement validity
+
+This decision restores and makes explicit the original SwifQL composition philosophy. It supersedes any conflicting requirement elsewhere in this document that makes `SwifQL { ... }` prove whole-statement SQL grammar, clause ordering, or statement completeness at Swift compile time.
+
+`SwifQL { ... }` is a SQL composition root, not a complete-statement validator. Its result may be a complete executable statement or any meaningful SQL fragment. A fragment does not need to be independently executable by a database.
+
+Canonical composition:
+
+```swift
+let activeUsers = SwifQL {
+    Where { User.$isActive == true }
+}
+
+let paging = SwifQL {
+    Limit(20)
+    Offset(40)
+}
+
+let query = SwifQL {
+    Select {
+        User.$id
+        User.$email
+    }
+    From { User.table }
+    activeUsers
+    paging
+}
+```
+
+The independent fragments render as `WHERE "User"."isActive" = TRUE` and `LIMIT 20 OFFSET 40`; together they compose the corresponding SELECT/FROM/WHERE/LIMIT/OFFSET text.
+
+### Specialized builders own local rendering, not whole-query validation
+
+A specialized builder owns only the mechanics needed to render its own body truthfully: projection/source/order separators, predicate `AND` composition, parentheses, and equivalent local structure. Its children may come from variables, functions, loops, conditionals, or reusable values whenever their type is meaningful for that builder.
+
+For example:
+
+```swift
+let fields: [SwifQLable] = [User.$id, User.$email]
+let predicates: [SwifQLable] = [User.$isActive == true, User.$age >= 18]
+let sorting: [OrderByItem] = [.desc(User.$createdAt)]
+
+SwifQL {
+    Select { for field in fields { field } }
+    From { User.table }
+    Where { for predicate in predicates { predicate } }
+    OrderBy { for item in sorting { item } }
+}
+```
+
+Local type distinctions may remain when they are necessary for deterministic rendering, safety, or unambiguous ownership inside that construct. They must not exist merely to reject a larger SQL composition because SwifQL predicts that a database would reject its placement or ordering.
+
+### Whole-statement clause order is intentionally representable
+
+This is valid SwifQL source:
+
+```swift
+SwifQL {
+    Select { User.$id }
+    Limit(10)
+    Where { User.$isActive == true }
+}
+```
+
+and should faithfully compose:
+
+```sql
+SELECT "User"."id"
+LIMIT 10
+WHERE "User"."isActive" = TRUE
+```
+
+even if the selected database later rejects it. Reusable fragments may likewise be assembled in any order. Database/parser/driver validation owns whole-statement SQL validity.
+
+This freedom must not require prior erasure to `SwifQLable`; direct declarative composition follows the same fragment-first principle.
+
+### Compiler contracts protect Swift/API invariants, not SQL validity
+
+Compile-negative tests are appropriate only for real Swift/API contracts or local construct invariants required for deterministic rendering, safety, or unambiguous ownership. They must not freeze:
+
+- a clause being the first child of `SwifQL { ... }`;
+- a partial query fragment that is not independently executable;
+- whole-statement clause ordering or completeness;
+- cross-dialect SQL validity that can truthfully be represented and rendered.
+
+Therefore previous assumptions that `Where`, `GroupBy`, `Having`, `Qualify`, `OrderBy`, `Limit`, or `Offset` have no standalone/root fragment ingress are superseded. Statement-order negatives such as `HAVING -> WHERE` or `QUALIFY -> HAVING` are likewise superseded when their only rationale is whole-statement validity.
+
+More generally, earlier typed-current rules in DESIGN-028/030/032 and related implementation evidence remain authoritative only for local composition semantics that survive DESIGN-037. They are not authority for rejecting otherwise renderable SQL fragments or statement permutations.
+
+The same rule applies inside SQL-shaped value/DML builders when rendering is deterministic. `Row`, `Values`, `Default`, and `Insert` must not reject emptiness, differing row arity, standalone/default placement, clause order, or incompleteness merely to predict database validity. Structural safety rules remain valid when they protect a different contract, such as ensuring an identifier-list child is actually representable as an identifier rather than silently treating an arbitrary value expression as a name.
+
+### Implementation consequence
+
+The declarative result-builder implementation must be simplified or widened wherever necessary to preserve maximal fragment composition. Existing rendering, binding order, identifier safety, structural-frame behavior, and dialect-specific preparation semantics remain protected.
+
+Any current implementation plan, compiler-contract candidate, or audit that assumes whole-statement compile-time grammar enforcement must be re-adjudicated against DESIGN-037 before staging or commit.
