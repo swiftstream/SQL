@@ -2,121 +2,110 @@ import Foundation
 
 @resultBuilder
 public enum InsertBuilder {
-    public struct ColumnsState {
-        let names: [String]
+    public struct Fragment {
+        enum Content {
+            case columns(FromColumnsRequest)
+            case values(Values)
+        }
 
-        init(names: [String]) {
-            precondition(!names.isEmpty, "INSERT must contain at least one target column.")
-            self.names = names
+        let content: Content
+
+        init(_ content: Content) {
+            self.content = content
         }
     }
 
     public struct Result {
-        let columns: ColumnsState
-        let values: Values
+        let fragments: [Fragment]
 
-        init(columns: ColumnsState, values: Values) {
-            self.columns = columns
-            self.values = values
+        init(fragments: [Fragment]) {
+            self.fragments = fragments
         }
     }
 
-    public static func buildExpression(_ columns: FromColumnsRequest) -> FromColumnsRequest {
-        columns
+    public static func buildExpression(_ columns: FromColumnsRequest) -> Fragment {
+        Fragment(.columns(columns))
     }
 
-    public static func buildExpression(_ values: Values) -> Values {
-        values
+    public static func buildExpression(_ values: Values) -> Fragment {
+        Fragment(.values(values))
     }
 
-    public static func buildPartialBlock(first columns: FromColumnsRequest) -> ColumnsState {
-        ColumnsState(names: columns.names)
+    public static func buildBlock() -> Result {
+        Result(fragments: [])
+    }
+
+    public static func buildPartialBlock(first fragment: Fragment) -> Result {
+        Result(fragments: [fragment])
     }
 
     public static func buildPartialBlock(
-        accumulated: ColumnsState,
-        next values: Values
+        accumulated: Result,
+        next fragment: Fragment
     ) -> Result {
-        Result(columns: accumulated, values: values)
+        Result(fragments: accumulated.fragments + [fragment])
+    }
+
+    public static func buildOptional(_ component: Result?) -> Result {
+        component ?? Result(fragments: [])
+    }
+
+    public static func buildEither(first component: Result) -> Result {
+        component
+    }
+
+    public static func buildEither(second component: Result) -> Result {
+        component
+    }
+
+    public static func buildArray(_ components: [Result]) -> Result {
+        Result(fragments: components.flatMap(\.fragments))
     }
 }
 
 public struct Insert: SwifQLable {
     private let targetParts: [SwifQLPart]
-    private let columns: [String]
-    private let values: Values
+    private let bodyFragments: [InsertBuilder.Fragment]
 
     public init(
         _ target: any SwifQLable,
         @InsertBuilder _ body: () -> InsertBuilder.Result
     ) {
-        let result = body()
-        precondition(!result.columns.names.isEmpty, "INSERT must contain at least one target column.")
-        precondition(!result.values.rows.isEmpty, "INSERT must contain at least one VALUES row.")
-        precondition(
-            result.values.rows.allSatisfy { $0.fields.count == result.columns.names.count },
-            "Every INSERT VALUES row must match the target column count."
-        )
-
         self.targetParts = target.parts
-        self.columns = result.columns.names
-        self.values = result.values
+        self.bodyFragments = body().fragments
     }
 
     public var parts: [SwifQLPart] {
-        precondition(!columns.isEmpty, "INSERT must contain at least one target column.")
-        precondition(!values.rows.isEmpty, "INSERT must contain at least one VALUES row.")
-        precondition(
-            values.rows.allSatisfy { $0.fields.count == columns.count },
-            "Every INSERT VALUES row must match the target column count."
-        )
-
         var result: [SwifQLPart] = []
         result.append(o: .insert, .space, .into, .space)
         result.append(contentsOf: targetParts)
-        result.append(o: .space, .openBracket)
-        for (index, name) in columns.enumerated() {
-            if index > 0 {
-                result.append(o: .comma, .space)
-            }
-            result.append(SwifQLPartAlias(name))
-        }
-        result.append(o: .closeBracket, .space, .values, .space)
 
-        let rowPrefix = SwifQLHybridOperator(
-            SwifQLPartOperator("("),
-            SwifQLPartOperator("ROW("),
-            SwifQLPartOperator("(")
-        )
-        for (index, row) in values.rows.enumerated() {
-            if index > 0 {
-                result.append(o: .comma, .space)
+        for fragment in bodyFragments {
+            switch fragment.content {
+            case .columns(let request):
+                guard !request.names.isEmpty else { continue }
+                result.append(o: .space, .openBracket)
+                for (index, name) in request.names.enumerated() {
+                    if index > 0 { result.append(o: .comma, .space) }
+                    result.append(SwifQLPartAlias(name))
+                }
+                result.append(o: .closeBracket)
+
+            case .values(let values):
+                result.append(o: .space, .custom("VALUES"), .space)
+                let rowPrefix = SwifQLHybridOperator(
+                    SwifQLPartOperator("("),
+                    SwifQLPartOperator("ROW("),
+                    SwifQLPartOperator("(")
+                )
+                for (index, row) in values.rows.enumerated() {
+                    if index > 0 { result.append(o: .comma, .space) }
+                    result.append(rowPrefix)
+                    _appendRowFields(row.fields, to: &result)
+                    result.append(o: .closeBracket)
+                }
             }
-            result.append(rowPrefix)
-            _appendInsertOwnedFields(row.fields, to: &result)
-            result.append(o: .closeBracket)
         }
         return result
-    }
-}
-
-private func _appendInsertOwnedFields(
-    _ fields: [RowFieldValue],
-    to parts: inout [SwifQLPart]
-) {
-    precondition(!fields.isEmpty, "An INSERT VALUES row must contain at least one field.")
-
-    for (index, field) in fields.enumerated() {
-        if index > 0 {
-            parts.append(o: .comma, .space)
-        }
-
-        switch field {
-        case .expression(let fieldParts):
-            precondition(!fieldParts.isEmpty, "An INSERT VALUES field must produce SQL parts.")
-            parts.append(contentsOf: fieldParts)
-        case .defaultKeyword:
-            parts.append(SwifQLPartOperator("DEFAULT"))
-        }
     }
 }

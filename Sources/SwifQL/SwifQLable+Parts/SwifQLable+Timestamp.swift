@@ -14,7 +14,7 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .timestamp)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     public func timestamp(_ fields: SwifQLable...) -> SwifQLable {
         timestamp(fields)
@@ -31,6 +31,6 @@ extension SwifQLable {
             }
             parts.append(contentsOf: v.parts)
         }
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

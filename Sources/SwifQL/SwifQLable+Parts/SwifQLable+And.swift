@@ -14,7 +14,7 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .and)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
     public func and(_ predicate: SwifQLable) -> SwifQLable {
@@ -23,6 +23,6 @@ extension SwifQLable {
         parts.append(o: .and)
         parts.append(o: .space)
         parts.append(contentsOf: predicate.parts)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 }

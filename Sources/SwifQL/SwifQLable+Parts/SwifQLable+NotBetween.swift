@@ -11,6 +11,16 @@ import Foundation
 
 extension SwifQLable {
     public func notBetween(_ part: SwifQLable) -> SwifQLable {
-        SwifQLableParts(parts: self.parts).not.between(part)
+        let transform: [SwifQLPart] = [
+            SwifQLPartOperator.space,
+            .not,
+            .space,
+            .between,
+            .space
+        ] + part.parts
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(
+            from: self,
+            resultParts: self.parts + transform
+        )
     }
 }

@@ -11,10 +11,10 @@ import Foundation
 
 extension SwifQLable {
     public var distinct: SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .distinct)
-        return SwifQLableParts(parts: parts)
+        return structurallyAppending(SwifQLableParts(parts: [
+            SwifQLPartOperator.space,
+            .distinct,
+        ]))
     }
 }
 

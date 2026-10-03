@@ -614,10 +614,11 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
         )
     }
 
-    @Test("D04-S39 concrete guaranteed From carries two sibling JOINs and alias owners")
+    @Test("D04-S39 one From result carries two sibling JOINs and alias owners")
     func s39ConcreteFromWithMultipleSiblingJoins() {
         let from = From { Path.Table("User") }
-        let guaranteed: FromBuilder.GuaranteedResult = from
+        let fromResult: FromBuilder.Result = from
+        _ = fromResult
         let sibling = SwifQL {
             from
             Join(.left, Path.Table("Profile")).as("profile")
@@ -642,7 +643,7 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
         expectSiblingAndNested(sibling, nested, dialect: .psql, expectedPlain: expectedPsql, expectedQuery: expectedPsql, expectedValues: [])
         expectSiblingAndNested(sibling, nested, dialect: .mysql, expectedPlain: expectedMysql, expectedQuery: expectedMysql, expectedValues: [])
         expectSiblingAndNested(sibling, nested, dialect: .duck, expectedPlain: expectedPsql, expectedQuery: expectedPsql, expectedValues: [])
-        #expect(guaranteed.prepare(.psql).plain == #"FROM "User""#)
+        #expect(fromResult.prepare(.psql).plain == #"FROM "User""#)
     }
 
     @Test("D04-S40 explicit legacy Result variables and helpers remain completed FROM clauses")

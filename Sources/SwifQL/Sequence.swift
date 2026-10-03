@@ -9,7 +9,7 @@ extension SwifQLable {
         parts.appendSpaceIfNeeded()
         parts.append(o: .custom("START"), .space)
         parts.append(safe: value)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     public func start(with value: Int64) -> SwifQLable {
@@ -17,7 +17,7 @@ extension SwifQLable {
         parts.appendSpaceIfNeeded()
         parts.append(o: .custom("START"), .space, .with, .space)
         parts.append(safe: value)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     public func increment(by value: Int64) -> SwifQLable {
@@ -25,7 +25,7 @@ extension SwifQLable {
         parts.appendSpaceIfNeeded()
         parts.append(o: .custom("INCREMENT"), .space, .by, .space)
         parts.append(safe: value)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     public func minValue(_ value: Int64) -> SwifQLable {
@@ -33,7 +33,7 @@ extension SwifQLable {
         parts.appendSpaceIfNeeded()
         parts.append(o: .custom("MINVALUE"), .space)
         parts.append(safe: value)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     public func maxValue(_ value: Int64) -> SwifQLable {
@@ -41,6 +41,6 @@ extension SwifQLable {
         parts.appendSpaceIfNeeded()
         parts.append(o: .custom("MAXVALUE"), .space)
         parts.append(safe: value)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

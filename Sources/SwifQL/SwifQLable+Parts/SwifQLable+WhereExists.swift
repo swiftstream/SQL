@@ -11,15 +11,14 @@ import Foundation
 
 extension SwifQLable {
     public func whereExists(_ predicates: SwifQLable) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .where)
-        parts.append(o: .space)
-        parts.append(o: .exists)
-        parts.append(o: .space)
-        parts.append(o: .openBracket)
-        parts.append(contentsOf: predicates.parts)
-        parts.append(o: .closeBracket)
-        return SwifQLableParts(parts: parts)
+        let parts: [SwifQLPart] = [
+            SwifQLPartOperator.space,
+            .where,
+            .space,
+            .exists,
+            .space,
+            .openBracket,
+        ] + predicates.parts + [SwifQLPartOperator.closeBracket]
+        return structurallyAppending(SwifQLableParts(parts: parts))
     }
 }

@@ -73,7 +73,7 @@ extension Fn {
         parts.append(o: .custom("||"))
         parts.append(o: .space)
         parts.append(contentsOf: rhs.parts)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: lhs, resultParts: parts)
     }
     
     /// Number of bits in string

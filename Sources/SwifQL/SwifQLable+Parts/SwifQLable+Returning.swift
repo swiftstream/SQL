@@ -9,10 +9,10 @@ import Foundation
 
 extension SwifQLable {
     public var returning: SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .returning)
-        return SwifQLableParts(parts: parts)
+        return structurallyAppending(SwifQLableParts(parts: [
+            SwifQLPartOperator.space,
+            .returning,
+        ]))
     }
     
     public func returning(_ paths: KeyPathLastPath...) -> SwifQLable {
@@ -20,10 +20,11 @@ extension SwifQLable {
     }
     
     public func returning(_ paths: [KeyPathLastPath]) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .returning)
-        parts.append(o: .space)
+        var parts: [SwifQLPart] = [
+            SwifQLPartOperator.space,
+            SwifQLPartOperator.returning,
+            SwifQLPartOperator.space,
+        ]
         for (i, p) in paths.enumerated() {
             if i > 0 {
                 parts.append(o: .comma)
@@ -31,6 +32,6 @@ extension SwifQLable {
             }
             parts.append(SwifQLPartAlias(p.lastPath))
         }
-        return SwifQLableParts(parts: parts)
+        return structurallyAppending(SwifQLableParts(parts: parts))
     }
 }

@@ -5,10 +5,7 @@ import Foundation
 extension SwifQLable {
     /// Appends a QUALIFY predicate to the current SQL composition.
     public func qualify(_ predicate: SwifQLable) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .custom("QUALIFY"), .space)
-        parts.append(contentsOf: predicate.parts)
-        return SwifQLableParts(parts: parts)
+        let parts: [SwifQLPart] = [SwifQLPartOperator.space, .custom("QUALIFY"), .space] + predicate.parts
+        return structurallyAppending(SwifQLableParts(parts: parts))
     }
 }

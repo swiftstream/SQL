@@ -15,6 +15,6 @@ extension SwifQLable {
         parts.appendSpaceIfNeeded()
         parts.append(o: .isNotNull)
         parts.append(o: .space)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 }

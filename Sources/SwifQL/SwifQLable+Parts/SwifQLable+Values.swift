@@ -21,7 +21,7 @@ extension SwifQLable {
         var parts: [SwifQLPart] = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .values)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
     /// Represent provided values in round brackets separated with comma
@@ -41,7 +41,7 @@ extension SwifQLable {
             parts.append(contentsOf: v.parts)
         }
         parts.append(o: .closeBracket)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
     /// e.g. INSERT INTO CarBrands (name) VALUES ("Acura"), ("Audi"), ("BMW")
@@ -67,6 +67,6 @@ extension SwifQLable {
             }
             parts.append(o: .closeBracket)
         }
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

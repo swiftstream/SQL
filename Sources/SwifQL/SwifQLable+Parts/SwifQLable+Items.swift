@@ -38,6 +38,6 @@ extension SwifQLable {
                 }
             }
         }
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

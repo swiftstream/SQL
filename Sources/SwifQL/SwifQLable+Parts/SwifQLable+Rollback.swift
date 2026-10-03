@@ -14,6 +14,6 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .rollback)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

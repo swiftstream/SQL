@@ -42,7 +42,7 @@ extension SwifQLable {
             parts.append(contentsOf: parameter.declarationParts)
         }
         parts.append(o: .closeBracket)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }
 

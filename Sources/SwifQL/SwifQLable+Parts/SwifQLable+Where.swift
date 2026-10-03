@@ -11,17 +11,10 @@ import Foundation
 
 extension SwifQLable {
     public var `where`: SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .where)
-        return SwifQLableParts(parts: parts)
+        structurallyAppending(SwifQLableParts(parts: [SwifQLPartOperator.space, .where]))
     }
     public func `where`(_ predicates: SwifQLable) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .where)
-        parts.append(o: .space)
-        parts.append(contentsOf: predicates.parts)
-        return SwifQLableParts(parts: parts)
+        let parts = [SwifQLPartOperator.space, .where, .space] + predicates.parts
+        return structurallyAppending(SwifQLableParts(parts: parts))
     }
 }

@@ -16,6 +16,6 @@ extension SwifQLable {
         } else {
             parts.append(contentsOf: table.parts)
         }
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

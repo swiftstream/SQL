@@ -32,7 +32,7 @@ extension SwifQLable {
             parts.append(contentsOf: v.parts)
         }
         parts.append(o: .closeBracket)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
     public subscript (fields items: SwifQLable...) -> SwifQLable {
@@ -70,21 +70,21 @@ extension SwifQLable {
             parts.append(v)
         }
         parts.append(o: .closeBracket)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
     public var insert: SwifQLable {
         var parts: [SwifQLPart] = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .insert)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
     public var into: SwifQLable {
         var parts: [SwifQLPart] = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .into)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
     public subscript (table item: SwifQLable) -> SwifQLable {
@@ -95,7 +95,7 @@ extension SwifQLable {
         } else {
             parts.append(contentsOf: item.parts)
         }
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
     public func insertInto(_ table: SwifQLable, fields: SwifQLable...) -> SwifQLable {

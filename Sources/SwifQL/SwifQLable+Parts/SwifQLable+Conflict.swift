@@ -14,7 +14,7 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .conflict)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
     public func conflict(_ paths: KeyPathLastPath...) -> SwifQLable {
@@ -35,6 +35,6 @@ extension SwifQLable {
             parts.append(SwifQLPartAlias(p.lastPath))
         }
         parts.append(o: .closeBracket)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

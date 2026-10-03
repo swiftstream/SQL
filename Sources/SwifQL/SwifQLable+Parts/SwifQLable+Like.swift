@@ -43,7 +43,10 @@ extension SwifQLable {
         } else {
             parts.append(contentsOf: pattern.parts)
         }
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(
+            from: self,
+            resultParts: parts
+        )
     }
 
     /// Builds query with `LIKE` parameter

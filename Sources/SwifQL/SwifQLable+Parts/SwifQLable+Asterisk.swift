@@ -14,7 +14,7 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(SwifQLPartOperator("*", semanticRole: .starProjection))
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 
     /// Excludes structural column names from a star expression.
@@ -31,7 +31,7 @@ extension SwifQLable {
                 semanticRole: role
             )
         )
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 
     /// Replaces selected columns in a star expression.
@@ -48,7 +48,7 @@ extension SwifQLable {
                 semanticRole: role
             )
         )
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 
     /// Renames selected columns in a star expression.
@@ -65,7 +65,7 @@ extension SwifQLable {
                 semanticRole: role
             )
         )
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 
     /// Builds a `GLOB` pattern expression.

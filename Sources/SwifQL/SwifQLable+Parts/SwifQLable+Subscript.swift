@@ -22,6 +22,6 @@ extension SwifQLable  {
         parts.append(o: .openSquareBracket)
         parts.append(contentsOf: items.parts)
         parts.append(o: .closeSquareBracket)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 }

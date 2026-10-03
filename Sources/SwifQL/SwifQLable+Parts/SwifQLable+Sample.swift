@@ -331,10 +331,9 @@ public struct TableSample: SwifQLable {
 extension SwifQLable {
     /// Appends a SELECT-level USING SAMPLE clause.
     public func usingSample(_ sample: Sample) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(contentsOf: sample.parts)
-        return SwifQLableParts(parts: parts)
+        return structurallyAppending(SwifQLableParts(parts:
+            [SwifQLPartOperator.space] + sample.parts
+        ))
     }
 
     /// Appends a TABLESAMPLE suffix to a table reference.
@@ -342,6 +341,6 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(contentsOf: sample.parts)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

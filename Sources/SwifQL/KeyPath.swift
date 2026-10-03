@@ -38,30 +38,30 @@ public func => (lhs: SwifQLable, rhs: Type) -> SwifQLable {
     var parts: [SwifQLPart] = lhs.parts
     parts.append(o: .custom("::"))
     parts.append(SwifQLPartType(rhs))
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: lhs, resultParts: parts)
 }
 /// e.g. `"hello" as "title"`
 public func => (lhs: SwifQLable, rhs: SwifQLable) -> SwifQLable {
-    var parts: [SwifQLPart] = lhs.parts
-    parts.append(o: .space)
-    parts.append(o: .as)
-    parts.append(o: .space)
+    var postfix: [SwifQLPart] = []
+    postfix.append(o: .space)
+    postfix.append(o: .as)
+    postfix.append(o: .space)
     if let rhs = rhs as? SwifQLUniversalKeyPathSimple {
-        parts.append(SwifQLPartAlias(rhs.lastPath))
+        postfix.append(SwifQLPartAlias(rhs.lastPath))
     } else if let _ = rhs as? _AliasKeyPath {
-        parts.append(contentsOf: rhs.parts)
+        postfix.append(contentsOf: rhs.parts)
     } else if let _ = rhs as? TableAlias {
-        parts.append(contentsOf: rhs.parts)
+        postfix.append(contentsOf: rhs.parts)
     } else if let schemaWithTable = rhs as? Path.SchemaWithTable {
-        parts.append(SwifQLPartAlias(schemaWithTable.table))
+        postfix.append(SwifQLPartAlias(schemaWithTable.table))
     } else if let table = rhs as? Path.Table {
-        parts.append(SwifQLPartAlias(table.name))
+        postfix.append(SwifQLPartAlias(table.name))
     } else if let kp = rhs as? Keypathable {
-        parts.append(SwifQLPartAlias(kp.lastPath))
+        postfix.append(SwifQLPartAlias(kp.lastPath))
     } else {
-        parts.append(SwifQLPartAlias(String(describing: rhs)))
+        postfix.append(SwifQLPartAlias(String(describing: rhs)))
     }
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.appendingPostfix(postfix, to: lhs)
 }
 
 prefix operator =>
@@ -80,7 +80,7 @@ public func + (lhs: SwifQLable, rhs: SwifQLable) -> SwifQLable {
     parts.append(o: .custom("+"))
     parts.append(o: .space)
     parts.append(contentsOf: rhs.parts)
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: lhs, resultParts: parts)
 }
 
 infix operator ++: AdditionPrecedence
@@ -90,7 +90,7 @@ public func ++ (lhs: SwifQLable, rhs: SwifQLable) -> SwifQLable {
     parts.append(o: .custom("+"))
     parts.append(o: .space)
     parts.append(contentsOf: rhs.parts)
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: lhs, resultParts: parts)
 }
 
 public func - (lhs: SwifQLable, rhs: SwifQLable) -> SwifQLable {
@@ -99,7 +99,7 @@ public func - (lhs: SwifQLable, rhs: SwifQLable) -> SwifQLable {
     parts.append(o: .custom("-"))
     parts.append(o: .space)
     parts.append(contentsOf: rhs.parts)
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: lhs, resultParts: parts)
 }
 
 infix operator --: AdditionPrecedence
@@ -109,7 +109,7 @@ public func -- (lhs: SwifQLable, rhs: SwifQLable) -> SwifQLable {
     parts.append(o: .custom("-"))
     parts.append(o: .space)
     parts.append(contentsOf: rhs.parts)
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: lhs, resultParts: parts)
 }
 
 public func * (lhs: SwifQLable, rhs: SwifQLable) -> SwifQLable {
@@ -118,7 +118,7 @@ public func * (lhs: SwifQLable, rhs: SwifQLable) -> SwifQLable {
     parts.append(o: .custom("*"))
     parts.append(o: .space)
     parts.append(contentsOf: rhs.parts)
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: lhs, resultParts: parts)
 }
 
 infix operator **: AdditionPrecedence
@@ -128,7 +128,7 @@ public func ** (lhs: SwifQLable, rhs: SwifQLable) -> SwifQLable {
     parts.append(o: .custom("*"))
     parts.append(o: .space)
     parts.append(contentsOf: rhs.parts)
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: lhs, resultParts: parts)
 }
 
 public func / (lhs: SwifQLable, rhs: SwifQLable) -> SwifQLable {
@@ -137,7 +137,7 @@ public func / (lhs: SwifQLable, rhs: SwifQLable) -> SwifQLable {
     parts.append(o: .custom("/"))
     parts.append(o: .space)
     parts.append(contentsOf: rhs.parts)
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: lhs, resultParts: parts)
 }
 
 //% prefix for LIKE
@@ -146,7 +146,7 @@ prefix public func %(lhs: SwifQLable) -> SwifQLable {
     var parts: [SwifQLPart] = []
     parts.append(o: .custom("%"))
     parts.append(contentsOf: lhs.parts)
-    return SwifQLableParts(parts: parts)
+    return SwifQLableParts(rawParts: parts)
 }
 
 //% postfix for LIKE
@@ -154,7 +154,7 @@ postfix operator %
 postfix public func %(rhs: SwifQLable) -> SwifQLable {
     var parts = rhs.parts
     parts.append(o: .custom("%"))
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: rhs, resultParts: parts)
 }
 
 //1 opening bracket
@@ -163,7 +163,7 @@ prefix public func |(lhs: SwifQLable) -> SwifQLable {
     var parts: [SwifQLPart] = []
     parts.append(o: .openBracket)
     parts.append(contentsOf: lhs.parts)
-    return SwifQLableParts(parts: parts)
+    return SwifQLableParts(rawParts: parts)
 }
 //2 opening brackets
 prefix operator ||
@@ -172,7 +172,7 @@ prefix public func ||(lhs: SwifQLable) -> SwifQLable {
     parts.append(o: .openBracket)
     parts.append(o: .openBracket)
     parts.append(contentsOf: lhs.parts)
-    return SwifQLableParts(parts: parts)
+    return SwifQLableParts(rawParts: parts)
 }
 //3 opening brackets
 prefix operator |||
@@ -182,7 +182,7 @@ prefix public func |||(lhs: SwifQLable) -> SwifQLable {
     parts.append(o: .openBracket)
     parts.append(o: .openBracket)
     parts.append(contentsOf: lhs.parts)
-    return SwifQLableParts(parts: parts)
+    return SwifQLableParts(rawParts: parts)
 }
 //4 opening brackets
 prefix operator ||||
@@ -193,7 +193,7 @@ prefix public func ||||(lhs: SwifQLable) -> SwifQLable {
     parts.append(o: .openBracket)
     parts.append(o: .openBracket)
     parts.append(contentsOf: lhs.parts)
-    return SwifQLableParts(parts: parts)
+    return SwifQLableParts(rawParts: parts)
 }
 //5 opening brackets
 prefix operator |||||
@@ -205,7 +205,7 @@ prefix public func |||||(lhs: SwifQLable) -> SwifQLable {
     parts.append(o: .openBracket)
     parts.append(o: .openBracket)
     parts.append(contentsOf: lhs.parts)
-    return SwifQLableParts(parts: parts)
+    return SwifQLableParts(rawParts: parts)
 }
 //6 opening brackets
 prefix operator ||||||
@@ -218,7 +218,7 @@ prefix public func ||||||(lhs: SwifQLable) -> SwifQLable {
     parts.append(o: .openBracket)
     parts.append(o: .openBracket)
     parts.append(contentsOf: lhs.parts)
-    return SwifQLableParts(parts: parts)
+    return SwifQLableParts(rawParts: parts)
 }
 
 //1 closing bracket
@@ -226,7 +226,7 @@ postfix operator |
 postfix public func |(rhs: SwifQLable) -> SwifQLable {
     var parts = rhs.parts
     parts.append(o: .closeBracket)
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: rhs, resultParts: parts)
 }
 //2 closing brackets
 postfix operator ||
@@ -234,7 +234,7 @@ postfix public func ||(rhs: SwifQLable) -> SwifQLable {
     var parts = rhs.parts
     parts.append(o: .closeBracket)
     parts.append(o: .closeBracket)
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: rhs, resultParts: parts)
 }
 //3 closing brackets
 postfix operator |||
@@ -243,7 +243,7 @@ postfix public func |||(rhs: SwifQLable) -> SwifQLable {
     parts.append(o: .closeBracket)
     parts.append(o: .closeBracket)
     parts.append(o: .closeBracket)
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: rhs, resultParts: parts)
 }
 //4 closing brackets
 postfix operator ||||
@@ -253,7 +253,7 @@ postfix public func ||||(rhs: SwifQLable) -> SwifQLable {
     parts.append(o: .closeBracket)
     parts.append(o: .closeBracket)
     parts.append(o: .closeBracket)
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: rhs, resultParts: parts)
 }
 //5 closing brackets
 postfix operator |||||
@@ -264,7 +264,7 @@ postfix public func |||||(rhs: SwifQLable) -> SwifQLable {
     parts.append(o: .closeBracket)
     parts.append(o: .closeBracket)
     parts.append(o: .closeBracket)
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: rhs, resultParts: parts)
 }
 //6 closing brackets
 postfix operator ||||||
@@ -276,7 +276,7 @@ postfix public func ||||||(rhs: SwifQLable) -> SwifQLable {
     parts.append(o: .closeBracket)
     parts.append(o: .closeBracket)
     parts.append(o: .closeBracket)
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: rhs, resultParts: parts)
 }
 
 postfix operator *
@@ -284,7 +284,7 @@ postfix public func *(lhs: SwifQLable) -> SwifQLable {
     var parts = lhs.parts
     parts.appendSpaceIfNeeded()
     parts.append(SwifQLPartOperator("*", semanticRole: .starProjection))
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: lhs, resultParts: parts)
 }
 
 postfix operator .*
@@ -292,5 +292,5 @@ postfix public func .*(lhs: SwifQLable) -> SwifQLable {
     var parts = lhs.parts
     parts.append(SwifQLPartOperator(".*", semanticRole: .starProjection))
     parts.append(o: .space)
-    return SwifQLableParts(parts: parts)
+    return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: lhs, resultParts: parts)
 }

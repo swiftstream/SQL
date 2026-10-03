@@ -14,7 +14,7 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .default)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     public func `default`(_ expression: SwifQLable) -> SwifQLable {
@@ -22,6 +22,6 @@ extension SwifQLable {
         parts.appendSpaceIfNeeded()
         parts.append(o: .default, .space)
         parts.append(contentsOf: expression.parts)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

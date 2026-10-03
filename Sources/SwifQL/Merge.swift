@@ -19,7 +19,7 @@ extension SwifQLable {
         } else {
             parts.append(contentsOf: target.parts)
         }
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     /// Builds `MERGE INTO ... USING ... ON ...` through the same incremental
@@ -54,7 +54,7 @@ extension SwifQLable {
             parts.append(SwifQLPartColumn(column.lastPath))
         }
         parts.append(o: .closeBracket)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     /// Appends the exact SQL branch action separator `THEN`.
@@ -75,6 +75,6 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         clause.forEach { parts.append($0) }
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

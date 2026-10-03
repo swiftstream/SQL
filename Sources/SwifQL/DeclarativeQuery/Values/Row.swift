@@ -9,10 +9,12 @@ public protocol RowField {
     var rowFieldValue: RowFieldValue { get }
 }
 
-public struct DefaultFieldRequest: RowField {
+public struct DefaultFieldRequest: SwifQLable {
     public init() {}
 
     public var rowFieldValue: RowFieldValue { .defaultKeyword }
+
+    public var parts: [SwifQLPart] { [SwifQLPartOperator.custom("DEFAULT")] }
 }
 
 public func Default() -> DefaultFieldRequest {
@@ -31,7 +33,6 @@ public struct Row: SwifQLable {
     }
 
     init(fields: [RowFieldValue]) {
-        precondition(!fields.isEmpty, "A Row must contain at least one field.")
         self.fields = fields
     }
 
@@ -47,8 +48,6 @@ func _appendRowFields(
     _ fields: [RowFieldValue],
     to parts: inout [SwifQLPart]
 ) {
-    precondition(!fields.isEmpty, "A Row must contain at least one field.")
-
     for (index, field) in fields.enumerated() {
         if index > 0 {
             parts.append(SwifQLPartOperator(","))
@@ -60,7 +59,7 @@ func _appendRowFields(
             precondition(!fieldParts.isEmpty, "A Row field must produce SQL parts.")
             parts.append(contentsOf: fieldParts)
         case .defaultKeyword:
-            preconditionFailure("Default() can only be lowered by its INSERT owner.")
+            parts.append(SwifQLPartOperator("DEFAULT"))
         }
     }
 }

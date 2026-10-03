@@ -138,7 +138,7 @@ extension SwifQLable {
             parts.append(o: .closeBracket)
         }
 
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     /// Appends `DETACH` for a structural catalog name.
@@ -147,7 +147,7 @@ extension SwifQLable {
         parts.appendSpaceIfNeeded()
         parts.append(o: .custom("DETACH"), .space)
         parts.append(contentsOf: catalog.parts)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     /// Appends `USE` for a structural catalog name.
@@ -170,6 +170,6 @@ extension SwifQLable {
         parts.appendSpaceIfNeeded()
         parts.append(o: .custom("USE"), .space)
         parts.append(contentsOf: target.parts)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

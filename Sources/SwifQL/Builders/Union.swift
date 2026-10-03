@@ -21,7 +21,7 @@ public class Union: SwifQLable {
     }
     
     public init (_ selections: [SwifQLable], all: Bool = false) {
-        var children: [SwifQLPart] = [SwifQLPartOperator.openBracket]
+        var children: [SwifQLPart] = []
         for (i, v) in selections.enumerated() {
             if i > 0 {
                 children.append(o: .space)
@@ -31,10 +31,11 @@ public class Union: SwifQLable {
                     children.append(o: .all)
                 }
                 children.append(o: .space)
-                children.append(o: .openBracket)
             }
-            children.append(_SwifQLStructuralComposition.statementFrame(for: v))
-            children.append(o: .closeBracket)
+            children.append(contentsOf: _SwifQLStructuralComposition.nestedStatementValueParts(for: v))
+        }
+        if selections.isEmpty {
+            children = [SwifQLPartOperator.openBracket]
         }
         parts = [SwifQLStructuralFramePart(region: .setResult, children: children)]
     }
@@ -86,17 +87,12 @@ struct _SwifQLSetOperationBuilder: SwifQLable {
         _ rhs: SwifQLable,
         kind: _SwifQLSetOperationKind
     ) {
-        let children: [SwifQLPart] = [
-            SwifQLPartOperator.openBracket,
-            _SwifQLStructuralComposition.statementFrame(for: lhs),
-            SwifQLPartOperator.closeBracket,
-            SwifQLPartOperator.space
-        ] + kind.operatorParts + [
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.openBracket,
-            _SwifQLStructuralComposition.statementFrame(for: rhs),
-            SwifQLPartOperator.closeBracket
-        ]
+        let children: [SwifQLPart] =
+            _SwifQLStructuralComposition.nestedStatementValueParts(for: lhs)
+            + [SwifQLPartOperator.space]
+            + kind.operatorParts
+            + [SwifQLPartOperator.space]
+            + _SwifQLStructuralComposition.nestedStatementValueParts(for: rhs)
 
         parts = [SwifQLStructuralFramePart(region: .setResult, children: children)]
     }

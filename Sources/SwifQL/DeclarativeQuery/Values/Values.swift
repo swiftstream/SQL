@@ -12,31 +12,10 @@ public struct Values: SwifQLable {
     }
 
     init(rows: [Row]) {
-        precondition(!rows.isEmpty, "VALUES must contain at least one Row.")
-
-        guard let arity = rows.first?.fields.count else {
-            preconditionFailure("VALUES must contain at least one Row.")
-        }
-        precondition(arity > 0, "A VALUES Row must contain at least one field.")
-        precondition(
-            rows.allSatisfy { $0.fields.count == arity },
-            "Every Row in VALUES must have the same number of fields."
-        )
-
         self.rows = rows
     }
 
     public var parts: [SwifQLPart] {
-        precondition(
-            rows.allSatisfy { row in
-                row.fields.allSatisfy { field in
-                    if case .defaultKeyword = field { return false }
-                    return true
-                }
-            },
-            "Default() can only be lowered by its INSERT owner."
-        )
-
         let rowPrefix = SwifQLHybridOperator(
             SwifQLPartOperator("("),
             SwifQLPartOperator("ROW("),

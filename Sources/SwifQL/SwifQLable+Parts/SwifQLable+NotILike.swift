@@ -27,6 +27,6 @@ extension SwifQLable {
         parts.append(o: .notILike)
         parts.append(o: .space)
         parts.append(contentsOf: part.parts)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 }

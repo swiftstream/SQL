@@ -14,7 +14,7 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .not)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
     public func not(_ part: SwifQLable) -> SwifQLable {
         var parts = self.parts
@@ -22,6 +22,6 @@ extension SwifQLable {
         parts.append(o: .not)
         parts.append(o: .space)
         parts.append(contentsOf: part.parts)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 }

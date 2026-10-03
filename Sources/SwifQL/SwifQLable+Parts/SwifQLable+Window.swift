@@ -12,12 +12,12 @@ import Foundation
 extension SwifQLable {
     /// [Learn more →](https://www.postgresqltutorial.com/postgresql-window-function/)
     public func window(_ expression: SwifQLable) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .window)
-        parts.append(o: .space)
-        parts.append(contentsOf: expression.parts)
-        return SwifQLableParts(parts: parts)
+        let parts: [SwifQLPart] = [
+            SwifQLPartOperator.space,
+            .window,
+            .space,
+        ] + expression.parts
+        return structurallyAppending(SwifQLableParts(parts: parts))
     }
     
     /// [Learn more →](https://www.postgresqltutorial.com/postgresql-window-function/)
@@ -30,7 +30,7 @@ extension SwifQLable {
         parts.append(o: .openBracket)
         parts.append(contentsOf: query.parts)
         parts.append(o: .closeBracket)
-        return self.window(SwifQLableParts(parts: parts))
+        return self.window(SwifQLableParts(rawParts: parts))
     }
     
     /// [Learn more →](https://www.postgresqltutorial.com/postgresql-window-function/)

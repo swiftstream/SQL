@@ -14,7 +14,7 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .as)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
     public func `as`(_ type: Type) -> SwifQLable {
@@ -23,14 +23,13 @@ extension SwifQLable {
         parts.append(o: .as)
         parts.append(o: .space)
         parts.append(SwifQLPartType(type))
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 
     public func `as`(_ expression: SwifQLable) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .as, .space)
+        var parts: [SwifQLPart] = []
+        parts.append(o: .space, .as, .space)
         parts.append(contentsOf: expression.parts)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.appendingPostfix(parts, to: self)
     }
 }

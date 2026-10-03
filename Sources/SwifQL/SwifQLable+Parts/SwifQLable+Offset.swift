@@ -11,11 +11,7 @@ import Foundation
 
 extension SwifQLable {
     public func offset(_ value: SwifQLable) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .offset)
-        parts.append(o: .space)
-        parts.append(contentsOf: value.parts)
-        return SwifQLableParts(parts: parts)
+        let parts: [SwifQLPart] = [SwifQLPartOperator.space, .offset, .space] + value.parts
+        return structurallyAppending(SwifQLableParts(parts: parts))
     }
 }

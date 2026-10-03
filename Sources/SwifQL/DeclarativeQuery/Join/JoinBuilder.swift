@@ -1,13 +1,12 @@
 import Foundation
 
-/// Typed current states and state transitions for declarative JOIN items.
+/// Typed current states and local transitions for declarative JOIN items.
 public enum JoinBuilder {
     public protocol JoinState: FromBuilder.CurrentState {}
 
-    public struct JoinOpen: JoinState, FromBuilder.AliasableCurrent {
+    public struct JoinOpen: JoinState, FromBuilder.AliasableCurrent, SwifQLable {
         public typealias Aliased = JoinSourceAliased
 
-        let baseSourceParts: [SwifQLPart]?
         let joinParts: [SwifQLPart]
 
         init(modeParts: [SwifQLPartOperator], sourceParts: [SwifQLPart]) {
@@ -15,36 +14,21 @@ public enum JoinBuilder {
             parts.append(contentsOf: modeParts)
             parts.append(o: .space)
             parts.append(contentsOf: sourceParts)
-            self.baseSourceParts = nil
             self.joinParts = parts
         }
 
-        init(baseSourceParts: [SwifQLPart]?, joinParts: [SwifQLPart]) {
-            self.baseSourceParts = baseSourceParts
+        init(joinParts: [SwifQLPart]) {
             self.joinParts = joinParts
         }
 
-        public func finalize() -> SwifQLable {
-            var parts: [SwifQLPart] = []
-            if let baseSourceParts {
-                parts.append(contentsOf: baseSourceParts)
-                parts.append(o: .space)
-            } else {
-                parts.append(FromBuilder.JoinContinuationPart())
-            }
-            parts.append(contentsOf: joinParts)
-            return SwifQLableParts(rawParts: parts)
-        }
+        public var parts: [SwifQLPart] { joinParts }
+        public func finalize() -> SwifQLable { SwifQLableParts(rawParts: joinParts) }
 
         public func addingAlias(_ name: String) -> JoinSourceAliased {
             var parts = joinParts
             parts.append(o: .space, .custom("AS"), .space)
             parts.append(SwifQLPartAlias(name))
-            return JoinSourceAliased(baseSourceParts: baseSourceParts, joinParts: parts)
-        }
-
-        func addingBaseSource(_ parts: [SwifQLPart]) -> JoinOpen {
-            JoinOpen(baseSourceParts: parts, joinParts: joinParts)
+            return JoinSourceAliased(joinParts: parts)
         }
 
         func addingOn(_ predicateParts: [SwifQLPart]) -> JoinOnQualified {
@@ -53,7 +37,7 @@ public enum JoinBuilder {
                 parts.append(o: .space, .custom("ON"), .space)
                 parts.append(contentsOf: predicateParts)
             }
-            return JoinOnQualified(baseSourceParts: baseSourceParts, joinParts: parts)
+            return JoinOnQualified(joinParts: parts)
         }
 
         func addingUsing(_ names: [String]) -> JoinUsing {
@@ -64,25 +48,19 @@ public enum JoinBuilder {
                 parts.append(SwifQLPartColumn(name))
             }
             parts.append(o: .closeBracket)
-            return JoinUsing(baseSourceParts: baseSourceParts, joinParts: parts)
+            return JoinUsing(joinParts: parts)
         }
-
     }
 
-    public struct JoinSourceAliased: JoinState {
-        let baseSourceParts: [SwifQLPart]?
+    public struct JoinSourceAliased: JoinState, SwifQLable {
         let joinParts: [SwifQLPart]
 
-        init(baseSourceParts: [SwifQLPart]?, joinParts: [SwifQLPart]) {
-            self.baseSourceParts = baseSourceParts
+        init(joinParts: [SwifQLPart]) {
             self.joinParts = joinParts
         }
 
-        public func finalize() -> SwifQLable { joinedParts() }
-
-        func joinedParts() -> SwifQLable {
-            Self.joined(baseSourceParts, joinParts)
-        }
+        public var parts: [SwifQLPart] { joinParts }
+        public func finalize() -> SwifQLable { SwifQLableParts(rawParts: joinParts) }
 
         func addingOn(_ predicateParts: [SwifQLPart]) -> JoinOnQualified {
             var parts = joinParts
@@ -90,7 +68,7 @@ public enum JoinBuilder {
                 parts.append(o: .space, .custom("ON"), .space)
                 parts.append(contentsOf: predicateParts)
             }
-            return JoinOnQualified(baseSourceParts: baseSourceParts, joinParts: parts)
+            return JoinOnQualified(joinParts: parts)
         }
 
         func addingUsing(_ names: [String]) -> JoinUsing {
@@ -101,90 +79,86 @@ public enum JoinBuilder {
                 parts.append(SwifQLPartColumn(name))
             }
             parts.append(o: .closeBracket)
-            return JoinUsing(baseSourceParts: baseSourceParts, joinParts: parts)
-        }
-
-        func addingBaseSource(_ parts: [SwifQLPart]) -> JoinSourceAliased {
-            JoinSourceAliased(baseSourceParts: parts, joinParts: joinParts)
-        }
-
-        fileprivate static func joined(
-            _ baseSourceParts: [SwifQLPart]?,
-            _ joinParts: [SwifQLPart]
-        ) -> SwifQLable {
-            var parts: [SwifQLPart] = []
-            if let baseSourceParts {
-                parts.append(contentsOf: baseSourceParts)
-                parts.append(o: .space)
-            } else {
-                parts.append(FromBuilder.JoinContinuationPart())
-            }
-            parts.append(contentsOf: joinParts)
-            return SwifQLableParts(rawParts: parts)
+            return JoinUsing(joinParts: parts)
         }
     }
 
-    public struct JoinOnQualified: JoinState {
-        let baseSourceParts: [SwifQLPart]?
+    public struct JoinOnQualified: JoinState, SwifQLable {
         let joinParts: [SwifQLPart]
 
-        init(baseSourceParts: [SwifQLPart]?, joinParts: [SwifQLPart]) {
-            self.baseSourceParts = baseSourceParts
+        init(joinParts: [SwifQLPart]) {
             self.joinParts = joinParts
         }
 
-        public func finalize() -> SwifQLable {
-            JoinSourceAliased.joined(baseSourceParts, joinParts)
-        }
+        public var parts: [SwifQLPart] { joinParts }
+        public func finalize() -> SwifQLable { SwifQLableParts(rawParts: joinParts) }
     }
 
-    public struct JoinUsing: JoinState, FromBuilder.AliasableCurrent {
+    public struct JoinUsing: JoinState, FromBuilder.AliasableCurrent, SwifQLable {
         public typealias Aliased = JoinUsingAliased
-
-        let baseSourceParts: [SwifQLPart]?
         let joinParts: [SwifQLPart]
 
-        init(baseSourceParts: [SwifQLPart]?, joinParts: [SwifQLPart]) {
-            self.baseSourceParts = baseSourceParts
+        init(joinParts: [SwifQLPart]) {
             self.joinParts = joinParts
         }
 
-        public func finalize() -> SwifQLable {
-            JoinSourceAliased.joined(baseSourceParts, joinParts)
-        }
+        public var parts: [SwifQLPart] { joinParts }
+        public func finalize() -> SwifQLable { SwifQLableParts(rawParts: joinParts) }
 
         public func addingAlias(_ name: String) -> JoinUsingAliased {
             var parts = joinParts
             parts.append(o: .space, .custom("AS"), .space)
             parts.append(SwifQLPartAlias(name))
-            return JoinUsingAliased(baseSourceParts: baseSourceParts, joinParts: parts)
+            return JoinUsingAliased(joinParts: parts)
         }
     }
 
-    public struct JoinUsingAliased: JoinState {
-        let baseSourceParts: [SwifQLPart]?
+    public struct JoinUsingAliased: JoinState, SwifQLable {
         let joinParts: [SwifQLPart]
 
-        init(baseSourceParts: [SwifQLPart]?, joinParts: [SwifQLPart]) {
-            self.baseSourceParts = baseSourceParts
+        init(joinParts: [SwifQLPart]) {
             self.joinParts = joinParts
         }
 
-        public func finalize() -> SwifQLable {
-            JoinSourceAliased.joined(baseSourceParts, joinParts)
+        public var parts: [SwifQLPart] { joinParts }
+        public func finalize() -> SwifQLable { SwifQLableParts(rawParts: joinParts) }
+    }
+
+    public struct OnRequest: SwifQLable {
+        let predicateParts: [SwifQLPart]
+
+        init(parts: [SwifQLPart]) { self.predicateParts = parts }
+
+        public var parts: [SwifQLPart] {
+            guard !predicateParts.isEmpty else { return [] }
+            var parts: [SwifQLPart] = []
+            parts.append(o: .custom("ON"), .space)
+            parts.append(contentsOf: predicateParts)
+            return parts
         }
     }
 
-    public struct OnRequest {
-        let parts: [SwifQLPart]
-
-        init(parts: [SwifQLPart]) { self.parts = parts }
-    }
-
-    public struct UsingRequest {
+    public struct UsingRequest: SwifQLable {
         let names: [String]
 
         init(names: [String]) { self.names = names }
+
+        public var parts: [SwifQLPart] {
+            var parts: [SwifQLPart] = []
+            parts.append(o: .custom("USING"), .space, .openBracket)
+            for (index, name) in names.enumerated() {
+                if index > 0 { parts.append(o: .comma, .space) }
+                parts.append(SwifQLPartColumn(name))
+            }
+            parts.append(o: .closeBracket)
+            return parts
+        }
+    }
+}
+
+public extension JoinBuilder.JoinState {
+    func asFromItem() -> FromBuilder.FromItem {
+        FromBuilder.FromItem(kind: .joinContinuation, parts: finalize().parts)
     }
 }
 
@@ -197,26 +171,41 @@ extension FromBuilder {
         expression
     }
 
-    /// A JOIN continues the immediately preceding FROM source in the same item.
-    public static func buildPartialBlock<Attachment: AttachmentState, Current: CurrentState>(
-        accumulated: Partial<Attachment, Current>,
-        next: JoinBuilder.JoinOpen
-    ) -> Partial<Attachment, JoinBuilder.JoinOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: next.addingBaseSource(accumulated.current.finalize().parts)
-        )
+    public static func buildPartialBlock(first: JoinBuilder.JoinOpen) -> Partial<JoinBuilder.JoinOpen> {
+        Partial(completed: [], current: first)
     }
 
-    /// A fluent/operator alias is received already in the same typed phase as sibling `As`.
-    public static func buildPartialBlock<Attachment: AttachmentState, Current: CurrentState>(
-        accumulated: Partial<Attachment, Current>,
+    public static func buildPartialBlock(first: JoinBuilder.JoinSourceAliased) -> Partial<JoinBuilder.JoinSourceAliased> {
+        Partial(completed: [], current: first)
+    }
+
+    /// A JOIN is a distinct ordered element; the local reducer supplies its spacing.
+    public static func buildPartialBlock<Current: CurrentState>(
+        accumulated: Partial<Current>,
+        next: JoinBuilder.JoinOpen
+    ) -> Partial<JoinBuilder.JoinOpen> {
+        Partial(completed: accumulated.completed + [accumulated.current.asFromItem()], current: next)
+    }
+
+    public static func buildPartialBlock<Current: CurrentState>(
+        accumulated: Partial<Current>,
         next: JoinBuilder.JoinSourceAliased
-    ) -> Partial<Attachment, JoinBuilder.JoinSourceAliased> {
-        Partial(
-            completed: accumulated.completed,
-            current: next.addingBaseSource(accumulated.current.finalize().parts)
-        )
+    ) -> Partial<JoinBuilder.JoinSourceAliased> {
+        Partial(completed: accumulated.completed + [accumulated.current.asFromItem()], current: next)
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Closed,
+        next: JoinBuilder.JoinOpen
+    ) -> Partial<JoinBuilder.JoinOpen> {
+        Partial(completed: accumulated.items, current: next)
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Closed,
+        next: JoinBuilder.JoinSourceAliased
+    ) -> Partial<JoinBuilder.JoinSourceAliased> {
+        Partial(completed: accumulated.items, current: next)
     }
 
     public static func buildExpression(_ request: JoinBuilder.OnRequest) -> JoinBuilder.OnRequest {
@@ -227,137 +216,38 @@ extension FromBuilder {
         request
     }
 
-    public static func buildPartialBlock<Attachment: AttachmentState>(
-        accumulated: Partial<Attachment, JoinBuilder.JoinOpen>,
+    public static func buildPartialBlock(
+        accumulated: Partial<JoinBuilder.JoinOpen>,
         next: JoinBuilder.OnRequest
-    ) -> Partial<Attachment, JoinBuilder.JoinOnQualified> {
-        Partial(
-            completed: accumulated.completed,
-            current: accumulated.current.addingOn(next.parts)
-        )
+    ) -> Partial<JoinBuilder.JoinOnQualified> {
+        Partial(completed: accumulated.completed, current: accumulated.current.addingOn(next.predicateParts))
     }
 
-    public static func buildPartialBlock<Attachment: AttachmentState>(
-        accumulated: Partial<Attachment, JoinBuilder.JoinSourceAliased>,
+    public static func buildPartialBlock(
+        accumulated: Partial<JoinBuilder.JoinSourceAliased>,
         next: JoinBuilder.OnRequest
-    ) -> Partial<Attachment, JoinBuilder.JoinOnQualified> {
-        Partial(
-            completed: accumulated.completed,
-            current: accumulated.current.addingOn(next.parts)
-        )
+    ) -> Partial<JoinBuilder.JoinOnQualified> {
+        Partial(completed: accumulated.completed, current: accumulated.current.addingOn(next.predicateParts))
     }
 
-    public static func buildPartialBlock<Attachment: AttachmentState>(
-        accumulated: Partial<Attachment, JoinBuilder.JoinOpen>,
+    public static func buildPartialBlock(
+        accumulated: Partial<JoinBuilder.JoinOpen>,
         next: JoinBuilder.UsingRequest
-    ) -> Partial<Attachment, JoinBuilder.JoinUsing> {
-        Partial(
-            completed: accumulated.completed,
-            current: accumulated.current.addingUsing(next.names)
-        )
+    ) -> Partial<JoinBuilder.JoinUsing> {
+        Partial(completed: accumulated.completed, current: accumulated.current.addingUsing(next.names))
     }
 
-    public static func buildPartialBlock<Attachment: AttachmentState>(
-        accumulated: Partial<Attachment, JoinBuilder.JoinSourceAliased>,
+    public static func buildPartialBlock(
+        accumulated: Partial<JoinBuilder.JoinSourceAliased>,
         next: JoinBuilder.UsingRequest
-    ) -> Partial<Attachment, JoinBuilder.JoinUsing> {
-        Partial(
-            completed: accumulated.completed,
-            current: accumulated.current.addingUsing(next.names)
-        )
+    ) -> Partial<JoinBuilder.JoinUsing> {
+        Partial(completed: accumulated.completed, current: accumulated.current.addingUsing(next.names))
     }
 
-    public static func buildPartialBlock<Attachment: AttachmentState>(
-        accumulated: Partial<Attachment, JoinBuilder.JoinUsing>,
+    public static func buildPartialBlock(
+        accumulated: Partial<JoinBuilder.JoinUsing>,
         next: SQLBuilder.AliasRequest
-    ) -> Partial<Attachment, JoinBuilder.JoinUsingAliased> {
-        Partial(completed: accumulated.completed, current: accumulated.current.addingAlias(next.name))
-    }
-}
-
-extension GuaranteedFromBuilder {
-    public static func buildExpression(_ expression: JoinBuilder.JoinSourceAliased) -> JoinBuilder.JoinSourceAliased {
-        expression
-    }
-
-    public static func buildExpression(_ expression: JoinBuilder.JoinOpen) -> JoinBuilder.JoinOpen {
-        expression
-    }
-
-    /// A JOIN continues the immediately preceding FROM source in the same item.
-    public static func buildPartialBlock<Attachment: AttachmentState, Current: CurrentState>(
-        accumulated: Partial<Attachment, Current>,
-        next: JoinBuilder.JoinOpen
-    ) -> Partial<Attachment, JoinBuilder.JoinOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: next.addingBaseSource(accumulated.current.finalize().parts)
-        )
-    }
-
-    /// A fluent/operator alias is received already in the same typed phase as sibling `As`.
-    public static func buildPartialBlock<Attachment: AttachmentState, Current: CurrentState>(
-        accumulated: Partial<Attachment, Current>,
-        next: JoinBuilder.JoinSourceAliased
-    ) -> Partial<Attachment, JoinBuilder.JoinSourceAliased> {
-        Partial(
-            completed: accumulated.completed,
-            current: next.addingBaseSource(accumulated.current.finalize().parts)
-        )
-    }
-
-    public static func buildExpression(_ request: JoinBuilder.OnRequest) -> JoinBuilder.OnRequest {
-        request
-    }
-
-    public static func buildExpression(_ request: JoinBuilder.UsingRequest) -> JoinBuilder.UsingRequest {
-        request
-    }
-
-    public static func buildPartialBlock<Attachment: AttachmentState>(
-        accumulated: Partial<Attachment, JoinBuilder.JoinOpen>,
-        next: JoinBuilder.OnRequest
-    ) -> Partial<Attachment, JoinBuilder.JoinOnQualified> {
-        Partial(
-            completed: accumulated.completed,
-            current: accumulated.current.addingOn(next.parts)
-        )
-    }
-
-    public static func buildPartialBlock<Attachment: AttachmentState>(
-        accumulated: Partial<Attachment, JoinBuilder.JoinSourceAliased>,
-        next: JoinBuilder.OnRequest
-    ) -> Partial<Attachment, JoinBuilder.JoinOnQualified> {
-        Partial(
-            completed: accumulated.completed,
-            current: accumulated.current.addingOn(next.parts)
-        )
-    }
-
-    public static func buildPartialBlock<Attachment: AttachmentState>(
-        accumulated: Partial<Attachment, JoinBuilder.JoinOpen>,
-        next: JoinBuilder.UsingRequest
-    ) -> Partial<Attachment, JoinBuilder.JoinUsing> {
-        Partial(
-            completed: accumulated.completed,
-            current: accumulated.current.addingUsing(next.names)
-        )
-    }
-
-    public static func buildPartialBlock<Attachment: AttachmentState>(
-        accumulated: Partial<Attachment, JoinBuilder.JoinSourceAliased>,
-        next: JoinBuilder.UsingRequest
-    ) -> Partial<Attachment, JoinBuilder.JoinUsing> {
-        Partial(
-            completed: accumulated.completed,
-            current: accumulated.current.addingUsing(next.names)
-        )
-    }
-
-    public static func buildPartialBlock<Attachment: AttachmentState>(
-        accumulated: Partial<Attachment, JoinBuilder.JoinUsing>,
-        next: SQLBuilder.AliasRequest
-    ) -> Partial<Attachment, JoinBuilder.JoinUsingAliased> {
+    ) -> Partial<JoinBuilder.JoinUsingAliased> {
         Partial(completed: accumulated.completed, current: accumulated.current.addingAlias(next.name))
     }
 }

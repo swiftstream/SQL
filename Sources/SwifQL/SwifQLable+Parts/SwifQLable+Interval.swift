@@ -14,7 +14,7 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .interval)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     public func interval(_ expression: String) -> SwifQLable {
         var parts = self.parts
@@ -22,6 +22,6 @@ extension SwifQLable {
         parts.append(o: .interval)
         parts.append(o: .space)
         parts.append(o: .custom(expression.singleQuotted))
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

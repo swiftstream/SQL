@@ -206,4 +206,128 @@ struct DeclarativeQueryValuesTests: SwifQLTests {
             #expect(duck.splitted.values.map { String(describing: $0) } == expectedValues)
         }
     }
+
+    @Test("Standalone Row lowers DEFAULT without INSERT ownership")
+    func standaloneRowLowersDefault() {
+        let defaultOnly = Row(Default())
+        #expect(defaultOnly.prepare(.psql).plain == "ROW(DEFAULT)")
+        #expect(defaultOnly.prepare(.mysql).plain == "ROW(DEFAULT)")
+        #expect(defaultOnly.prepare(.duck).plain == "ROW(DEFAULT)")
+
+        let mixed = Row(Default(), "x")
+        #expect(mixed.prepare(.psql).plain == "ROW(DEFAULT, 'x')")
+        #expect(mixed.prepare(.psql).splitted.query == "ROW(DEFAULT, $1)")
+        #expect(mixed.prepare(.psql).splitted.values.map { String(describing: $0) } == ["x"])
+    }
+
+    @Test("VALUES lowers DEFAULT and DEFAULT consumes no bind slot")
+    func valuesLowerDefaultWithoutBinding() {
+        let built = Values {
+            Row(Default(), "x")
+        }
+        let concise = Values(Row(Default(), "x"))
+
+        for values in [built, concise] {
+            let psql = values.prepare(.psql)
+            #expect(psql.plain == "VALUES (DEFAULT, 'x')")
+            #expect(psql.splitted.query == "VALUES (DEFAULT, $1)")
+            #expect(psql.splitted.values.map { String(describing: $0) } == ["x"])
+
+            let mysql = values.prepare(.mysql)
+            #expect(mysql.plain == "VALUES ROW(DEFAULT, 'x')")
+            #expect(mysql.splitted.query == "VALUES ROW(DEFAULT, ?)")
+            #expect(mysql.splitted.values.map { String(describing: $0) } == ["x"])
+
+            let duck = values.prepare(.duck)
+            #expect(duck.plain == "VALUES (DEFAULT, 'x')")
+            #expect(duck.splitted.query == "VALUES (DEFAULT, $1)")
+            #expect(duck.splitted.values.map { String(describing: $0) } == ["x"])
+        }
+
+        let rooted = SwifQL {
+            Values {
+                Row(Default(), "x")
+            }
+        }
+        #expect(rooted.prepare(.psql).plain == "VALUES (DEFAULT, 'x')")
+        #expect(rooted.prepare(.psql).splitted.values.map { String(describing: $0) } == ["x"])
+    }
+
+    @Test("Empty and control-flow-empty Row and VALUES render deterministically")
+    func emptyRowAndValuesRenderWithoutTraps() {
+        let emptyRow = Row {}
+        #expect(emptyRow.prepare(.psql).plain == "ROW()")
+
+        let emptyValues = Values {}
+        #expect(emptyValues.prepare(.psql).plain == "VALUES ")
+
+        let controlFlowEmptyValues = Values {
+            if false {
+                Row(1)
+            }
+        }
+        #expect(controlFlowEmptyValues.prepare(.psql).plain == "VALUES ")
+
+        let emptyRowInsideValues = Values {
+            Row {}
+            Row(1)
+        }
+        #expect(emptyRowInsideValues.prepare(.psql).plain == "VALUES (), (1)")
+        #expect(emptyRowInsideValues.prepare(.duck).plain == "VALUES (), (1)")
+    }
+
+    @Test("Differing VALUES row arity renders in source order")
+    func differingRowArityRendersInSourceOrder() {
+        let built = Values {
+            Row(1)
+            Row(2, 3)
+        }
+        let concise = Values(Row(1), Row(2, 3))
+
+        for values in [built, concise] {
+            #expect(values.prepare(.psql).plain == "VALUES (1), (2, 3)")
+            #expect(values.prepare(.mysql).plain == "VALUES ROW(1), ROW(2, 3)")
+            #expect(values.prepare(.duck).plain == "VALUES (1), (2, 3)")
+        }
+
+        let defaultLeading = Values {
+            Row(Default())
+            Row(2, 3)
+        }
+        #expect(defaultLeading.prepare(.psql).plain == "VALUES (DEFAULT), (2, 3)")
+        #expect(defaultLeading.prepare(.psql).splitted.query == "VALUES (DEFAULT), ($1, $2)")
+        #expect(defaultLeading.prepare(.psql).splitted.values.map { String(describing: $0) } == ["2", "3"])
+    }
+
+    @Test("Empty, partial, and reordered INSERT bodies render deterministically")
+    func emptyPartialAndReorderedInsertBodiesRender() {
+        #expect(Insert(Path.Table("User")) {}.prepare(.psql).plain == #"INSERT INTO "User""#)
+
+        #expect(
+            Insert(Path.Table("User")) {
+                Columns { "id" }
+            }.prepare(.psql).plain == #"INSERT INTO "User" ("id")"#
+        )
+
+        let valuesOnly = Insert(Path.Table("User")) {
+            Values { Row(1) }
+        }
+        #expect(valuesOnly.prepare(.psql).plain == #"INSERT INTO "User" VALUES (1)"#)
+        #expect(valuesOnly.prepare(.mysql).plain == "INSERT INTO User VALUES ROW(1)")
+
+        #expect(
+            Insert(Path.Table("User")) {
+                Values {}
+            }.prepare(.psql).plain == #"INSERT INTO "User" VALUES "#
+        )
+
+        let reordered = Insert(Path.Table("User")) {
+            Values { Row(1, "x") }
+            Columns { "id"; "name" }
+        }
+        #expect(reordered.prepare(.psql).plain == #"INSERT INTO "User" VALUES (1, 'x') ("id", "name")"#)
+        #expect(reordered.prepare(.psql).splitted.query == #"INSERT INTO "User" VALUES ($1, $2) ("id", "name")"#)
+        #expect(reordered.prepare(.psql).splitted.values.map { String(describing: $0) } == ["1", "x"])
+        #expect(reordered.prepare(.duck).plain == #"INSERT INTO "User" VALUES (1, 'x') ("id", "name")"#)
+    }
 }

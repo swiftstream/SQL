@@ -11,11 +11,7 @@ import Foundation
 
 extension SwifQLable {
     public func having(_ predicates: SwifQLable) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .having)
-        parts.append(o: .space)
-        parts.append(contentsOf: predicates.parts)
-        return SwifQLableParts(parts: parts)
+        let parts: [SwifQLPart] = [SwifQLPartOperator.space, .having, .space] + predicates.parts
+        return structurallyAppending(SwifQLableParts(parts: parts))
     }
 }

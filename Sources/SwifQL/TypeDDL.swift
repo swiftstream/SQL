@@ -12,7 +12,7 @@ extension SwifQLable {
         parts.appendSpaceIfNeeded()
         parts.append(o: .type, .space)
         parts.append(SwifQLPartType(type))
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     /// Appends a parser-literal ENUM body. These labels are structural SQL
@@ -33,7 +33,7 @@ extension SwifQLable {
             parts.append(safe: value)
         }
         parts.append(o: .closeBracket)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     /// Appends an ENUM body sourced by a child SELECT query. The child query
@@ -44,6 +44,6 @@ extension SwifQLable {
         parts.append(o: .enum, .space, .openBracket)
         parts.append(contentsOf: query.parts)
         parts.append(o: .closeBracket)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

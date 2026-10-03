@@ -12,6 +12,6 @@ extension SwifQLable {
     public var semicolon: SwifQLable {
         var parts: [SwifQLPart] = self.parts
         parts.append(o: .semicolon)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

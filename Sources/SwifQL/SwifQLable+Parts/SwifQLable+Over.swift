@@ -14,7 +14,7 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .over)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
     
     /// [Learn more →](https://www.postgresqltutorial.com/postgresql-window-function/)
@@ -26,7 +26,7 @@ extension SwifQLable {
         parts.append(o: .openBracket)
         parts.append(contentsOf: query.parts)
         parts.append(o: .closeBracket)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
     
     /// [Learn more →](https://www.postgresqltutorial.com/postgresql-window-function/)

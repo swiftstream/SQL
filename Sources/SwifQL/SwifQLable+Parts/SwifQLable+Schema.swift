@@ -12,7 +12,7 @@ extension SwifQLable {
         var parts: [SwifQLPart] = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .schema)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
     public func schema(_ name: String) -> SwifQLable {
@@ -21,6 +21,6 @@ extension SwifQLable {
         parts.append(o: .schema)
         parts.append(o: .space)
         parts.append(SwifQLPartSchema(name))
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

@@ -17,7 +17,10 @@ public func => (
 
 /// Requests a typed JOIN source that can be continued by `As`, `On`, or `Using`.
 public func Join(_ mode: JoinMode, _ source: SwifQLable) -> JoinBuilder.JoinOpen {
-    JoinBuilder.JoinOpen(modeParts: mode.parts, sourceParts: source.parts)
+    JoinBuilder.JoinOpen(
+        modeParts: mode.parts,
+        sourceParts: _SwifQLStructuralComposition.nestedEmbeddingParts(from: source.parts)
+    )
 }
 
 /// Requests a nested structural JOIN source, commonly used with a lateral mode.
@@ -26,10 +29,7 @@ public func Join(
     @SQLBuilder _ content: () -> SQLBuilder.Root
 ) -> JoinBuilder.JoinOpen {
     let query = SQLBuilder.lowerRoot(content().fragments)
-    var sourceParts: [SwifQLPart] = []
-    sourceParts.append(o: .openBracket)
-    sourceParts.append(_SwifQLStructuralComposition.statementFrame(for: query))
-    sourceParts.append(o: .closeBracket)
+    let sourceParts = _SwifQLStructuralComposition.nestedEmbeddingParts(from: query.parts)
     return JoinBuilder.JoinOpen(modeParts: mode.parts, sourceParts: sourceParts)
 }
 
@@ -56,4 +56,20 @@ public func Using(
     _ rest: KeyPathLastPath...
 ) -> JoinBuilder.UsingRequest {
     JoinBuilder.UsingRequest(names: ([first] + rest).map(\.lastPath))
+}
+
+/// Compatibility bridge for `Table.$column`, whose established dynamic-member
+/// surface erases its structural key path to `any SwifQLable`.
+@_disfavoredOverload
+public func Using(
+    _ first: any SwifQLable,
+    _ rest: any SwifQLable...
+) -> JoinBuilder.UsingRequest {
+    let names = ([first] + rest).map { value in
+        guard let name = IdentifierListBuilder.structuralColumnName(from: value) else {
+            preconditionFailure("USING accepts only a single structural column path per identifier.")
+        }
+        return name
+    }
+    return JoinBuilder.UsingRequest(names: names)
 }

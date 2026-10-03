@@ -11,22 +11,16 @@ import Foundation
 
 extension SwifQLable {
     public func limit(_ value: SwifQLable) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .limit)
-        parts.append(o: .space)
-        parts.append(contentsOf: value.parts)
-        return SwifQLableParts(parts: parts)
+        let parts: [SwifQLPart] = [SwifQLPartOperator.space, SwifQLPartOperator.limit, SwifQLPartOperator.space] + value.parts
+        return structurallyAppending(SwifQLableParts(parts: parts))
     }
 
     /// Appends DuckDB's exact percentage LIMIT form without changing the
     /// established row-count overload.
     public func limit(percent value: SwifQLable) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .limit, .space)
+        var parts: [SwifQLPart] = [SwifQLPartOperator.space, SwifQLPartOperator.limit, SwifQLPartOperator.space]
         parts.append(contentsOf: value.parts)
-        parts.append(o: .custom("%"))
-        return SwifQLableParts(parts: parts)
+        parts.append(SwifQLPartOperator.custom("%"))
+        return structurallyAppending(SwifQLableParts(parts: parts))
     }
 }

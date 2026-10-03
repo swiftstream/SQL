@@ -14,7 +14,7 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .exists)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
     public func exists(_ predicates: SwifQLable) -> SwifQLable {
         var parts = self.parts
@@ -24,6 +24,6 @@ extension SwifQLable {
         parts.append(o: .openBracket)
         parts.append(contentsOf: predicates.parts)
         parts.append(o: .closeBracket)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 }

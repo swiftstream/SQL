@@ -11,10 +11,10 @@ import Foundation
 
 extension SwifQLable {
     public var select: SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .select)
-        return SwifQLableParts(parts: parts)
+        structurallyAppending(SwifQLableParts(parts: [
+            SwifQLPartOperator.space,
+            SwifQLPartOperator.select
+        ]))
     }
     
     public func select(_ fields: SwifQLable...) -> SwifQLable {
@@ -22,10 +22,11 @@ extension SwifQLable {
     }
     
     public func select(_ fields: [SwifQLable]) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .select)
-        parts.append(o: .space)
+        var parts: [SwifQLPart] = [
+            SwifQLPartOperator.space,
+            SwifQLPartOperator.select,
+            SwifQLPartOperator.space
+        ]
         for (i, v) in fields.enumerated() {
             if i > 0 {
                 parts.append(o: .comma)
@@ -33,6 +34,6 @@ extension SwifQLable {
             }
             parts.append(contentsOf: v.parts)
         }
-        return SwifQLableParts(parts: parts)
+        return structurallyAppending(SwifQLableParts(parts: parts))
     }
 }

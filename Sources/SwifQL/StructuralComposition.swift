@@ -86,8 +86,25 @@ enum _SwifQLStructuralSpacingPolicy {
 }
 
 enum _SwifQLStructuralComposition {
+    private struct RootParts {
+        let frame: SwifQLStructuralFramePart?
+        let suffix: [SwifQLPart]
+
+        var completeValue: [SwifQLPart] {
+            guard let frame else { return suffix }
+            return [frame] + suffix
+        }
+    }
+
+    private static func decompose(_ parts: [SwifQLPart]) -> RootParts {
+        guard let frame = parts.first as? SwifQLStructuralFramePart else {
+            return RootParts(frame: nil, suffix: parts)
+        }
+        return RootParts(frame: frame, suffix: Array(parts.dropFirst()))
+    }
+
     static func rootFrame(in parts: [SwifQLPart]) -> SwifQLStructuralFramePart? {
-        parts.first as? SwifQLStructuralFramePart
+        decompose(parts).frame
     }
 
     static func currentOwner(
@@ -97,12 +114,59 @@ enum _SwifQLStructuralComposition {
         rootFrame(in: parts)?.owner(for: kind)
     }
 
+    /// Wraps the complete ordered value in one statement frame. When the value
+    /// already has a statement root and sibling suffixes, both are retained as
+    /// ordered children; the root frame and its ownership metadata stay intact.
     static func statementFrame(for query: SwifQLable) -> SwifQLStructuralFramePart {
-        if let frame = rootFrame(in: query.parts), frame.region == .statement {
+        let value = decompose(query.parts)
+        if let frame = value.frame,
+           frame.region == .statement,
+           value.suffix.isEmpty {
             return frame
         }
 
-        return SwifQLStructuralFramePart(region: .statement, children: query.parts)
+        return SwifQLStructuralFramePart(region: .statement, children: value.completeValue)
+    }
+
+    /// Keeps a root frame and every sibling suffix in their original order.
+    static func statementValueParts(for query: SwifQLable) -> [SwifQLPart] {
+        let value = decompose(query.parts)
+        guard value.frame == nil else { return value.completeValue }
+        return [statementFrame(for: query)]
+    }
+
+    /// Embeds a statement or set-result atomically while keeping its suffix
+    /// outside the root frame's parentheses. Raw values are first framed as a
+    /// statement because these consumers require a statement operand.
+    static func nestedStatementValueParts(for query: SwifQLable) -> [SwifQLPart] {
+        let value = decompose(query.parts)
+        guard let frame = value.frame else {
+            let parts: [SwifQLPart] = [
+                SwifQLPartOperator.openBracket,
+                statementFrame(for: query),
+                SwifQLPartOperator.closeBracket
+            ]
+            return parts
+        }
+        let statementFrame = frame.region == .setResult
+            ? SwifQLStructuralFramePart(region: .statement, children: [frame])
+            : frame
+        let parts: [SwifQLPart] = [
+            SwifQLPartOperator.openBracket,
+            statementFrame,
+            SwifQLPartOperator.closeBracket
+        ]
+        return parts + value.suffix
+    }
+
+    /// With owns an outer `AS (...)` boundary. A suffix-bearing nested query
+    /// needs its own frame parentheses before the suffix, while a suffix-free
+    /// query keeps the established single pair.
+    static func withQueryPartsInsideParentheses(for query: SwifQLable) -> [SwifQLPart] {
+        let value = decompose(query.parts)
+        guard !value.suffix.isEmpty else { return [statementFrame(for: query)] }
+        guard value.frame != nil else { return [statementFrame(for: query)] }
+        return nestedEmbeddingParts(from: value.completeValue)
     }
 
     static func setResult(from query: SwifQLable) -> SwifQLable {
@@ -113,9 +177,50 @@ enum _SwifQLStructuralComposition {
         return SwifQLableParts(rawParts: [
             SwifQLStructuralFramePart(
                 region: .setResult,
-                children: [statementFrame(for: query)]
+                children: statementValueParts(for: query)
             )
         ])
+    }
+
+    /// Appends postfix structure outside root frames, normalizing its separator.
+    static func appendingPostfix(
+        _ postfixParts: [SwifQLPart],
+        to base: SwifQLable
+    ) -> SwifQLable {
+        var baseParts = base.parts
+        var suffix = postfixParts
+        if (suffix.first as? SwifQLPartOperator)?._value == " " {
+            if rootFrame(in: baseParts) != nil {
+                baseParts = removingTrailingSpace(from: baseParts) ?? baseParts
+            } else if removingTrailingSpace(from: baseParts) != nil {
+                suffix.removeFirst()
+            }
+        }
+        let combined = baseParts + suffix
+        return rootFrame(in: baseParts) == nil
+            ? SwifQLableParts(parts: combined)
+            : SwifQLableParts(rawParts: combined)
+    }
+
+    private static func removingTrailingSpace(from parts: [SwifQLPart]) -> [SwifQLPart]? {
+        guard let last = parts.last else {
+            return nil
+        }
+        if let op = last as? SwifQLPartOperator, op._value == " " {
+            return Array(parts.dropLast())
+        }
+        if let frame = last as? SwifQLStructuralFramePart {
+            if let children = removingTrailingSpace(from: frame.children) {
+                return Array(parts.dropLast()) + [
+                    SwifQLStructuralFramePart(region: frame.region, owners: frame.owners, children: children)
+                ]
+            }
+            if frame.children.isEmpty,
+               let prefix = removingTrailingSpace(from: Array(parts.dropLast())) {
+                return prefix + [frame]
+            }
+        }
+        return nil
     }
 
     static func append(
@@ -155,34 +260,75 @@ enum _SwifQLStructuralComposition {
             }
         }
 
-        guard let root = rootFrame(in: base.parts) else {
-            let appendedParts = partsToAppend(after: base.parts)
+        let value = decompose(base.parts)
+        guard let root = value.frame else {
+            let appendedParts = partsToAppend(after: value.completeValue)
             guard !newOwners.isEmpty else {
-                return SwifQLableParts(rawParts: base.parts + appendedParts)
+                return SwifQLableParts(rawParts: value.completeValue + appendedParts)
             }
 
             return SwifQLableParts(rawParts: [
                 SwifQLStructuralFramePart(
                     region: .statement,
                     owners: newOwners,
-                    children: base.parts + appendedParts
+                    children: value.completeValue + appendedParts
                 )
             ])
         }
 
-        let appendedParts = partsToAppend(after: root.children)
-        return SwifQLableParts(rawParts: [root.appending(appendedParts, owners: newOwners)])
+        let spacingParts = value.suffix.isEmpty ? root.children : value.suffix
+        let appendedParts = partsToAppend(after: spacingParts)
+        guard !value.suffix.isEmpty else {
+            return SwifQLableParts(rawParts: [root.appending(appendedParts, owners: newOwners)])
+        }
+
+        let updatedRoot = root.appending([], owners: newOwners)
+        return SwifQLableParts(rawParts: [updatedRoot] + value.suffix + appendedParts)
+    }
+
+    /// Reconstructs a receiver-preserving, append-only fluent operation.
+    /// Callers must build `resultParts` by starting with `base.parts` and only
+    /// appending a known continuation tail. That invariant makes the count
+    /// split exact; this helper must not be used for prepend, infix, replace,
+    /// or wrapper operations.
+    static func reconstructingSequentialContinuation(
+        from base: SwifQLable,
+        resultParts: [SwifQLPart]
+    ) -> SwifQLable {
+        let baseParts = base.parts
+        precondition(resultParts.count >= baseParts.count, "Sequential continuation must retain the receiver prefix.")
+        let continuation = Array(resultParts.dropFirst(baseParts.count))
+        return append(base, parts: continuation)
+    }
+
+    /// Reconstructs an expression transform that follows the complete current
+    /// value. A bare structural root keeps the legacy in-root representation;
+    /// when the root already has siblings, preserve those siblings before the
+    /// transform so the operation cannot re-own or fold them.
+    static func reconstructingWholeValueTransform(
+        from base: SwifQLable,
+        resultParts: [SwifQLPart]
+    ) -> SwifQLable {
+        let baseParts = base.parts
+        precondition(resultParts.count >= baseParts.count, "Whole-value transform must retain the receiver prefix.")
+        let transform = Array(resultParts.dropFirst(baseParts.count))
+        let value = decompose(baseParts)
+        guard value.frame != nil, value.suffix.isEmpty else {
+            return SwifQLableParts(rawParts: value.completeValue + transform)
+        }
+        return append(base, parts: transform)
     }
 
     static func appendStatementContents(
         from fragment: SwifQLable,
         to base: SwifQLable
     ) -> SwifQLable {
+        let value = decompose(fragment.parts)
         let contents: [SwifQLPart]
-        if let frame = rootFrame(in: fragment.parts), frame.region == .statement {
-            contents = frame.children
+        if let frame = value.frame, frame.region == .statement {
+            contents = frame.children + value.suffix
         } else {
-            contents = fragment.parts
+            contents = value.completeValue
         }
 
         guard !contents.isEmpty else {
@@ -193,6 +339,22 @@ enum _SwifQLStructuralComposition {
             base,
             parts: [SwifQLPartOperator.space] + contents
         )
+    }
+
+    /// Makes a stored statement or set result one nested expression/source,
+    /// leaving any postfix suffix after the matching closing parenthesis.
+    static func nestedEmbeddingParts(from parts: [SwifQLPart]) -> [SwifQLPart] {
+        let value = decompose(parts)
+        guard let frame = value.frame,
+              frame.region == .statement || frame.region == .setResult else {
+            return value.completeValue
+        }
+        let statementFrame = frame.region == .setResult
+            ? SwifQLStructuralFramePart(region: .statement, children: [frame])
+            : frame
+
+        return [SwifQLPartOperator.openBracket, statementFrame, SwifQLPartOperator.closeBracket]
+            + value.suffix
     }
 }
 

@@ -14,10 +14,11 @@ extension SwifQLable {
         from(tables)
     }
     public func from(_ tables: [SwifQLable]) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .from)
-        parts.append(o: .space)
+        var parts: [SwifQLPart] = [
+            SwifQLPartOperator.space,
+            SwifQLPartOperator.from,
+            SwifQLPartOperator.space
+        ]
         for (i, v) in tables.enumerated() {
             if i > 0 {
                 parts.append(o: .comma)
@@ -25,6 +26,6 @@ extension SwifQLable {
             }
             parts.append(contentsOf: v.parts)
         }
-        return SwifQLableParts(parts: parts)
+        return structurallyAppending(SwifQLableParts(parts: parts))
     }
 }

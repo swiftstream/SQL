@@ -3,11 +3,11 @@ import Foundation
 extension SQLBuilder {
     /// Typed aliasability contract for postfix `As("alias")` continuation.
     ///
-    /// An open owner stays statically typed. `As` attaches only through this
-    /// protocol. An already-aliased item is only `FinalizableItem`, so repeated
-    /// aliasing rejects structurally. Orphan/after-finalized-branch aliasing is
-    /// rejected by the consuming result builder's typed transitions, not by
-    /// token scanning or ambient state.
+    /// Within a specialized builder, an open owner stays statically typed and
+    /// `As` attaches through this protocol. An already-aliased item is only
+    /// `FinalizableItem`, so repeated aliasing rejects structurally. Alias
+    /// requests left unattached remain independently renderable
+    /// `AS <identifier>` fragments.
     public protocol AliasableItem: FinalizableItem {
         associatedtype Aliased: FinalizableItem
         func addingAlias(_ name: String) -> Aliased
@@ -15,23 +15,33 @@ extension SQLBuilder {
 
     /// Immutable typed alias request produced by `As(_:)`.
     ///
+    /// Renders independently as `AS <identifier>` with identifier-safe
+    /// lowering through `SwifQLPartAlias`, including standalone/root use.
+    /// Specialized builders may also recognize it as a local postfix
+    /// continuation and preserve local alias ownership where useful.
+    ///
     /// Deliberately public under DESIGN-016/018 so a downstream package may
     /// conform its own typed authoring item to `AliasableItem` and consume the
     /// request in a compatible custom result-builder extension.
-    public struct AliasRequest {
+    public struct AliasRequest: SwifQLable {
         public let name: String
 
         public init(_ name: String) {
             self.name = name
+        }
+
+        public var parts: [SwifQLPart] {
+            [SwifQLPartOperator.custom("AS"), SwifQLPartOperator.space, SwifQLPartAlias(name)]
         }
     }
 }
 
 /// Typed postfix alias request.
 ///
-/// Owner-specific result builders consume this request through
-/// `SQLBuilder.AliasableItem.addingAlias(_:)`. DQ-02 does not attach it to
-/// arbitrary `FinalizableItem` values and does not add clause-owner states.
+/// The request is an ordinary independently renderable `SwifQLable`
+/// fragment, valid standalone/at root. Specialized result builders may
+/// still consume it through `SQLBuilder.AliasableItem.addingAlias(_:)` as
+/// a local postfix continuation.
 public func As(_ name: String) -> SQLBuilder.AliasRequest {
     SQLBuilder.AliasRequest(name)
 }

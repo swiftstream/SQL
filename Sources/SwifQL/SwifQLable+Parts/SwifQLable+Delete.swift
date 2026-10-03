@@ -12,7 +12,7 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .delete)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
     public func delete(from table: SwifQLable) -> SwifQLable {
@@ -23,6 +23,6 @@ extension SwifQLable {
         parts.append(o: .from)
         parts.append(o: .space)
         parts.append(contentsOf: table.parts)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

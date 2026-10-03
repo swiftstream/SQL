@@ -14,7 +14,7 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .epoch)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
     
     public func epoch(with value: SwifQLable) -> SwifQLable {
@@ -25,6 +25,6 @@ extension SwifQLable {
         parts.append(o: .custom("+"))
         parts.append(o: .space)
         parts.append(contentsOf: value.parts)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 }

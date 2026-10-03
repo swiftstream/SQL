@@ -1,39 +1,31 @@
 import Foundation
 
-/// Typed FROM source and derived-item construction.
+/// Ordered FROM-item composition with local postfix ownership.
 @resultBuilder
 public enum FromBuilder {
-    public protocol CurrentState: SQLBuilder.FinalizableItem {}
-
-    /// Static proof dimensions carried by a FROM fragment.
-    public protocol RootGuarantee {}
-    public protocol FragmentRole {}
-
-    /// Combines independent root-guarantee and fragment-role proofs.
-    public protocol AttachmentState {
-        associatedtype Guarantee: RootGuarantee
-        associatedtype Role: FragmentRole
+    public protocol CurrentState: SQLBuilder.FinalizableItem {
+        func asFromItem() -> FromItem
     }
 
-    public enum NoLeftSource: RootGuarantee {}
-    public enum HasLeftSource: RootGuarantee {}
-    public enum SourceList: FragmentRole {}
-    public enum JoinContinuationOnly: FragmentRole {}
-
-    public struct Fragment<G: RootGuarantee, R: FragmentRole>: AttachmentState {
-        public typealias Guarantee = G
-        public typealias Role = R
+    /// Completed result-builder boundary used by optional, branch, and loop composition.
+    public protocol ControlFlowComponent {
+        var finalizedFromItems: [FromItem] { get }
     }
 
-    /// Structural separator metadata for a JOIN item finalized across a branch.
-    struct JoinContinuationPart: SwifQLPart {}
+    /// Local rendering identity carried with each completed FROM item.
+    public struct FromItem {
+        public enum Kind: Sendable {
+            case source
+            case joinContinuation
+        }
 
-    public protocol SourceListBranch {
-        func finalizeSourceListBranch() -> [[SwifQLPart]]
-    }
+        public let kind: Kind
+        let parts: [SwifQLPart]
 
-    public protocol JoinContinuationBranch {
-        func finalizeJoinContinuationBranch() -> [[SwifQLPart]]
+        init(kind: Kind, parts: [SwifQLPart]) {
+            self.kind = kind
+            self.parts = parts
+        }
     }
 
     public protocol SourceState {}
@@ -43,16 +35,9 @@ public enum FromBuilder {
         func addingAlias(_ name: String) -> Aliased
     }
 
-    /// Open nested SELECT states expose their structural statement children to
-    /// typed clause continuations without exposing a general mutable owner.
     public protocol NestedStatementCurrent: AliasableCurrent {
         var statementParts: [SwifQLPart] { get }
     }
-
-    public protocol NestedGroupAttachable: NestedStatementCurrent {}
-    public protocol NestedOrderByAttachable: NestedStatementCurrent {}
-    public protocol NestedLimitAttachable: NestedStatementCurrent {}
-    public protocol NestedOffsetAttachable: NestedStatementCurrent {}
 
     public protocol AliasableSourceState: SourceState {
         associatedtype Aliased: SourceState
@@ -62,16 +47,18 @@ public enum FromBuilder {
         associatedtype WithColumns: SourceState
     }
 
-    public enum SourceOpen: AliasableSourceState {
+    public enum SourceOpen: AliasableSourceState, ColumnListSourceState {
         public typealias Aliased = SourceAliased
+        public typealias WithColumns = SourceAliasedColumns
     }
 
     public enum SourceAliased: ColumnListSourceState {
         public typealias WithColumns = SourceAliasedColumns
     }
 
-    public enum SourceOrdinality: AliasableSourceState {
+    public enum SourceOrdinality: AliasableSourceState, ColumnListSourceState {
         public typealias Aliased = SourceOrdinalityAliased
+        public typealias WithColumns = SourceOrdinalityAliasedColumns
     }
 
     public enum SourceOrdinalityAliased: ColumnListSourceState {
@@ -81,7 +68,7 @@ public enum FromBuilder {
     public enum SourceAliasedColumns: SourceState {}
     public enum SourceOrdinalityAliasedColumns: SourceState {}
 
-    /// One snapshotted source with a statically typed continuation state.
+    /// One snapshotted source with a statically typed local continuation state.
     public struct Source<State: SourceState>: CurrentState {
         let snapshot: [SwifQLPart]
 
@@ -93,10 +80,13 @@ public enum FromBuilder {
             SwifQLableParts(rawParts: snapshot)
         }
 
+        public func asFromItem() -> FromItem {
+            FromItem(kind: .source, parts: snapshot)
+        }
     }
 
     /// Open direct nested SELECT item before its FROM continuation.
-    public struct NestedSelectOpen: NestedGroupAttachable, NestedOrderByAttachable, NestedLimitAttachable, NestedOffsetAttachable {
+    public struct NestedSelectOpen: NestedStatementCurrent {
         public let statementParts: [SwifQLPart]
 
         init(statementParts: [SwifQLPart]) {
@@ -104,7 +94,7 @@ public enum FromBuilder {
         }
 
         public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: Self.derivedParts(statementParts, alias: nil))
+            SwifQLableParts(rawParts: FromBuilder.derivedParts(statementParts, alias: nil))
         }
 
         public func addingAlias(_ name: String) -> NestedAliased {
@@ -112,8 +102,8 @@ public enum FromBuilder {
         }
     }
 
-    /// Direct nested SELECT after its same-name FROM continuation.
-    public struct NestedFromOpen: NestedGroupAttachable, NestedOrderByAttachable, NestedLimitAttachable, NestedOffsetAttachable {
+    /// Nested SELECT after its FROM/clause fragments, still aliasable.
+    public struct NestedStatementOpen: NestedStatementCurrent {
         public let statementParts: [SwifQLPart]
 
         init(statementParts: [SwifQLPart]) {
@@ -121,98 +111,7 @@ public enum FromBuilder {
         }
 
         public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
-        }
-
-        public func addingAlias(_ name: String) -> NestedAliased {
-            NestedAliased(statementParts: statementParts, alias: name)
-        }
-    }
-
-    /// Direct nested SELECT after WHERE and still open for later clauses or As.
-    public struct NestedWhereOpen: NestedGroupAttachable, NestedOrderByAttachable, NestedLimitAttachable, NestedOffsetAttachable {
-        public let statementParts: [SwifQLPart]
-
-        public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
-        }
-
-        public func addingAlias(_ name: String) -> NestedAliased {
-            NestedAliased(statementParts: statementParts, alias: name)
-        }
-    }
-
-    /// Direct nested SELECT after GROUP BY and still open for later clauses or As.
-    public struct NestedGroupOpen: NestedOrderByAttachable, NestedLimitAttachable, NestedOffsetAttachable {
-        public let statementParts: [SwifQLPart]
-
-        public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
-        }
-
-        public func addingAlias(_ name: String) -> NestedAliased {
-            NestedAliased(statementParts: statementParts, alias: name)
-        }
-    }
-
-    /// Direct nested SELECT after HAVING and still open for QUALIFY or As.
-    public struct NestedHavingOpen: NestedOrderByAttachable, NestedLimitAttachable, NestedOffsetAttachable {
-        public let statementParts: [SwifQLPart]
-
-        public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
-        }
-
-        public func addingAlias(_ name: String) -> NestedAliased {
-            NestedAliased(statementParts: statementParts, alias: name)
-        }
-    }
-
-    /// Direct nested SELECT after QUALIFY and still open for As.
-    public struct NestedQualifyOpen: NestedOrderByAttachable, NestedLimitAttachable, NestedOffsetAttachable {
-        public let statementParts: [SwifQLPart]
-
-        public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
-        }
-
-        public func addingAlias(_ name: String) -> NestedAliased {
-            NestedAliased(statementParts: statementParts, alias: name)
-        }
-    }
-
-    /// Direct nested SELECT after ORDER BY and still open for LIMIT/OFFSET or As.
-    public struct NestedOrderOpen: NestedLimitAttachable, NestedOffsetAttachable {
-        public let statementParts: [SwifQLPart]
-
-        public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
-        }
-
-        public func addingAlias(_ name: String) -> NestedAliased {
-            NestedAliased(statementParts: statementParts, alias: name)
-        }
-    }
-
-    /// Direct nested SELECT after LIMIT and still open for OFFSET or As.
-    public struct NestedLimitOpen: NestedOffsetAttachable {
-        public let statementParts: [SwifQLPart]
-
-        public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
-        }
-
-        public func addingAlias(_ name: String) -> NestedAliased {
-            NestedAliased(statementParts: statementParts, alias: name)
-        }
-    }
-
-    /// Direct nested SELECT after OFFSET and still open for As.
-    public struct NestedOffsetOpen: AliasableCurrent {
-        public let statementParts: [SwifQLPart]
-
-        public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: nil))
+            SwifQLableParts(rawParts: FromBuilder.derivedParts(statementParts, alias: nil))
         }
 
         public func addingAlias(_ name: String) -> NestedAliased {
@@ -231,42 +130,49 @@ public enum FromBuilder {
         }
 
         public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: NestedSelectOpen.derivedParts(statementParts, alias: alias))
+            SwifQLableParts(rawParts: FromBuilder.derivedParts(statementParts, alias: alias))
         }
     }
 
-    public struct Partial<Attachment: AttachmentState, Current: CurrentState> {
-        let completed: [[SwifQLPart]]
+    public struct Partial<Current: CurrentState>: ControlFlowComponent {
+        let completed: [FromItem]
         let current: Current
 
-        init(completed: [[SwifQLPart]], current: Current) {
+        init(completed: [FromItem], current: Current) {
             self.completed = completed
             self.current = current
         }
 
-        func finalizedFragments() -> [[SwifQLPart]] {
-            completed + [current.finalize().parts]
+        func finalizedItems() -> [FromItem] {
+            completed + [current.asFromItem()]
         }
+
+        public var finalizedFromItems: [FromItem] { finalizedItems() }
     }
 
-    public struct FinalizedGroup<Attachment: AttachmentState> {
-        let fragments: [[SwifQLPart]]
+    public struct FinalizedGroup: ControlFlowComponent {
+        let items: [FromItem]
 
-        init(fragments: [[SwifQLPart]]) {
-            self.fragments = fragments
+        init(items: [FromItem]) {
+            self.items = items
         }
+
+        public var finalizedFromItems: [FromItem] { items }
     }
 
-    public struct Closed<Attachment: AttachmentState> {
-        let fragments: [[SwifQLPart]]
+    public struct Closed: ControlFlowComponent {
+        let items: [FromItem]
 
-        init(fragments: [[SwifQLPart]]) {
-            self.fragments = fragments
+        init(items: [FromItem]) {
+            self.items = items
         }
+
+        public var finalizedFromItems: [FromItem] { items }
     }
 
-    /// Statically written-empty FROM syntax, kept outside source-list finalization.
-    public struct EmptyClosed {}
+    public struct EmptyClosed: ControlFlowComponent {
+        public var finalizedFromItems: [FromItem] { [] }
+    }
 
     /// Completed FROM clause lowered into one ordinary statement frame.
     public struct Result: SwifQLable, SQLBuilder.FinalizableItem {
@@ -283,40 +189,10 @@ public enum FromBuilder {
         public func finalize() -> SwifQLable { self }
     }
 
-    /// Completed FROM clause retaining typed source fragments for an outer JOIN owner.
-    public struct GuaranteedResult: SwifQLable, SQLBuilder.FinalizableItem {
-        let children: [SwifQLPart]
-        let itemFragments: [[SwifQLPart]]
-
-        init(children: [SwifQLPart], itemFragments: [[SwifQLPart]]) {
-            self.children = children
-            self.itemFragments = itemFragments
-        }
-
-        public var parts: [SwifQLPart] {
-            [SwifQLStructuralFramePart(region: .statement, children: children)]
-        }
-
-        public func finalize() -> SwifQLable { self }
-    }
-
     // MARK: - Expressions
 
-    public static func buildExpression(_ expression: GuaranteedResult) -> Result {
-        Result(children: expression.children)
-    }
-
-    public static func buildExpression(_ expression: SwifQLable) -> Source<SourceOpen> {
-        let parts = expression.parts
-        if let frame = parts.first as? SwifQLStructuralFramePart,
-           frame.region == .statement {
-            var derived: [SwifQLPart] = []
-            derived.append(o: .openBracket)
-            derived.append(frame)
-            derived.append(o: .closeBracket)
-            return Source(snapshot: derived)
-        }
-        return Source(snapshot: parts)
+    public static func buildExpression(_ expression: any SwifQLable) -> Source<SourceOpen> {
+        Source(snapshot: _SwifQLStructuralComposition.nestedEmbeddingParts(from: expression.parts))
     }
 
     public static func buildExpression(_ expression: SelectBuilder.Result) -> NestedSelectOpen {
@@ -353,286 +229,189 @@ public enum FromBuilder {
 
     public static func buildPartialBlock<State: SourceState>(
         first: Source<State>
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, Source<State>> {
+    ) -> Partial<Source<State>> {
         Partial(completed: [], current: first)
     }
 
-    public static func buildPartialBlock(first: NestedSelectOpen) -> Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen> {
+    public static func buildPartialBlock(first: NestedSelectOpen) -> Partial<NestedSelectOpen> {
         Partial(completed: [], current: first)
     }
 
-    public static func buildPartialBlock(first: JoinBuilder.JoinOpen) -> Partial<Fragment<NoLeftSource, JoinContinuationOnly>, JoinBuilder.JoinOpen> {
-        Partial(completed: [], current: first)
-    }
-
-    public static func buildPartialBlock(first: JoinBuilder.JoinSourceAliased) -> Partial<Fragment<NoLeftSource, JoinContinuationOnly>, JoinBuilder.JoinSourceAliased> {
-        Partial(completed: [], current: first)
+    /// A completed FROM fragment may itself be used as a source item.
+    public static func buildPartialBlock(first expression: Result) -> Partial<Source<SourceOpen>> {
+        Partial(completed: [], current: Source(snapshot: derivedSourceParts(expression)))
     }
 
     public static func buildPartialBlock<Current: CurrentState>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
+        accumulated: Partial<Current>,
         next: Source<SourceOpen>
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, Source<SourceOpen>> {
-        Partial(completed: accumulated.completed + [accumulated.current.finalize().parts], current: next)
+    ) -> Partial<Source<SourceOpen>> {
+        Partial(completed: accumulated.completed + [accumulated.current.asFromItem()], current: next)
     }
 
     public static func buildPartialBlock<Current: CurrentState>(
-        accumulated: Partial<Fragment<NoLeftSource, SourceList>, Current>,
-        next: Source<SourceOpen>
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, Source<SourceOpen>> {
-        Partial(completed: accumulated.completed + [accumulated.current.finalize().parts], current: next)
-    }
-
-    public static func buildPartialBlock<Current: CurrentState>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
+        accumulated: Partial<Current>,
         next: NestedSelectOpen
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen> {
-        Partial(completed: accumulated.completed + [accumulated.current.finalize().parts], current: next)
+    ) -> Partial<NestedSelectOpen> {
+        Partial(completed: accumulated.completed + [accumulated.current.asFromItem()], current: next)
     }
 
-    public static func buildPartialBlock<Current: CurrentState>(
-        accumulated: Partial<Fragment<NoLeftSource, SourceList>, Current>,
-        next: NestedSelectOpen
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen> {
-        Partial(completed: accumulated.completed + [accumulated.current.finalize().parts], current: next)
-    }
-
+    /// A direct FROM after SELECT belongs to that nested statement.
     public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen>,
+        accumulated: Partial<NestedSelectOpen>,
         next: Result
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedFromOpen> {
-        let parts = next.parts
-        let children = (parts.first as? SwifQLStructuralFramePart)?.children ?? parts
-        var statementParts = accumulated.current.statementParts
-        statementParts.appendSpaceIfNeeded()
-        statementParts.append(contentsOf: children)
-        return Partial(completed: accumulated.completed, current: NestedFromOpen(statementParts: statementParts))
+    ) -> Partial<NestedStatementOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedStatementOpen(statementParts: appendStatementBody(accumulated.current.statementParts, next))
+        )
     }
 
+    /// Repeated nested statement fragments retain their literal source order.
     public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen>,
+        accumulated: Partial<NestedStatementOpen>,
+        next: Result
+    ) -> Partial<NestedStatementOpen> {
+        Partial(
+            completed: accumulated.completed,
+            current: NestedStatementOpen(statementParts: appendStatementBody(accumulated.current.statementParts, next))
+        )
+    }
+
+    /// A nested FROM without an immediately preceding SELECT is an ordinary item.
+    public static func buildPartialBlock<Current: CurrentState>(
+        accumulated: Partial<Current>,
+        next: Result
+    ) -> Partial<Source<SourceOpen>> {
+        Partial(
+            completed: accumulated.completed + [accumulated.current.asFromItem()],
+            current: Source(snapshot: derivedSourceParts(next))
+        )
+    }
+
+    public static func buildPartialBlock<Current: NestedStatementCurrent>(
+        accumulated: Partial<Current>,
         next: WhereClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen> {
+    ) -> Partial<NestedStatementOpen> {
         Partial(
             completed: accumulated.completed,
-            current: NestedWhereOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.where($1) }
-                )
-            )
+            current: NestedStatementOpen(statementParts: _nestedStatementParts(
+                accumulated.current.statementParts,
+                appending: next.predicateParts,
+                with: { $0.where($1) }
+            ))
         )
     }
 
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedFromOpen>,
-        next: WhereClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedWhereOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.where($1) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedFromOpen>,
+    public static func buildPartialBlock<Current: NestedStatementCurrent>(
+        accumulated: Partial<Current>,
         next: HavingClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen> {
+    ) -> Partial<NestedStatementOpen> {
         Partial(
             completed: accumulated.completed,
-            current: NestedHavingOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.having($1) }
-                )
-            )
+            current: NestedStatementOpen(statementParts: _nestedStatementParts(
+                accumulated.current.statementParts,
+                appending: next.predicateParts,
+                with: { $0.having($1) }
+            ))
         )
     }
 
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen>,
-        next: HavingClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedHavingOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.having($1) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedFromOpen>,
+    public static func buildPartialBlock<Current: NestedStatementCurrent>(
+        accumulated: Partial<Current>,
         next: QualifyClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
+    ) -> Partial<NestedStatementOpen> {
         Partial(
             completed: accumulated.completed,
-            current: NestedQualifyOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.qualify($1) }
-                )
-            )
+            current: NestedStatementOpen(statementParts: _nestedStatementParts(
+                accumulated.current.statementParts,
+                appending: next.predicateParts,
+                with: { $0.qualify($1) }
+            ))
         )
     }
 
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen>,
-        next: QualifyClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedQualifyOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.qualify($1) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen>,
-        next: QualifyClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedQualifyOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.qualify($1) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock<Current: NestedGroupAttachable>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
+    public static func buildPartialBlock<Current: NestedStatementCurrent>(
+        accumulated: Partial<Current>,
         next: GroupByClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedGroupOpen> {
+    ) -> Partial<NestedStatementOpen> {
         Partial(
             completed: accumulated.completed,
-            current: NestedGroupOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    applying: { _fromAddingGroupBy(next, to: $0) }
-                )
-            )
+            current: NestedStatementOpen(statementParts: _nestedStatementParts(
+                accumulated.current.statementParts,
+                applying: { _fromAddingGroupBy(next, to: $0) }
+            ))
         )
     }
 
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedGroupOpen>,
-        next: HavingClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedHavingOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.having($1) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedGroupOpen>,
-        next: QualifyClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedQualifyOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.qualify($1) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock<Current: NestedOrderByAttachable>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
+    public static func buildPartialBlock<Current: NestedStatementCurrent>(
+        accumulated: Partial<Current>,
         next: OrderByClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedOrderOpen> {
+    ) -> Partial<NestedStatementOpen> {
         Partial(
             completed: accumulated.completed,
-            current: NestedOrderOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    applying: { _fromAddingOrderBy(next, to: $0) }
-                )
-            )
+            current: NestedStatementOpen(statementParts: _nestedStatementParts(
+                accumulated.current.statementParts,
+                applying: { _fromAddingOrderBy(next, to: $0) }
+            ))
         )
     }
 
-    public static func buildPartialBlock<Current: NestedLimitAttachable>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
+    public static func buildPartialBlock<Current: NestedStatementCurrent>(
+        accumulated: Partial<Current>,
         next: LimitClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedLimitOpen> {
+    ) -> Partial<NestedStatementOpen> {
         Partial(
             completed: accumulated.completed,
-            current: NestedLimitOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    applying: { _fromAddingLimit(next, to: $0) }
-                )
-            )
+            current: NestedStatementOpen(statementParts: _nestedStatementParts(
+                accumulated.current.statementParts,
+                applying: { _fromAddingLimit(next, to: $0) }
+            ))
         )
     }
 
-    public static func buildPartialBlock<Current: NestedOffsetAttachable>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
+    public static func buildPartialBlock<Current: NestedStatementCurrent>(
+        accumulated: Partial<Current>,
         next: OffsetClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedOffsetOpen> {
+    ) -> Partial<NestedStatementOpen> {
         Partial(
             completed: accumulated.completed,
-            current: NestedOffsetOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    applying: { _fromAddingOffset(next, to: $0) }
-                )
-            )
+            current: NestedStatementOpen(statementParts: _nestedStatementParts(
+                accumulated.current.statementParts,
+                applying: { _fromAddingOffset(next, to: $0) }
+            ))
         )
     }
 
-    public static func buildPartialBlock<Attachment: AttachmentState, Current: AliasableCurrent>(
-        accumulated: Partial<Attachment, Current>,
+    public static func buildPartialBlock<Current: AliasableCurrent>(
+        accumulated: Partial<Current>,
         next: SQLBuilder.AliasRequest
-    ) -> Partial<Attachment, Current.Aliased> {
+    ) -> Partial<Current.Aliased> {
         Partial(completed: accumulated.completed, current: accumulated.current.addingAlias(next.name))
     }
 
     public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Source<SourceOpen>>,
+        accumulated: Partial<Source<SourceOpen>>,
         next: WithOrdinalityRequest
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, Source<SourceOrdinality>> {
+    ) -> Partial<Source<SourceOrdinality>> {
         var parts = accumulated.current.snapshot
         parts.append(o: .space, .custom("WITH"), .space, .custom("ORDINALITY"))
-        return Partial(completed: accumulated.completed, current: Source<SourceOrdinality>(snapshot: parts))
+        return Partial(completed: accumulated.completed, current: Source(snapshot: parts))
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Partial<Source<SourceAliased>>,
+        next: WithOrdinalityRequest
+    ) -> Partial<Source<SourceOrdinalityAliased>> {
+        var parts = accumulated.current.snapshot
+        parts.append(o: .space, .custom("WITH"), .space, .custom("ORDINALITY"))
+        return Partial(completed: accumulated.completed, current: Source(snapshot: parts))
     }
 
     public static func buildPartialBlock<Current: ColumnListSourceState>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Source<Current>>,
+        accumulated: Partial<Source<Current>>,
         next: FromColumnsRequest
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, Source<Current.WithColumns>> {
+    ) -> Partial<Source<Current.WithColumns>> {
         var parts = accumulated.current.snapshot
         if !next.names.isEmpty {
             parts.append(o: .space, .openBracket)
@@ -642,911 +421,219 @@ public enum FromBuilder {
             }
             parts.append(o: .closeBracket)
         }
-        return Partial(completed: accumulated.completed, current: Source<Current.WithColumns>(snapshot: parts))
+        return Partial(completed: accumulated.completed, current: Source(snapshot: parts))
     }
-
-    // A guaranteed source chain may absorb either role; JOIN continuations attach
-    // to its current source while source-list groups remain comma-separated items.
-    public static func buildPartialBlock<Current: CurrentState, Role: FragmentRole>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
-        next: FinalizedGroup<Fragment<NoLeftSource, Role>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.completed + [accumulated.current.finalize().parts] + next.fragments)
-    }
-
-    public static func buildPartialBlock<Current: CurrentState, Role: FragmentRole>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
-        next: FinalizedGroup<Fragment<HasLeftSource, Role>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.completed + [accumulated.current.finalize().parts] + next.fragments)
-    }
-
-    public static func buildPartialBlock<Current: CurrentState, Role: FragmentRole>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
-        next: FinalizedGroup<Fragment<NoLeftSource, Role>>?
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.completed + [accumulated.current.finalize().parts] + (next?.fragments ?? []))
-    }
-
-    // Source-list prefixes can be followed by source-list control-flow groups,
-    // but a continuation-only prefix cannot be rescued by any later source.
-    public static func buildPartialBlock<Current: CurrentState>(
-        accumulated: Partial<Fragment<NoLeftSource, SourceList>, Current>,
-        next: FinalizedGroup<Fragment<NoLeftSource, SourceList>>
-    ) -> Closed<Fragment<NoLeftSource, SourceList>> {
-        Closed(fragments: accumulated.completed + [accumulated.current.finalize().parts] + next.fragments)
-    }
-
-    public static func buildPartialBlock<Current: CurrentState>(
-        accumulated: Partial<Fragment<NoLeftSource, SourceList>, Current>,
-        next: FinalizedGroup<Fragment<HasLeftSource, SourceList>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.completed + [accumulated.current.finalize().parts] + next.fragments)
-    }
-
-    public static func buildPartialBlock<Current: CurrentState>(
-        accumulated: Partial<Fragment<NoLeftSource, JoinContinuationOnly>, Current>,
-        next: FinalizedGroup<Fragment<NoLeftSource, JoinContinuationOnly>>
-    ) -> Closed<Fragment<NoLeftSource, JoinContinuationOnly>> {
-        Closed(fragments: accumulated.completed + [accumulated.current.finalize().parts] + next.fragments)
-    }
-
-    public static func buildPartialBlock(
-        first: FinalizedGroup<Fragment<HasLeftSource, SourceList>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: first.fragments)
-    }
-
-    public static func buildPartialBlock(
-        first: FinalizedGroup<Fragment<NoLeftSource, SourceList>>?
-    ) -> Closed<Fragment<NoLeftSource, SourceList>> {
-        Closed(fragments: first?.fragments ?? [])
-    }
-
-    public static func buildPartialBlock(
-        first: FinalizedGroup<Fragment<NoLeftSource, JoinContinuationOnly>>?
-    ) -> Closed<Fragment<NoLeftSource, JoinContinuationOnly>> {
-        Closed(fragments: first?.fragments ?? [])
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<HasLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<NoLeftSource, SourceList>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + next.fragments)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<HasLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<HasLeftSource, SourceList>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + next.fragments)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<HasLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<NoLeftSource, JoinContinuationOnly>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + next.fragments)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<HasLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<NoLeftSource, SourceList>>?
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + (next?.fragments ?? []))
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<HasLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<NoLeftSource, JoinContinuationOnly>>?
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + (next?.fragments ?? []))
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<NoLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<NoLeftSource, SourceList>>
-    ) -> Closed<Fragment<NoLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + next.fragments)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<NoLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<HasLeftSource, SourceList>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + next.fragments)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<NoLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<NoLeftSource, SourceList>>?
-    ) -> Closed<Fragment<NoLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + (next?.fragments ?? []))
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<NoLeftSource, JoinContinuationOnly>>,
-        next: FinalizedGroup<Fragment<NoLeftSource, JoinContinuationOnly>>
-    ) -> Closed<Fragment<NoLeftSource, JoinContinuationOnly>> {
-        Closed(fragments: accumulated.fragments + next.fragments)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<HasLeftSource, SourceList>>,
-        next: Source<SourceOpen>
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, Source<SourceOpen>> {
-        Partial(completed: accumulated.fragments, current: next)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<HasLeftSource, SourceList>>,
-        next: NestedSelectOpen
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen> {
-        Partial(completed: accumulated.fragments, current: next)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<NoLeftSource, SourceList>>,
-        next: Source<SourceOpen>
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, Source<SourceOpen>> {
-        Partial(completed: accumulated.fragments, current: next)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<NoLeftSource, SourceList>>,
-        next: NestedSelectOpen
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen> {
-        Partial(completed: accumulated.fragments, current: next)
-    }
-
-    // No source-start overload exists for Closed<NoLeftSource + JoinContinuationOnly>.
 
     // MARK: - Control-flow boundaries
 
-    public static func buildOptional(
-        _ component: (any SourceListBranch)?
-    ) -> FinalizedGroup<Fragment<NoLeftSource, SourceList>>? {
-        component.map { FinalizedGroup(fragments: $0.finalizeSourceListBranch()) }
+    public static func buildOptional(_ component: (any ControlFlowComponent)?) -> FinalizedGroup? {
+        component.map { FinalizedGroup(items: $0.finalizedFromItems) }
     }
 
-    public static func buildOptional(
-        _ component: (any JoinContinuationBranch)?
-    ) -> FinalizedGroup<Fragment<NoLeftSource, JoinContinuationOnly>>? {
-        component.map { FinalizedGroup(fragments: $0.finalizeJoinContinuationBranch()) }
+    public static func buildEither<Component: ControlFlowComponent>(
+        first component: Component
+    ) -> FinalizedGroup {
+        FinalizedGroup(items: component.finalizedFromItems)
     }
 
-    public static func buildEither<Guarantee: RootGuarantee, Role: FragmentRole, Current: CurrentState>(
-        first component: Partial<Fragment<Guarantee, Role>, Current>
-    ) -> FinalizedGroup<Fragment<Guarantee, Role>> {
-        finalizeGroup(component)
+    public static func buildEither<Component: ControlFlowComponent>(
+        second component: Component
+    ) -> FinalizedGroup {
+        FinalizedGroup(items: component.finalizedFromItems)
     }
 
-    public static func buildEither<Guarantee: RootGuarantee, Role: FragmentRole, Current: CurrentState>(
-        second component: Partial<Fragment<Guarantee, Role>, Current>
-    ) -> FinalizedGroup<Fragment<Guarantee, Role>> {
-        finalizeGroup(component)
+    public static func buildArray<Component: ControlFlowComponent>(
+        _ components: [Component]
+    ) -> FinalizedGroup {
+        FinalizedGroup(items: components.flatMap(\.finalizedFromItems))
     }
 
-    public static func buildArray<Guarantee: RootGuarantee, Role: FragmentRole, Current: CurrentState>(
-        _ components: [Partial<Fragment<Guarantee, Role>, Current>]
-    ) -> FinalizedGroup<Fragment<NoLeftSource, Role>> {
-        FinalizedGroup(fragments: components.flatMap { finalizeGroup($0).fragments })
-    }
+    // MARK: - Ordered list assembly
 
-    // MARK: - Final result
-
-    public static func buildFinalResult(_ component: Closed<Fragment<HasLeftSource, SourceList>>) -> Result {
-        makeResult(component.fragments)
-    }
-
-    public static func buildFinalResult<Current: CurrentState>(
-        _ component: Partial<Fragment<HasLeftSource, SourceList>, Current>
-    ) -> Result {
-        makeResult(component.completed + [component.current.finalize().parts])
-    }
-
-    public static func buildFinalResult(
-        _ component: FinalizedGroup<Fragment<HasLeftSource, SourceList>>
-    ) -> Result {
-        makeResult(component.fragments)
-    }
-
-    public static func buildFinalResult(
-        _ component: FinalizedGroup<Fragment<HasLeftSource, SourceList>>?
-    ) -> Result {
-        makeResult(component?.fragments ?? [])
-    }
-
-    public static func buildFinalResult(
-        _ component: FinalizedGroup<Fragment<NoLeftSource, SourceList>>
-    ) -> Result {
-        makeResult(component.fragments)
-    }
-
-    public static func buildFinalResult(
-        _ component: Closed<Fragment<NoLeftSource, SourceList>>
-    ) -> Result {
-        makeResult(component.fragments)
-    }
-
-    private static func finalizeGroup<Attachment: AttachmentState, Current: CurrentState>(
-        _ component: Partial<Attachment, Current>
-    ) -> FinalizedGroup<Attachment> {
-        FinalizedGroup(fragments: component.finalizedFragments())
-    }
-
-    private static func makeResult(_ items: [[SwifQLPart]]) -> Result {
-        Result(children: assemble(items))
-    }
-
-    /// Shared FROM item assembler for legacy and guaranteed result paths.
-    static func assemble(_ items: [[SwifQLPart]]) -> [SwifQLPart] {
-        var children: [SwifQLPart] = []
-        children.append(o: .custom("FROM"), .space)
-        var hasItem = false
-        for item in items {
-            let continuesPrevious = item.first is JoinContinuationPart
-            let content = continuesPrevious ? Array(item.dropFirst()) : item
-            guard !content.isEmpty else { continue }
-            if hasItem {
-                children.append(o: continuesPrevious ? .space : .comma)
-                if !continuesPrevious { children.append(o: .space) }
-            }
-            children.append(contentsOf: content)
-            hasItem = true
-        }
-        return children
-    }
-}
-
-
-@resultBuilder
-public enum GuaranteedFromBuilder {
-    // Reuse the established FromBuilder grammar states. This builder adds only
-    // a guaranteed final result; it does not introduce parallel public states.
-    public typealias RootGuarantee = FromBuilder.RootGuarantee
-    public typealias FragmentRole = FromBuilder.FragmentRole
-    public typealias AttachmentState = FromBuilder.AttachmentState
-    public typealias NoLeftSource = FromBuilder.NoLeftSource
-    public typealias HasLeftSource = FromBuilder.HasLeftSource
-    public typealias SourceList = FromBuilder.SourceList
-    public typealias JoinContinuationOnly = FromBuilder.JoinContinuationOnly
-    public typealias Fragment<G: RootGuarantee, R: FragmentRole> = FromBuilder.Fragment<G, R>
-    typealias JoinContinuationPart = FromBuilder.JoinContinuationPart
-    public typealias SourceListBranch = FromBuilder.SourceListBranch
-    public typealias JoinContinuationBranch = FromBuilder.JoinContinuationBranch
-    public typealias SourceState = FromBuilder.SourceState
-    public typealias CurrentState = FromBuilder.CurrentState
-    public typealias AliasableCurrent = FromBuilder.AliasableCurrent
-    public typealias NestedStatementCurrent = FromBuilder.NestedStatementCurrent
-    public typealias NestedGroupAttachable = FromBuilder.NestedGroupAttachable
-    public typealias NestedOrderByAttachable = FromBuilder.NestedOrderByAttachable
-    public typealias NestedLimitAttachable = FromBuilder.NestedLimitAttachable
-    public typealias NestedOffsetAttachable = FromBuilder.NestedOffsetAttachable
-    public typealias AliasableSourceState = FromBuilder.AliasableSourceState
-    public typealias ColumnListSourceState = FromBuilder.ColumnListSourceState
-    public typealias SourceOpen = FromBuilder.SourceOpen
-    public typealias SourceAliased = FromBuilder.SourceAliased
-    public typealias SourceOrdinality = FromBuilder.SourceOrdinality
-    public typealias SourceOrdinalityAliased = FromBuilder.SourceOrdinalityAliased
-    public typealias SourceAliasedColumns = FromBuilder.SourceAliasedColumns
-    public typealias SourceOrdinalityAliasedColumns = FromBuilder.SourceOrdinalityAliasedColumns
-    public typealias Source<State: SourceState> = FromBuilder.Source<State>
-    public typealias NestedSelectOpen = FromBuilder.NestedSelectOpen
-    public typealias NestedFromOpen = FromBuilder.NestedFromOpen
-    public typealias NestedWhereOpen = FromBuilder.NestedWhereOpen
-    public typealias NestedGroupOpen = FromBuilder.NestedGroupOpen
-    public typealias NestedHavingOpen = FromBuilder.NestedHavingOpen
-    public typealias NestedQualifyOpen = FromBuilder.NestedQualifyOpen
-    public typealias NestedOrderOpen = FromBuilder.NestedOrderOpen
-    public typealias NestedLimitOpen = FromBuilder.NestedLimitOpen
-    public typealias NestedOffsetOpen = FromBuilder.NestedOffsetOpen
-    public typealias NestedAliased = FromBuilder.NestedAliased
-    public typealias Partial<A: AttachmentState, C: CurrentState> = FromBuilder.Partial<A, C>
-    public typealias FinalizedGroup<A: AttachmentState> = FromBuilder.FinalizedGroup<A>
-    public typealias Closed<A: AttachmentState> = FromBuilder.Closed<A>
-    public typealias EmptyClosed = FromBuilder.EmptyClosed
-    public typealias Result = FromBuilder.Result
-
-    // MARK: - Expressions
-
-    public static func buildExpression(_ expression: FromBuilder.GuaranteedResult) -> Result {
-        Result(children: expression.children)
-    }
-
-    public static func buildExpression(_ expression: SwifQLable) -> Source<SourceOpen> {
-        let parts = expression.parts
-        if let frame = parts.first as? SwifQLStructuralFramePart,
-           frame.region == .statement {
-            var derived: [SwifQLPart] = []
-            derived.append(o: .openBracket)
-            derived.append(frame)
-            derived.append(o: .closeBracket)
-            return Source(snapshot: derived)
-        }
-        return Source(snapshot: parts)
-    }
-
-    public static func buildExpression(_ expression: SelectBuilder.Result) -> NestedSelectOpen {
-        let parts = expression.parts
-        let children = (parts.first as? SwifQLStructuralFramePart)?.children ?? parts
-        return NestedSelectOpen(statementParts: children)
-    }
-
-    public static func buildExpression(_ expression: Result) -> Result { expression }
-
-    public static func buildExpression(_ request: SQLBuilder.AliasRequest) -> SQLBuilder.AliasRequest {
-        request
-    }
-
-    public static func buildExpression(_ request: WhereClause) -> WhereClause { request }
-    public static func buildExpression(_ request: HavingClause) -> HavingClause { request }
-    public static func buildExpression(_ request: QualifyClause) -> QualifyClause { request }
-    public static func buildExpression(_ request: GroupByClause) -> GroupByClause { request }
-    public static func buildExpression(_ request: OrderByClause) -> OrderByClause { request }
-    public static func buildExpression(_ request: LimitClause) -> LimitClause { request }
-    public static func buildExpression(_ request: OffsetClause) -> OffsetClause { request }
-
-    public static func buildExpression(_ request: WithOrdinalityRequest) -> WithOrdinalityRequest {
-        request
-    }
-
-    public static func buildExpression(_ request: FromColumnsRequest) -> FromColumnsRequest {
-        request
-    }
-
-    // MARK: - Straight-line composition
-
-    public static func buildBlock() -> EmptyClosed { EmptyClosed() }
-
-    public static func buildPartialBlock<State: SourceState>(
-        first: Source<State>
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, Source<State>> {
-        Partial(completed: [], current: first)
-    }
-
-    public static func buildPartialBlock(first: NestedSelectOpen) -> Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen> {
-        Partial(completed: [], current: first)
-    }
-
-    public static func buildPartialBlock(first: JoinBuilder.JoinOpen) -> Partial<Fragment<NoLeftSource, JoinContinuationOnly>, JoinBuilder.JoinOpen> {
-        Partial(completed: [], current: first)
-    }
-
-    public static func buildPartialBlock(first: JoinBuilder.JoinSourceAliased) -> Partial<Fragment<NoLeftSource, JoinContinuationOnly>, JoinBuilder.JoinSourceAliased> {
-        Partial(completed: [], current: first)
+    public static func buildPartialBlock<Current: CurrentState>(
+        accumulated: Partial<Current>,
+        next group: FinalizedGroup
+    ) -> Closed {
+        Closed(items: accumulated.completed + [accumulated.current.asFromItem()] + group.items)
     }
 
     public static func buildPartialBlock<Current: CurrentState>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
-        next: Source<SourceOpen>
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, Source<SourceOpen>> {
-        Partial(completed: accumulated.completed + [accumulated.current.finalize().parts], current: next)
+        accumulated: Partial<Current>,
+        next group: FinalizedGroup?
+    ) -> Closed {
+        Closed(items: accumulated.completed + [accumulated.current.asFromItem()] + (group?.items ?? []))
     }
 
-    public static func buildPartialBlock<Current: CurrentState>(
-        accumulated: Partial<Fragment<NoLeftSource, SourceList>, Current>,
-        next: Source<SourceOpen>
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, Source<SourceOpen>> {
-        Partial(completed: accumulated.completed + [accumulated.current.finalize().parts], current: next)
+    public static func buildPartialBlock(first group: FinalizedGroup) -> Closed {
+        Closed(items: group.items)
     }
 
-    public static func buildPartialBlock<Current: CurrentState>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
-        next: NestedSelectOpen
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen> {
-        Partial(completed: accumulated.completed + [accumulated.current.finalize().parts], current: next)
+    public static func buildPartialBlock(first group: FinalizedGroup?) -> Closed {
+        Closed(items: group?.items ?? [])
     }
 
-    public static func buildPartialBlock<Current: CurrentState>(
-        accumulated: Partial<Fragment<NoLeftSource, SourceList>, Current>,
-        next: NestedSelectOpen
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen> {
-        Partial(completed: accumulated.completed + [accumulated.current.finalize().parts], current: next)
+    public static func buildPartialBlock(first empty: EmptyClosed) -> Closed {
+        Closed(items: [])
     }
 
     public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen>,
+        accumulated: Closed,
+        next group: FinalizedGroup
+    ) -> Closed {
+        Closed(items: accumulated.items + group.items)
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Closed,
+        next group: FinalizedGroup?
+    ) -> Closed {
+        Closed(items: accumulated.items + (group?.items ?? []))
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Closed,
+        next empty: EmptyClosed
+    ) -> Closed {
+        accumulated
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Closed,
+        next: Source<SourceOpen>
+    ) -> Partial<Source<SourceOpen>> {
+        Partial(completed: accumulated.items, current: next)
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Closed,
+        next: NestedSelectOpen
+    ) -> Partial<NestedSelectOpen> {
+        Partial(completed: accumulated.items, current: next)
+    }
+
+    public static func buildPartialBlock(
+        accumulated: Closed,
         next: Result
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedFromOpen> {
-        let parts = next.parts
-        let children = (parts.first as? SwifQLStructuralFramePart)?.children ?? parts
-        var statementParts = accumulated.current.statementParts
-        statementParts.appendSpaceIfNeeded()
-        statementParts.append(contentsOf: children)
-        return Partial(completed: accumulated.completed, current: NestedFromOpen(statementParts: statementParts))
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen>,
-        next: WhereClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedWhereOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.where($1) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedFromOpen>,
-        next: WhereClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedWhereOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.where($1) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedFromOpen>,
-        next: HavingClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedHavingOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.having($1) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen>,
-        next: HavingClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedHavingOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.having($1) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedFromOpen>,
-        next: QualifyClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedQualifyOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.qualify($1) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedWhereOpen>,
-        next: QualifyClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedQualifyOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.qualify($1) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen>,
-        next: QualifyClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedQualifyOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.qualify($1) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock<Current: NestedGroupAttachable>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
-        next: GroupByClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedGroupOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedGroupOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    applying: { _fromAddingGroupBy(next, to: $0) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedGroupOpen>,
-        next: HavingClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedHavingOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedHavingOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.having($1) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, NestedGroupOpen>,
-        next: QualifyClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedQualifyOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedQualifyOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    appending: next.predicateParts,
-                    with: { $0.qualify($1) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock<Current: NestedOrderByAttachable>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
-        next: OrderByClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedOrderOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedOrderOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    applying: { _fromAddingOrderBy(next, to: $0) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock<Current: NestedLimitAttachable>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
-        next: LimitClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedLimitOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedLimitOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    applying: { _fromAddingLimit(next, to: $0) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock<Current: NestedOffsetAttachable>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
-        next: OffsetClause
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedOffsetOpen> {
-        Partial(
-            completed: accumulated.completed,
-            current: NestedOffsetOpen(
-                statementParts: _nestedStatementParts(
-                    accumulated.current.statementParts,
-                    applying: { _fromAddingOffset(next, to: $0) }
-                )
-            )
-        )
-    }
-
-    public static func buildPartialBlock<Attachment: AttachmentState, Current: AliasableCurrent>(
-        accumulated: Partial<Attachment, Current>,
-        next: SQLBuilder.AliasRequest
-    ) -> Partial<Attachment, Current.Aliased> {
-        Partial(completed: accumulated.completed, current: accumulated.current.addingAlias(next.name))
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Source<SourceOpen>>,
-        next: WithOrdinalityRequest
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, Source<SourceOrdinality>> {
-        var parts = accumulated.current.snapshot
-        parts.append(o: .space, .custom("WITH"), .space, .custom("ORDINALITY"))
-        return Partial(completed: accumulated.completed, current: Source<SourceOrdinality>(snapshot: parts))
-    }
-
-    public static func buildPartialBlock<Current: ColumnListSourceState>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Source<Current>>,
-        next: FromColumnsRequest
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, Source<Current.WithColumns>> {
-        var parts = accumulated.current.snapshot
-        if !next.names.isEmpty {
-            parts.append(o: .space, .openBracket)
-            for (index, name) in next.names.enumerated() {
-                if index > 0 { parts.append(o: .comma, .space) }
-                parts.append(SwifQLPartAlias(name))
-            }
-            parts.append(o: .closeBracket)
-        }
-        return Partial(completed: accumulated.completed, current: Source<Current.WithColumns>(snapshot: parts))
-    }
-
-    // A guaranteed source chain may absorb either role; JOIN continuations attach
-    // to its current source while source-list groups remain comma-separated items.
-    public static func buildPartialBlock<Current: CurrentState, Role: FragmentRole>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
-        next: FinalizedGroup<Fragment<NoLeftSource, Role>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.completed + [accumulated.current.finalize().parts] + next.fragments)
-    }
-
-    public static func buildPartialBlock<Current: CurrentState, Role: FragmentRole>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
-        next: FinalizedGroup<Fragment<HasLeftSource, Role>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.completed + [accumulated.current.finalize().parts] + next.fragments)
-    }
-
-    public static func buildPartialBlock<Current: CurrentState, Role: FragmentRole>(
-        accumulated: Partial<Fragment<HasLeftSource, SourceList>, Current>,
-        next: FinalizedGroup<Fragment<NoLeftSource, Role>>?
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.completed + [accumulated.current.finalize().parts] + (next?.fragments ?? []))
-    }
-
-    // Source-list prefixes can be followed by source-list control-flow groups,
-    // but a continuation-only prefix cannot be rescued by any later source.
-    public static func buildPartialBlock<Current: CurrentState>(
-        accumulated: Partial<Fragment<NoLeftSource, SourceList>, Current>,
-        next: FinalizedGroup<Fragment<NoLeftSource, SourceList>>
-    ) -> Closed<Fragment<NoLeftSource, SourceList>> {
-        Closed(fragments: accumulated.completed + [accumulated.current.finalize().parts] + next.fragments)
-    }
-
-    public static func buildPartialBlock<Current: CurrentState>(
-        accumulated: Partial<Fragment<NoLeftSource, SourceList>, Current>,
-        next: FinalizedGroup<Fragment<HasLeftSource, SourceList>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.completed + [accumulated.current.finalize().parts] + next.fragments)
-    }
-
-    public static func buildPartialBlock<Current: CurrentState>(
-        accumulated: Partial<Fragment<NoLeftSource, JoinContinuationOnly>, Current>,
-        next: FinalizedGroup<Fragment<NoLeftSource, JoinContinuationOnly>>
-    ) -> Closed<Fragment<NoLeftSource, JoinContinuationOnly>> {
-        Closed(fragments: accumulated.completed + [accumulated.current.finalize().parts] + next.fragments)
-    }
-
-    public static func buildPartialBlock(
-        first: FinalizedGroup<Fragment<HasLeftSource, SourceList>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: first.fragments)
-    }
-
-    public static func buildPartialBlock(
-        first: FinalizedGroup<Fragment<NoLeftSource, SourceList>>?
-    ) -> Closed<Fragment<NoLeftSource, SourceList>> {
-        Closed(fragments: first?.fragments ?? [])
-    }
-
-    public static func buildPartialBlock(
-        first: FinalizedGroup<Fragment<NoLeftSource, JoinContinuationOnly>>?
-    ) -> Closed<Fragment<NoLeftSource, JoinContinuationOnly>> {
-        Closed(fragments: first?.fragments ?? [])
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<HasLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<NoLeftSource, SourceList>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + next.fragments)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<HasLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<HasLeftSource, SourceList>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + next.fragments)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<HasLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<NoLeftSource, JoinContinuationOnly>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + next.fragments)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<HasLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<NoLeftSource, SourceList>>?
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + (next?.fragments ?? []))
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<HasLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<NoLeftSource, JoinContinuationOnly>>?
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + (next?.fragments ?? []))
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<NoLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<NoLeftSource, SourceList>>
-    ) -> Closed<Fragment<NoLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + next.fragments)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<NoLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<HasLeftSource, SourceList>>
-    ) -> Closed<Fragment<HasLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + next.fragments)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<NoLeftSource, SourceList>>,
-        next: FinalizedGroup<Fragment<NoLeftSource, SourceList>>?
-    ) -> Closed<Fragment<NoLeftSource, SourceList>> {
-        Closed(fragments: accumulated.fragments + (next?.fragments ?? []))
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<NoLeftSource, JoinContinuationOnly>>,
-        next: FinalizedGroup<Fragment<NoLeftSource, JoinContinuationOnly>>
-    ) -> Closed<Fragment<NoLeftSource, JoinContinuationOnly>> {
-        Closed(fragments: accumulated.fragments + next.fragments)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<HasLeftSource, SourceList>>,
-        next: Source<SourceOpen>
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, Source<SourceOpen>> {
-        Partial(completed: accumulated.fragments, current: next)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<HasLeftSource, SourceList>>,
-        next: NestedSelectOpen
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen> {
-        Partial(completed: accumulated.fragments, current: next)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<NoLeftSource, SourceList>>,
-        next: Source<SourceOpen>
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, Source<SourceOpen>> {
-        Partial(completed: accumulated.fragments, current: next)
-    }
-
-    public static func buildPartialBlock(
-        accumulated: Closed<Fragment<NoLeftSource, SourceList>>,
-        next: NestedSelectOpen
-    ) -> Partial<Fragment<HasLeftSource, SourceList>, NestedSelectOpen> {
-        Partial(completed: accumulated.fragments, current: next)
-    }
-
-    // No source-start overload exists for Closed<NoLeftSource + JoinContinuationOnly>.
-
-    // MARK: - Control-flow boundaries
-
-    public static func buildOptional(
-        _ component: (any SourceListBranch)?
-    ) -> FinalizedGroup<Fragment<NoLeftSource, SourceList>>? {
-        component.map { FinalizedGroup(fragments: $0.finalizeSourceListBranch()) }
-    }
-
-    public static func buildOptional(
-        _ component: (any JoinContinuationBranch)?
-    ) -> FinalizedGroup<Fragment<NoLeftSource, JoinContinuationOnly>>? {
-        component.map { FinalizedGroup(fragments: $0.finalizeJoinContinuationBranch()) }
-    }
-
-    public static func buildEither<Guarantee: RootGuarantee, Role: FragmentRole, Current: CurrentState>(
-        first component: Partial<Fragment<Guarantee, Role>, Current>
-    ) -> FinalizedGroup<Fragment<Guarantee, Role>> {
-        finalizeGroup(component)
-    }
-
-    public static func buildEither<Guarantee: RootGuarantee, Role: FragmentRole, Current: CurrentState>(
-        second component: Partial<Fragment<Guarantee, Role>, Current>
-    ) -> FinalizedGroup<Fragment<Guarantee, Role>> {
-        finalizeGroup(component)
-    }
-
-    public static func buildArray<Guarantee: RootGuarantee, Role: FragmentRole, Current: CurrentState>(
-        _ components: [Partial<Fragment<Guarantee, Role>, Current>]
-    ) -> FinalizedGroup<Fragment<NoLeftSource, Role>> {
-        FinalizedGroup(fragments: components.flatMap { finalizeGroup($0).fragments })
+    ) -> Partial<Source<SourceOpen>> {
+        Partial(completed: accumulated.items, current: Source(snapshot: derivedSourceParts(next)))
     }
 
     // MARK: - Final result
 
-    public static func buildFinalResult(_ component: Closed<Fragment<HasLeftSource, SourceList>>) -> FromBuilder.GuaranteedResult {
-        makeGuaranteedResult(component.fragments)
-    }
-
     public static func buildFinalResult<Current: CurrentState>(
-        _ component: Partial<Fragment<HasLeftSource, SourceList>, Current>
-    ) -> FromBuilder.GuaranteedResult {
-        makeGuaranteedResult(component.completed + [component.current.finalize().parts])
-    }
-
-    public static func buildFinalResult(
-        _ component: FinalizedGroup<Fragment<HasLeftSource, SourceList>>
-    ) -> FromBuilder.GuaranteedResult {
-        makeGuaranteedResult(component.fragments)
-    }
-
-    public static func buildFinalResult(
-        _ component: FinalizedGroup<Fragment<HasLeftSource, SourceList>>?
-    ) -> FromBuilder.GuaranteedResult {
-        makeGuaranteedResult(component?.fragments ?? [])
-    }
-
-    public static func buildFinalResult(
-        _ component: FinalizedGroup<Fragment<NoLeftSource, SourceList>>
+        _ component: Partial<Current>
     ) -> Result {
-        makeResult(component.fragments)
+        makeResult(component.finalizedItems())
     }
 
-    public static func buildFinalResult(
-        _ component: Closed<Fragment<NoLeftSource, SourceList>>
-    ) -> Result {
-        makeResult(component.fragments)
+    public static func buildFinalResult(_ component: Closed) -> Result {
+        makeResult(component.items)
     }
 
-    private static func finalizeGroup<Attachment: AttachmentState, Current: CurrentState>(
-        _ component: Partial<Attachment, Current>
-    ) -> FinalizedGroup<Attachment> {
-        FinalizedGroup(fragments: component.finalizedFragments())
+    public static func buildFinalResult(_ component: FinalizedGroup) -> Result {
+        makeResult(component.items)
     }
 
-    private static func makeResult(_ items: [[SwifQLPart]]) -> Result {
+    public static func buildFinalResult(_ component: FinalizedGroup?) -> Result {
+        makeResult(component?.items ?? [])
+    }
+
+    public static func buildFinalResult(_ component: EmptyClosed) -> Result {
+        makeResult([])
+    }
+
+    private static func makeResult(_ items: [FromItem]) -> Result {
         var children: [SwifQLPart] = []
         children.append(o: .custom("FROM"), .space)
         var hasItem = false
         for item in items {
-            let continuesPrevious = item.first is JoinContinuationPart
-            let content = continuesPrevious ? Array(item.dropFirst()) : item
-            guard !content.isEmpty else { continue }
+            guard !item.parts.isEmpty else { continue }
             if hasItem {
-                children.append(o: continuesPrevious ? .space : .comma)
-                if !continuesPrevious { children.append(o: .space) }
+                switch item.kind {
+                case .source:
+                    children.append(o: .comma, .space)
+                case .joinContinuation:
+                    children.append(o: .space)
+                }
             }
-            children.append(contentsOf: content)
+            children.append(contentsOf: item.parts)
             hasItem = true
         }
         return Result(children: children)
     }
 
-    private static func makeGuaranteedResult(_ items: [[SwifQLPart]]) -> FromBuilder.GuaranteedResult {
-        FromBuilder.GuaranteedResult(children: FromBuilder.assemble(items), itemFragments: items)
+    private static func derivedSourceParts(_ result: Result) -> [SwifQLPart] {
+        guard let frame = result.parts.first as? SwifQLStructuralFramePart else { return result.parts }
+        return [SwifQLPartOperator.openBracket, frame, SwifQLPartOperator.closeBracket]
     }
 
+    private static func appendStatementBody(_ statementParts: [SwifQLPart], _ result: Result) -> [SwifQLPart] {
+        let children = (result.parts.first as? SwifQLStructuralFramePart)?.children ?? result.parts
+        var parts = statementParts
+        parts.appendSpaceIfNeeded()
+        parts.append(contentsOf: children)
+        return parts
+    }
+
+    fileprivate static func finalizeNestedClause(
+        _ statementParts: [SwifQLPart],
+        appending predicateParts: [SwifQLPart],
+        with appendClause: (SwifQLable, SwifQLable) -> SwifQLable
+    ) -> [SwifQLPart] {
+        guard !predicateParts.isEmpty else { return statementParts }
+        let statement = SwifQLableParts(parts: [SwifQLStructuralFramePart(region: .statement, children: statementParts)])
+        let appended = appendClause(statement, SwifQLableParts(rawParts: predicateParts))
+        return (appended.parts.first as? SwifQLStructuralFramePart)?.children ?? appended.parts
+    }
+
+    fileprivate static func finalizeNestedClause(
+        _ statementParts: [SwifQLPart],
+        applying appendClause: (SwifQLable) -> SwifQLable
+    ) -> [SwifQLPart] {
+        let statement = SwifQLableParts(parts: [SwifQLStructuralFramePart(region: .statement, children: statementParts)])
+        let appended = appendClause(statement)
+        return (appended.parts.first as? SwifQLStructuralFramePart)?.children ?? appended.parts
+    }
+
+    private static func _fromAddingGroupBy(_ request: GroupByClause, to statement: SwifQLable) -> SwifQLable {
+        let expressions = request.expressionParts
+            .filter { !$0.isEmpty }
+            .map { SwifQLableParts(rawParts: $0) as SwifQLable }
+        guard !expressions.isEmpty else { return statement }
+        return statement.groupBy(expressions)
+    }
+
+    private static func _fromAddingOrderBy(_ request: OrderByClause, to statement: SwifQLable) -> SwifQLable {
+        guard !request.items.isEmpty else { return statement }
+        return statement.orderBy(request.items)
+    }
+
+    private static func _fromAddingLimit(_ request: LimitClause, to statement: SwifQLable) -> SwifQLable {
+        guard !request.countParts.isEmpty else { return statement }
+        return statement.limit(SwifQLableParts(rawParts: request.countParts))
+    }
+
+    private static func _fromAddingOffset(_ request: OffsetClause, to statement: SwifQLable) -> SwifQLable {
+        guard !request.countParts.isEmpty else { return statement }
+        return statement.offset(SwifQLableParts(rawParts: request.countParts))
+    }
+
+    private static func derivedParts(_ statementParts: [SwifQLPart], alias: String?) -> [SwifQLPart] {
+        var parts: [SwifQLPart] = [SwifQLPartOperator.openBracket]
+        parts.append(SwifQLStructuralFramePart(region: .statement, children: statementParts))
+        parts.append(SwifQLPartOperator.closeBracket)
+        if let alias {
+            parts.append(o: .space, .custom("AS"), .space)
+            parts.append(SwifQLPartAlias(alias))
+        }
+        return parts
+    }
+}
+
+public extension FromBuilder.CurrentState {
+    func asFromItem() -> FromBuilder.FromItem {
+        FromBuilder.FromItem(kind: .source, parts: finalize().parts)
+    }
 }
 
 extension FromBuilder.Source: FromBuilder.AliasableCurrent where State: FromBuilder.AliasableSourceState {
@@ -1560,71 +647,17 @@ extension FromBuilder.Source: FromBuilder.AliasableCurrent where State: FromBuil
     }
 }
 
-private extension FromBuilder.NestedSelectOpen {
-    static func derivedParts(_ statementParts: [SwifQLPart], alias: String?) -> [SwifQLPart] {
-        var parts: [SwifQLPart] = []
-        parts.append(o: .openBracket)
-        parts.append(SwifQLStructuralFramePart(region: .statement, children: statementParts))
-        parts.append(o: .closeBracket)
-        if let alias {
-            parts.append(o: .space, .custom("AS"), .space)
-            parts.append(SwifQLPartAlias(alias))
-        }
-        return parts
-    }
-}
-
 private func _nestedStatementParts(
     _ statementParts: [SwifQLPart],
     appending predicateParts: [SwifQLPart],
     with appendClause: (SwifQLable, SwifQLable) -> SwifQLable
 ) -> [SwifQLPart] {
-    guard !predicateParts.isEmpty else { return statementParts }
-
-    let frame = SwifQLStructuralFramePart(region: .statement, children: statementParts)
-    let statement = SwifQLableParts(parts: [frame])
-    let appended = appendClause(statement, SwifQLableParts(rawParts: predicateParts))
-    return (appended.parts.first as? SwifQLStructuralFramePart)?.children ?? appended.parts
+    FromBuilder.finalizeNestedClause(statementParts, appending: predicateParts, with: appendClause)
 }
 
 private func _nestedStatementParts(
     _ statementParts: [SwifQLPart],
     applying appendClause: (SwifQLable) -> SwifQLable
 ) -> [SwifQLPart] {
-    let frame = SwifQLStructuralFramePart(region: .statement, children: statementParts)
-    let statement = SwifQLableParts(parts: [frame])
-    let appended = appendClause(statement)
-    return (appended.parts.first as? SwifQLStructuralFramePart)?.children ?? appended.parts
-}
-
-private func _fromAddingGroupBy(_ request: GroupByClause, to statement: SwifQLable) -> SwifQLable {
-    let expressions = request.expressionParts
-        .filter { !$0.isEmpty }
-        .map { SwifQLableParts(rawParts: $0) as SwifQLable }
-    guard !expressions.isEmpty else { return statement }
-    return statement.groupBy(expressions)
-}
-
-private func _fromAddingOrderBy(_ request: OrderByClause, to statement: SwifQLable) -> SwifQLable {
-    guard !request.items.isEmpty else { return statement }
-    return statement.orderBy(request.items)
-}
-
-private func _fromAddingLimit(_ request: LimitClause, to statement: SwifQLable) -> SwifQLable {
-    guard !request.countParts.isEmpty else { return statement }
-    return statement.limit(SwifQLableParts(rawParts: request.countParts))
-}
-
-private func _fromAddingOffset(_ request: OffsetClause, to statement: SwifQLable) -> SwifQLable {
-    guard !request.countParts.isEmpty else { return statement }
-    return statement.offset(SwifQLableParts(rawParts: request.countParts))
-}
-
-
-extension FromBuilder.Partial: FromBuilder.SourceListBranch where Attachment.Role == FromBuilder.SourceList {
-    public func finalizeSourceListBranch() -> [[SwifQLPart]] { finalizedFragments() }
-}
-
-extension FromBuilder.Partial: FromBuilder.JoinContinuationBranch where Attachment.Role == FromBuilder.JoinContinuationOnly {
-    public func finalizeJoinContinuationBranch() -> [[SwifQLPart]] { finalizedFragments() }
+    FromBuilder.finalizeNestedClause(statementParts, applying: appendClause)
 }

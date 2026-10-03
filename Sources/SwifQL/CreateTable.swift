@@ -14,7 +14,7 @@ public struct CreateTable: SwifQLable {
         @TableDefinitionBuilder _ definitions: () -> [any TableDefinition]
     ) {
         let snapshots: [SwifQLable] = definitions().map {
-            SwifQLableParts(parts: $0.parts)
+            SwifQLableParts(rawParts: $0.parts)
         }
         self.parts = SwifQL.create.table[any: Path.SchemaWithTable(schema: schema, table: table)]
             .tableDefinitions(snapshots)
@@ -40,6 +40,6 @@ extension SwifQLable {
             parts.append(contentsOf: definition.parts)
         }
         parts.append(o: .closeBracket)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

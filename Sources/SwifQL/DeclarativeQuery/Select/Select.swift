@@ -15,13 +15,11 @@ extension SwifQLable {
     ///
     /// Wins overload resolution for `.as("alias")` over the existing generic
     /// `.as(_ expression: SwifQLable)` (which would route `String` through
-    /// ordinary value semantics). Binds zero alias values. The existing `=>`
-    /// operator and generic `.as(SwifQLable)` remain unchanged.
+    /// ordinary value semantics). Binds zero alias values.
     public func `as`(_ alias: String) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
-        parts.append(o: .as, .space)
+        var parts: [SwifQLPart] = []
+        parts.append(o: .space, .as, .space)
         parts.append(SwifQLPartAlias(alias))
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.appendingPostfix(parts, to: self)
     }
 }

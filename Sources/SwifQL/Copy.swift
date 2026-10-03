@@ -121,7 +121,7 @@ extension SwifQLable {
         parts.append(o: .space, .to, .space)
         parts.append(contentsOf: destination.parts)
         appendCopyOptions(options, to: &parts)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     /// Copies an ordinary source expression into a structural table. The
@@ -150,7 +150,7 @@ extension SwifQLable {
         parts.append(contentsOf: source.parts)
         parts.append(o: .closeBracket)
         appendCopyOptions(options, to: &parts)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     /// Copies a parenthesized query result to an ordinary destination
@@ -177,7 +177,7 @@ extension SwifQLable {
         parts.append(o: .closeBracket, .space, .to, .space)
         parts.append(contentsOf: destination.parts)
         appendCopyOptions(options, to: &parts)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     /// Copies all objects or one schema from a structural source catalog to a
@@ -203,6 +203,6 @@ extension SwifQLable {
         parts.append(o: .space, .to, .space)
         parts.append(contentsOf: destination.parts)
         appendCopyOptions(options, to: &parts)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

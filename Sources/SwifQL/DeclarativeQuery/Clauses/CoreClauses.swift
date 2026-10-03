@@ -1,43 +1,69 @@
 import Foundation
 
-/// A typed WHERE request consumed only by an open declarative SELECT owner.
-public struct WhereClause {
+/// A typed WHERE clause request: an independently renderable SQL fragment
+/// that may also participate in specialized local builder composition.
+public struct WhereClause: SwifQLable {
     let predicateParts: [SwifQLPart]
 
     init(predicateParts: [SwifQLPart]) {
         self.predicateParts = predicateParts
     }
+
+    public var parts: [SwifQLPart] {
+        guard !predicateParts.isEmpty else { return [] }
+        return SwifQL.`where`(SwifQLableParts(rawParts: predicateParts)).parts
+    }
 }
 
-/// A typed HAVING request consumed only by an open declarative SELECT owner.
-public struct HavingClause {
+/// A typed HAVING clause request: an independently renderable SQL fragment
+/// that may also participate in specialized local builder composition.
+public struct HavingClause: SwifQLable {
     let predicateParts: [SwifQLPart]
 
     init(predicateParts: [SwifQLPart]) {
         self.predicateParts = predicateParts
     }
+
+    public var parts: [SwifQLPart] {
+        guard !predicateParts.isEmpty else { return [] }
+        return SwifQL.having(SwifQLableParts(rawParts: predicateParts)).parts
+    }
 }
 
-/// A typed QUALIFY request consumed only by an open declarative SELECT owner.
-public struct QualifyClause {
+/// A typed QUALIFY clause request: an independently renderable SQL fragment
+/// that may also participate in specialized local builder composition.
+public struct QualifyClause: SwifQLable {
     let predicateParts: [SwifQLPart]
 
     init(predicateParts: [SwifQLPart]) {
         self.predicateParts = predicateParts
     }
+
+    public var parts: [SwifQLPart] {
+        guard !predicateParts.isEmpty else { return [] }
+        return SwifQL.qualify(SwifQLableParts(rawParts: predicateParts)).parts
+    }
 }
 
-/// A typed GROUP BY request consumed only by an open declarative SELECT owner.
-public struct GroupByClause {
+/// A typed GROUP BY clause request: an independently renderable SQL fragment
+/// that may also participate in specialized local builder composition.
+public struct GroupByClause: SwifQLable {
     let expressionParts: [[SwifQLPart]]
 
     init(expressionParts: [[SwifQLPart]]) {
         self.expressionParts = expressionParts
     }
+
+    public var parts: [SwifQLPart] {
+        let expressions = expressionParts.filter { !$0.isEmpty }
+        guard !expressions.isEmpty else { return [] }
+        return SwifQL.groupBy(expressions.map { SwifQLableParts(rawParts: $0) as SwifQLable }).parts
+    }
 }
 
-/// A typed ORDER BY request consumed only by an open declarative SELECT owner.
-public struct OrderByClause {
+/// A typed ORDER BY clause request: an independently renderable SQL fragment
+/// that may also participate in specialized local builder composition.
+public struct OrderByClause: SwifQLable {
     let items: [OrderByItem]
 
     init(items: [OrderByItem]) {
@@ -49,23 +75,40 @@ public struct OrderByClause {
             return OrderByItem(elements: elements, direction: item.direction, nulls: item.nulls)
         }
     }
+
+    public var parts: [SwifQLPart] {
+        guard !items.isEmpty else { return [] }
+        return SwifQL.orderBy(items).parts
+    }
 }
 
-/// A typed LIMIT request consumed only by an open declarative SELECT owner.
-public struct LimitClause {
+/// A typed LIMIT clause request: an independently renderable SQL fragment
+/// that may also participate in specialized local builder composition.
+public struct LimitClause: SwifQLable {
     let countParts: [SwifQLPart]
 
     init(countParts: [SwifQLPart]) {
         self.countParts = countParts
     }
+
+    public var parts: [SwifQLPart] {
+        guard !countParts.isEmpty else { return [] }
+        return SwifQL.limit(SwifQLableParts(rawParts: countParts)).parts
+    }
 }
 
-/// A typed OFFSET request consumed only by an open declarative SELECT owner.
-public struct OffsetClause {
+/// A typed OFFSET clause request: an independently renderable SQL fragment
+/// that may also participate in specialized local builder composition.
+public struct OffsetClause: SwifQLable {
     let countParts: [SwifQLPart]
 
     init(countParts: [SwifQLPart]) {
         self.countParts = countParts
+    }
+
+    public var parts: [SwifQLPart] {
+        guard !countParts.isEmpty else { return [] }
+        return SwifQL.offset(SwifQLableParts(rawParts: countParts)).parts
     }
 }
 
@@ -112,12 +155,12 @@ public func OrderBy(
     OrderByClause(items: [OrderByItem.direction(direction, expression)])
 }
 
-/// Creates a LIMIT request. Empty `parts` omit the whole clause at its owner.
+/// Creates a LIMIT request. Empty `parts` render as an empty fragment, omitting the clause.
 public func Limit(_ count: any SwifQLable) -> LimitClause {
     LimitClause(countParts: count.parts)
 }
 
-/// Creates an OFFSET request. Empty `parts` omit the whole clause at its owner.
+/// Creates an OFFSET request. Empty `parts` render as an empty fragment, omitting the clause.
 public func Offset(_ count: any SwifQLable) -> OffsetClause {
     OffsetClause(countParts: count.parts)
 }

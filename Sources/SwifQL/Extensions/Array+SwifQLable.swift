@@ -35,7 +35,7 @@ extension Array where Element: SwifQLable {
             }
             parts.append(contentsOf: v.parts)
         }
-        return SwifQLableParts(parts: parts)
+        return SwifQLableParts(rawParts: parts)
     }
 }
 

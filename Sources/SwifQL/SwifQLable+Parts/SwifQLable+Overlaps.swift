@@ -14,7 +14,7 @@ extension SwifQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .overlaps)
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
     
     public func overlaps(_ fields: SwifQLable...) -> SwifQLable {
@@ -39,7 +39,7 @@ extension SwifQLable {
         if fields.count > 0 {
             parts.append(o: .closeBracket)
         }
-        return SwifQLableParts(parts: parts)
+        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 }
 

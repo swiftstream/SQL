@@ -33,11 +33,8 @@ extension SwifQLable {
     ///   - predicates: which columns should be used to make `JOIN`
     /// - Returns: `SwifQLable`
     public func join(_ mode: JoinMode = .none, _ expression: SwifQLable, on predicates: SwifQLable? = nil) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
         let join = SwifQLJoinBuilder(mode, expression, on: predicates)
-        parts.append(contentsOf: join.parts)
-        return SwifQLableParts(parts: parts)
+        return structurallyAppending(SwifQLableParts(parts: [SwifQLPartOperator.space] + join.parts))
     }
 
     /// Join with an explicit SQL MATCH_CONDITION role followed by an
@@ -49,16 +46,13 @@ extension SwifQLable {
         matchCondition: SwifQLable,
         on predicates: SwifQLable? = nil
     ) -> SwifQLable {
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
         let join = SwifQLJoinBuilder(
             mode,
             expression,
             matchCondition: matchCondition,
             on: predicates
         )
-        parts.append(contentsOf: join.parts)
-        return SwifQLableParts(parts: parts)
+        return structurallyAppending(SwifQLableParts(parts: [SwifQLPartOperator.space] + join.parts))
     }
 
     /// Join with an explicit SQL MATCH_CONDITION role followed by structural
@@ -167,11 +161,8 @@ extension SwifQLable {
     ) -> SwifQLable {
         precondition(!columns.isEmpty, "JOIN USING requires at least one column")
 
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
         let join = SwifQLJoinBuilder(mode, expression, using: columns)
-        parts.append(contentsOf: join.parts)
-        return SwifQLableParts(parts: parts)
+        return structurallyAppending(SwifQLableParts(parts: [SwifQLPartOperator.space] + join.parts))
     }
 
     private func makeMatchConditionUsingJoin(
@@ -182,16 +173,13 @@ extension SwifQLable {
     ) -> SwifQLable {
         precondition(!columns.isEmpty, "JOIN MATCH_CONDITION USING requires at least one column")
 
-        var parts = self.parts
-        parts.appendSpaceIfNeeded()
         let join = SwifQLJoinBuilder(
             mode,
             expression,
             matchCondition: matchCondition,
             using: columns
         )
-        parts.append(contentsOf: join.parts)
-        return SwifQLableParts(parts: parts)
+        return structurallyAppending(SwifQLableParts(parts: [SwifQLPartOperator.space] + join.parts))
     }
 
 }
