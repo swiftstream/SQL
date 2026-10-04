@@ -24,8 +24,8 @@ extension Fn.Name {
 }
 
 extension Fn {
-    private static func commaSeparated(_ values: [SwifQLable]) -> [SwifQLPart] {
-        var parts: [SwifQLPart] = []
+    private static func commaSeparated(_ values: [SQLable]) -> [SQLPart] {
+        var parts: [SQLPart] = []
         for (index, value) in values.enumerated() {
             if index > 0 {
                 parts.append(o: .comma)
@@ -37,98 +37,98 @@ extension Fn {
     }
 
     /// Builds DuckDB's variadic `json_array` function.
-    public static func jsonArray(_ values: SwifQLable...) -> SwifQLable {
+    public static func jsonArray(_ values: SQLable...) -> SQLable {
         jsonArray(values)
     }
 
-    public static func jsonArray(_ values: [SwifQLable]) -> SwifQLable {
+    public static func jsonArray(_ values: [SQLable]) -> SQLable {
         build(.jsonArray, body: commaSeparated(values))
     }
 
     /// Applies one JSON merge patch to a JSON value.
-    public static func jsonMergePatch(_ json: SwifQLable, _ patch: SwifQLable) -> SwifQLable {
+    public static func jsonMergePatch(_ json: SQLable, _ patch: SQLable) -> SQLable {
         build(.jsonMergePatch, body: commaSeparated([json, patch]))
     }
 
     /// Builds a DuckDB JSON object from alternating string keys and values.
-    public static func jsonObject(_ items: SwifQLable...) -> SwifQLable {
+    public static func jsonObject(_ items: SQLable...) -> SQLable {
         build(.jsonObject, body: commaSeparated(items))
     }
 
     /// Aggregates values into a JSON array.
-    public static func jsonGroupArray(_ value: SwifQLable) -> SwifQLable {
+    public static func jsonGroupArray(_ value: SQLable) -> SQLable {
         build(.jsonGroupArray, body: value.parts)
     }
 
     /// Aggregates key/value pairs into a JSON object.
-    public static func jsonGroupObject(_ key: SwifQLable, _ value: SwifQLable) -> SwifQLable {
+    public static func jsonGroupObject(_ key: SQLable, _ value: SQLable) -> SQLable {
         build(.jsonGroupObject, body: commaSeparated([key, value]))
     }
 
     /// Aggregates values into a JSON structure description.
-    public static func jsonGroupStructure(_ value: SwifQLable) -> SwifQLable {
+    public static func jsonGroupStructure(_ value: SQLable) -> SQLable {
         build(.jsonGroupStructure, body: value.parts)
     }
 
-    public static func jsonKeys(_ json: SwifQLable) -> SwifQLable {
+    public static func jsonKeys(_ json: SQLable) -> SQLable {
         build(.jsonKeys, body: json.parts)
     }
 
-    public static func jsonKeys(_ json: SwifQLable, path: SwifQLable) -> SwifQLable {
+    public static func jsonKeys(_ json: SQLable, path: SQLable) -> SQLable {
         build(.jsonKeys, body: commaSeparated([json, path]))
     }
 
-    public static func jsonStructure(_ json: SwifQLable) -> SwifQLable {
+    public static func jsonStructure(_ json: SQLable) -> SQLable {
         build(.jsonStructure, body: json.parts)
     }
 
-    public static func jsonType(_ json: SwifQLable) -> SwifQLable {
+    public static func jsonType(_ json: SQLable) -> SQLable {
         build(.jsonType, body: json.parts)
     }
 
-    public static func jsonType(_ json: SwifQLable, path: SwifQLable) -> SwifQLable {
+    public static func jsonType(_ json: SQLable, path: SQLable) -> SQLable {
         build(.jsonType, body: commaSeparated([json, path]))
     }
 
-    public static func jsonValid(_ json: SwifQLable) -> SwifQLable {
+    public static func jsonValid(_ json: SQLable) -> SQLable {
         build(.jsonValid, body: json.parts)
     }
 
-    public static func jsonValue(_ json: SwifQLable, path: SwifQLable) -> SwifQLable {
+    public static func jsonValue(_ json: SQLable, path: SQLable) -> SQLable {
         build(.jsonValue, body: commaSeparated([json, path]))
     }
 
-    public static func jsonTransform(_ json: SwifQLable, structure: SwifQLable) -> SwifQLable {
+    public static func jsonTransform(_ json: SQLable, structure: SQLable) -> SQLable {
         build(.jsonTransform, body: commaSeparated([json, structure]))
     }
 
-    public static func fromJSON(_ json: SwifQLable, structure: SwifQLable) -> SwifQLable {
+    public static func fromJSON(_ json: SQLable, structure: SQLable) -> SQLable {
         build(.fromJSON, body: commaSeparated([json, structure]))
     }
 
-    public static func jsonTransformStrict(_ json: SwifQLable, structure: SwifQLable) -> SwifQLable {
+    public static func jsonTransformStrict(_ json: SQLable, structure: SQLable) -> SQLable {
         build(.jsonTransformStrict, body: commaSeparated([json, structure]))
     }
 
-    public static func fromJSONStrict(_ json: SwifQLable, structure: SwifQLable) -> SwifQLable {
+    public static func fromJSONStrict(_ json: SQLable, structure: SQLable) -> SQLable {
         build(.fromJSONStrict, body: commaSeparated([json, structure]))
     }
 
-    public static func jsonTree(_ json: SwifQLable) -> SwifQLable {
+    public static func jsonTree(_ json: SQLable) -> SQLable {
         build(.jsonTree, body: json.parts)
     }
 
-    public static func jsonTree(_ json: SwifQLable, path: SwifQLable) -> SwifQLable {
+    public static func jsonTree(_ json: SQLable, path: SQLable) -> SQLable {
         build(.jsonTree, body: commaSeparated([json, path]))
     }
 
     /// Extracts one DuckDB JSON path expression from a JSON value.
-    public static func jsonExtractPath(_ json: SwifQLable, path: SwifQLable) -> SwifQLable {
+    public static func jsonExtractPath(_ json: SQLable, path: SQLable) -> SQLable {
         build(.jsonExtractPath, body: commaSeparated([json, path]))
     }
 
     /// Extracts one DuckDB JSON path expression as text.
-    public static func jsonExtractPathText(_ json: SwifQLable, path: SwifQLable) -> SwifQLable {
+    public static func jsonExtractPathText(_ json: SQLable, path: SQLable) -> SQLable {
         build(.jsonExtractPathText, body: commaSeparated([json, path]))
     }
 }

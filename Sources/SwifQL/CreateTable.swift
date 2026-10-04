@@ -1,35 +1,35 @@
 import Foundation
 
-public protocol TableDefinition: SwifQLable {}
+public protocol TableDefinition: SQLable {}
 
 extension NewColumn: TableDefinition {}
 extension GeneratedColumn: TableDefinition {}
 
-public struct CreateTable: SwifQLable {
-    public let parts: [SwifQLPart]
+public struct CreateTable: SQLable {
+    public let parts: [SQLPart]
 
     public init(
         _ table: String,
         schema: String? = nil,
         @TableDefinitionBuilder _ definitions: () -> [any TableDefinition]
     ) {
-        let snapshots: [SwifQLable] = definitions().map {
-            SwifQLableParts(rawParts: $0.parts)
+        let snapshots: [SQLable] = definitions().map {
+            SQLableParts(rawParts: $0.parts)
         }
-        self.parts = SwifQL.create.table[any: Path.SchemaWithTable(schema: schema, table: table)]
+        self.parts = SQL.root.create.table[any: Path.SchemaWithTable(schema: schema, table: table)]
             .tableDefinitions(snapshots)
             .parts
     }
 }
 
-extension SwifQLable {
+extension SQLable {
     /// Appends a parenthesized, comma-separated table-definition list.
-    public func tableDefinitions(_ definitions: SwifQLable...) -> SwifQLable {
+    public func tableDefinitions(_ definitions: SQLable...) -> SQLable {
         tableDefinitions(definitions)
     }
 
     /// Appends a parenthesized, comma-separated table-definition list.
-    public func tableDefinitions(_ definitions: [SwifQLable]) -> SwifQLable {
+    public func tableDefinitions(_ definitions: [SQLable]) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .openBracket)
@@ -40,6 +40,6 @@ extension SwifQLable {
             parts.append(contentsOf: definition.parts)
         }
         parts.append(o: .closeBracket)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

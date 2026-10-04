@@ -1,26 +1,26 @@
-public protocol AlterTableAction: SwifQLable {}
+public protocol AlterTableAction: SQLable {}
 
 public struct AddColumn: AlterTableAction {
-    public let parts: [SwifQLPart]
+    public let parts: [SQLPart]
 
     public init(
         _ name: String,
-        _ type: SwifQL.`Type`
+        _ type: Type
     ) {
-        var parts: [SwifQLPart] = []
+        var parts: [SQLPart] = []
         parts.append(o: .add)
         parts.append(o: .space)
         parts.append(o: .column)
         parts.append(o: .space)
-        parts.append(SwifQLPartColumn(name))
+        parts.append(SQLPartColumn(name))
         parts.append(o: .space)
-        parts.append(SwifQLPartType(type))
+        parts.append(SQLPartType(type))
         self.parts = parts
     }
 }
 
-public struct AlterTable: SwifQLable {
-    public let parts: [SwifQLPart]
+public struct AlterTable: SQLable {
+    public let parts: [SQLPart]
 
     public init(
         _ table: String,
@@ -28,7 +28,7 @@ public struct AlterTable: SwifQLable {
         @AlterTableActionBuilder _ actions: () -> [any AlterTableAction]
     ) {
         let actionParts = actions().map(\.parts)
-        var parts = SwifQL.alter.table[any: Path.SchemaWithTable(schema: schema, table: table)].parts
+        var parts = SQL.root.alter.table[any: Path.SchemaWithTable(schema: schema, table: table)].parts
         for (index, action) in actionParts.enumerated() {
             if index == 0 {
                 parts.append(o: .space)
@@ -37,6 +37,6 @@ public struct AlterTable: SwifQLable {
             }
             parts.append(contentsOf: action)
         }
-        self.parts = SwifQLableParts(parts: parts).parts
+        self.parts = SQLableParts(parts: parts).parts
     }
 }

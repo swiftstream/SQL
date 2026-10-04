@@ -7,14 +7,14 @@
 
 import Foundation
 
-public struct SwifQLPartSchema: SwifQLPart {
+public struct SQLPartSchema: SQLPart {
     public var schema: String?
     public init (_ schema: String?) {
         self.schema = schema
     }
 }
 
-public struct SwifQLPartTable: SwifQLPart {
+public struct SQLPartTable: SQLPart {
     public var schema: String?
     public var table: String
     public init (_ table: String) {

@@ -12,7 +12,7 @@ extension Fn.Name {
 
 private func appendTableFunctionOptions(
     _ options: [TableFunctionOption],
-    to parts: inout [SwifQLPart]
+    to parts: inout [SQLPart]
 ) {
     guard !options.isEmpty else { return }
 
@@ -27,54 +27,54 @@ private func appendTableFunctionOptions(
 
 extension Fn {
     public static func readCSV(
-        _ path: SwifQLable,
+        _ path: SQLable,
         options: TableFunctionOption...
-    ) -> SwifQLable {
+    ) -> SQLable {
         readCSV(path, options: options)
     }
 
     public static func readCSV(
-        _ path: SwifQLable,
+        _ path: SQLable,
         options: [TableFunctionOption]
-    ) -> SwifQLable {
+    ) -> SQLable {
         var parts = path.parts
         appendTableFunctionOptions(options, to: &parts)
         return build(.readCSV, body: parts)
     }
 
     public static func readParquet(
-        _ path: SwifQLable,
+        _ path: SQLable,
         options: TableFunctionOption...
-    ) -> SwifQLable {
+    ) -> SQLable {
         readParquet(path, options: options)
     }
 
     public static func readParquet(
-        _ path: SwifQLable,
+        _ path: SQLable,
         options: [TableFunctionOption]
-    ) -> SwifQLable {
+    ) -> SQLable {
         var parts = path.parts
         appendTableFunctionOptions(options, to: &parts)
         return build(.readParquet, body: parts)
     }
 
     public static func readJSON(
-        _ path: SwifQLable,
+        _ path: SQLable,
         options: TableFunctionOption...
-    ) -> SwifQLable {
+    ) -> SQLable {
         readJSON(path, options: options)
     }
 
     public static func readJSON(
-        _ path: SwifQLable,
+        _ path: SQLable,
         options: [TableFunctionOption]
-    ) -> SwifQLable {
+    ) -> SQLable {
         var parts = path.parts
         appendTableFunctionOptions(options, to: &parts)
         return build(.readJSON, body: parts)
     }
 
-    public static func glob(_ pattern: SwifQLable) -> SwifQLable {
+    public static func glob(_ pattern: SQLable) -> SQLable {
         build(.glob, body: pattern.parts)
     }
 }

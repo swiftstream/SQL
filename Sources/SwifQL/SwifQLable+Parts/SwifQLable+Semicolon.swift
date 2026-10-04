@@ -1,5 +1,5 @@
 //
-//  SwifQLable+Semicolon.swift
+//  SQLable+Semicolon.swift
 //  
 //
 //  Created by Mihael Isaev on 24.01.2020.
@@ -7,11 +7,11 @@
 
 import Foundation
 
-extension SwifQLable {
+extension SQLable {
     /// Represent just `;` symbol
-    public var semicolon: SwifQLable {
-        var parts: [SwifQLPart] = self.parts
+    public var semicolon: SQLable {
+        var parts: [SQLPart] = self.parts
         parts.append(o: .semicolon)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

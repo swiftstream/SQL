@@ -1,82 +1,82 @@
 import Foundation
 
-extension SwifQLable {
-    public var or: SwifQLable {
+extension SQLable {
+    public var or: SQLable {
         appendingAtomicKeyword(.or)
     }
 
-    public var replace: SwifQLable {
+    public var replace: SQLable {
         appendingAtomicKeyword(.replace)
     }
 
-    public var view: SwifQLable {
+    public var view: SQLable {
         appendingAtomicKeyword(.custom("VIEW"))
     }
 
-    public var sequence: SwifQLable {
+    public var sequence: SQLable {
         appendingAtomicKeyword(.custom("SEQUENCE"))
     }
 
-    public var macro: SwifQLable {
+    public var macro: SQLable {
         appendingAtomicKeyword(.custom("MACRO"))
     }
 
-    public var index: SwifQLable {
+    public var index: SQLable {
         appendingAtomicKeyword(.custom("INDEX"))
     }
 
-    public var temp: SwifQLable {
+    public var temp: SQLable {
         appendingAtomicKeyword(.custom("TEMP"))
     }
 
-    public var temporary: SwifQLable {
+    public var temporary: SQLable {
         appendingAtomicKeyword(.custom("TEMPORARY"))
     }
 
-    public var ignore: SwifQLable {
+    public var ignore: SQLable {
         appendingAtomicKeyword(.custom("IGNORE"))
     }
 
-    public var name: SwifQLable {
+    public var name: SQLable {
         appendingAtomicKeyword(.custom("NAME"))
     }
 
-    public var when: SwifQLable {
+    public var when: SQLable {
         appendingAtomicKeyword(.when)
     }
 
-    public var matched: SwifQLable {
+    public var matched: SQLable {
         appendingAtomicKeyword(.custom("MATCHED"))
     }
 
-    public var source: SwifQLable {
+    public var source: SQLable {
         appendingAtomicKeyword(.custom("SOURCE"))
     }
 
-    public var target: SwifQLable {
+    public var target: SQLable {
         appendingAtomicKeyword(.custom("TARGET"))
     }
 
-    public var cycle: SwifQLable {
+    public var cycle: SQLable {
         appendingAtomicKeyword(.custom("CYCLE"))
     }
 
-    public var minValue: SwifQLable {
+    public var minValue: SQLable {
         appendingAtomicKeyword(.custom("MINVALUE"))
     }
 
-    public var maxValue: SwifQLable {
+    public var maxValue: SQLable {
         appendingAtomicKeyword(.custom("MAXVALUE"))
     }
 
-    public var data: SwifQLable {
+    public var data: SQLable {
         appendingAtomicKeyword(.data)
     }
 
-    private func appendingAtomicKeyword(_ keyword: SwifQLPartOperator) -> SwifQLable {
+    private func appendingAtomicKeyword(_ keyword: SQLPartOperator) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: keyword)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

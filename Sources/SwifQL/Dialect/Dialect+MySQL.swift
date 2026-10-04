@@ -22,23 +22,23 @@ class MySQLDialect: SQLDialect {
     override var id: String? { "mysql" }
 
     override func sampling(
-        _ sample: SwifQLPartSampling,
-        observingUnsafeValues observation: SwifQLUnsafeValueObservation
-    ) -> SwifQLObservedParts {
+        _ sample: SQLPartSampling,
+        observingUnsafeValues observation: SQLUnsafeValueObservation
+    ) -> SQLObservedParts {
         .complete(defaultSamplingParts(sample))
     }
 
     override func lambda(
-        _ lambda: SwifQLPartLambda,
-        observingUnsafeValues observation: SwifQLUnsafeValueObservation
-    ) -> SwifQLObservedParts {
+        _ lambda: SQLPartLambda,
+        observingUnsafeValues observation: SQLUnsafeValueObservation
+    ) -> SQLObservedParts {
         .complete(defaultLambdaParts(lambda))
     }
 
     override func starReplaceParts(
-        _ part: SwifQLStarReplacePart,
-        observingUnsafeValues observation: SwifQLUnsafeValueObservation
-    ) -> SwifQLObservedParts {
+        _ part: SQLStarReplacePart,
+        observingUnsafeValues observation: SQLUnsafeValueObservation
+    ) -> SQLObservedParts {
         .complete(defaultStarReplaceParts(part))
     }
 
@@ -46,7 +46,7 @@ class MySQLDialect: SQLDialect {
         "`\(value.replacingOccurrences(of: "`", with: "``"))`"
     }
     
-    override func keyPath(_ keyPath: SwifQLPartKeyPath) -> String {
+    override func keyPath(_ keyPath: SQLPartKeyPath) -> String {
         var result = ""
         if let schema = keyPath.schema {
             result.append(schemaName(schema))

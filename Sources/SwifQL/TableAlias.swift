@@ -19,25 +19,25 @@ import Foundation
 ///             \User.$groupID => "groupID")
 ///     .from(User.table)
 ///     .groupBy(\User.$groupID)| => u
-/// let query = SwifQL.select(..., u.users)
+/// let query = SQL.root.select(..., u.users)
 ///     .from(...)
 ///     .join(.left, subquery, on: u.groupID == \Group.$id)
 ///     .groupBy(..., u.users)
 /// ```
 @dynamicMemberLookup
-public class TableAlias: SwifQLable {
+public class TableAlias: SQLable {
     public var name: String
 
     public init (_ name: String) {
         self.name = name
     }
     
-    public subscript(dynamicMember path: String) -> SwifQLable {
+    public subscript(dynamicMember path: String) -> SQLable {
         Path.Table(name).column(path)
     }
     
-    public var parts: [SwifQLPart] {
-        [SwifQLPartAlias(name)]
+    public var parts: [SQLPart] {
+        [SQLPartAlias(name)]
     }
 }
 
@@ -46,15 +46,15 @@ protocol AnyGenericTableAlias {
 }
 
 @dynamicMemberLookup
-public class GenericTableAlias<M: Decodable>: SwifQLable, AnyGenericTableAlias {
+public class GenericTableAlias<M: Decodable>: SQLable, AnyGenericTableAlias {
     public typealias Model = M
     
-    public var parts: [SwifQLPart] {
-        [SwifQLPartTable(schema: nil, table: alias)]
+    public var parts: [SQLPart] {
+        [SQLPartTable(schema: nil, table: alias)]
     }
     
-    public var table: SwifQLable {
-        SwifQLableParts(parts: SwifQLPartTableWithAlias(schema: schema, table: name, alias: alias))
+    public var table: SQLable {
+        SQLableParts(parts: SQLPartTableWithAlias(schema: schema, table: name, alias: alias))
     }
     
     var name: String {
@@ -77,26 +77,26 @@ public class GenericTableAlias<M: Decodable>: SwifQLable, AnyGenericTableAlias {
         Path.Table(alias).column(paths)
     }
     
-    public subscript<V>(dynamicMember keyPath: KeyPath<Model, V>) -> SwifQLable {
+    public subscript<V>(dynamicMember keyPath: KeyPath<Model, V>) -> SQLable {
         guard let k = keyPath as? Keypathable else { return "<keyPath should conform to Keypathable>" }
         return Path.Table(alias).column(k.paths)
     }
 }
 
 postfix operator *
-postfix public func *<T: Decodable>(table: GenericTableAlias<T>) -> SwifQLable {
-    var parts: [SwifQLPart] = []
-    parts.append(SwifQLPartTable(table.alias))
-    parts.append(SwifQLPartOperator(".*", semanticRole: .starProjection))
+postfix public func *<T: Decodable>(table: GenericTableAlias<T>) -> SQLable {
+    var parts: [SQLPart] = []
+    parts.append(SQLPartTable(table.alias))
+    parts.append(SQLPartOperator(".*", semanticRole: .starProjection))
     parts.append(o: .space)
-    return SwifQLableParts(parts: parts)
+    return SQLableParts(parts: parts)
 }
-postfix public func *(table: AnyTable.Type) -> SwifQLable {
-    var parts: [SwifQLPart] = []
-    parts.append(SwifQLPartTable(table.tableName))
-    parts.append(SwifQLPartOperator(".*", semanticRole: .starProjection))
+postfix public func *(table: AnyTable.Type) -> SQLable {
+    var parts: [SQLPart] = []
+    parts.append(SQLPartTable(table.tableName))
+    parts.append(SQLPartOperator(".*", semanticRole: .starProjection))
     parts.append(o: .space)
-    return SwifQLableParts(parts: parts)
+    return SQLableParts(parts: parts)
 }
 
 //MARK: Decodable extension
@@ -118,22 +118,22 @@ public class AliasedKeyPath<K, T, V> where K: KeyPath<T, V>, T: Table, V: Column
     }
 }
 
-extension AliasedKeyPath: SwifQLKeyPathable {
+extension AliasedKeyPath: SQLKeyPathable {
     public var schema: String? { (AModel.self as? Schemable.Type)?.schemaName }
     public var table: String? { alias }
     public var paths: [String] { kp.paths }
 }
 
-extension AliasedKeyPath: SwifQLable {
-    public var parts: [SwifQLPart] {
+extension AliasedKeyPath: SQLable {
+    public var parts: [SQLPart] {
         if let kp = self.originalKeyPath as? FluentKitFieldable {
-            return [SwifQLPartKeyPath(table: table, paths: [kp.key])]
+            return [SQLPartKeyPath(table: table, paths: [kp.key])]
         }
-        return [SwifQLPartKeyPath(table: table, paths: paths)]
+        return [SQLPartKeyPath(table: table, paths: paths)]
     }
 }
 
-extension AliasedKeyPath: SwifQLUniversalKeyPath, SwifQLUniversalKeyPathSimple {
+extension AliasedKeyPath: SQLUniversalKeyPath, SQLUniversalKeyPathSimple {
     public typealias AType = V
     public typealias AModel = T
     public typealias ARoot = AliasedKeyPath

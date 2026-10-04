@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct SwifQLPartUnsafeValue: SwifQLPart {
+public struct SQLPartUnsafeValue: SQLPart {
     var unsafeValue: Encodable
     
     public init (_ value: Encodable) {

@@ -1,6 +1,6 @@
 //
-//  SwifQLable+NotIn.swift
-//  SwifQLCore
+//  SQLable+NotIn.swift
+//  SQLCore
 //
 //  Created by Mihael Isaev on 16/11/2018.
 //
@@ -9,18 +9,18 @@ import Foundation
 
 // MARK: IN
 
-extension SwifQLable {
+extension SQLable {
     /// Builds query with `NOT IN` parameter
     ///
     /// Example usage:
     /// ```swift
-    /// SwifQL.select
+    /// SQL.root.select
     ///     // ...
     ///     .where((\User.$id).notIn(aUserID, bUserID))
     /// ```
-    /// - Parameter items: comma separated list of  `SwifQLable` elements
+    /// - Parameter items: comma separated list of  `SQLable` elements
     ///
-    public func notIn(_ items: SwifQLable...) -> SwifQLable {
+    public func notIn(_ items: SQLable...) -> SQLable {
         notIn(items)
     }
 
@@ -28,13 +28,13 @@ extension SwifQLable {
     ///
     /// Example usage:
     /// ```swift
-    /// SwifQL.select
+    /// SQL.root.select
     ///     // ...
     ///     .where((\User.$id).notIn(userIDsArray))
     /// ```
-    /// - Parameter items: Array of `[SwifQLable]` elements
+    /// - Parameter items: Array of `[SQLable]` elements
     ///
-    public func notIn(_ items: [SwifQLable]) -> SwifQLable {
+    public func notIn(_ items: [SQLable]) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .notIn)
@@ -48,6 +48,6 @@ extension SwifQLable {
             parts.append(contentsOf: v.parts)
         }
         parts.append(o: .closeBracket)
-        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 }

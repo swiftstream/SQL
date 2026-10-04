@@ -7,56 +7,50 @@ import Foundation
 @resultBuilder
 public enum SQLBuilder {
     public protocol FinalizableItem {
-        func finalize() -> SwifQLable
+        func finalize() -> SQLable
     }
 
     public struct NeutralItem: FinalizableItem {
-        private let snapshot: [SwifQLPart]
+        private let snapshot: [SQLPart]
 
-        init(snapshotting parts: [SwifQLPart]) {
+        init(snapshotting parts: [SQLPart]) {
             self.snapshot = parts
         }
 
-        public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: snapshot)
+        public func finalize() -> SQLable {
+            SQLableParts(rawParts: snapshot)
         }
     }
 
     public struct Partial<Current: FinalizableItem> {
-        var completed: [SwifQLable]
+        var completed: [SQLable]
         var current: Current
 
-        init(completed: [SwifQLable], current: Current) {
+        init(completed: [SQLable], current: Current) {
             self.completed = completed
             self.current = current
         }
     }
 
     public struct FinalizedGroup<Source: FinalizableItem> {
-        let fragments: [SwifQLable]
+        let fragments: [SQLable]
 
-        init(fragments: [SwifQLable]) {
+        init(fragments: [SQLable]) {
             self.fragments = fragments
         }
     }
 
     public struct ClosedRoot {
-        let fragments: [SwifQLable]
+        let fragments: [SQLable]
 
-        init(fragments: [SwifQLable]) {
+        init(fragments: [SQLable]) {
             self.fragments = fragments
         }
     }
 
-    public struct Root {
-        let fragments: [SwifQLable]
+    public typealias Root = SQL
 
-        init(fragments: [SwifQLable]) {
-            self.fragments = fragments
-        }
-    }
-
-    public static func buildExpression(_ expression: any SwifQLable) -> NeutralItem {
+    public static func buildExpression(_ expression: any SQLable) -> NeutralItem {
         NeutralItem(snapshotting: expression.parts)
     }
 
@@ -162,48 +156,48 @@ public enum SQLBuilder {
     }
 
     public static func buildFinalResult(_ component: ClosedRoot) -> Root {
-        Root(fragments: component.fragments)
+        lowerRoot(component.fragments)
     }
 
     public static func buildFinalResult<C: FinalizableItem>(
         _ component: Partial<C>
     ) -> Root {
-        Root(fragments: component.completed + [component.current.finalize()])
+        lowerRoot(component.completed + [component.current.finalize()])
     }
 
     public static func buildFinalResult<Source: FinalizableItem>(
         _ component: FinalizedGroup<Source>
     ) -> Root {
-        Root(fragments: component.fragments)
+        lowerRoot(component.fragments)
     }
 
     public static func buildFinalResult<Source: FinalizableItem>(
         _ component: FinalizedGroup<Source>?
     ) -> Root {
-        Root(fragments: component?.fragments ?? [])
+        lowerRoot(component?.fragments ?? [])
     }
 
-    static func lowerRoot(_ fragments: [SwifQLable]) -> SwifQLable {
-        guard !fragments.isEmpty else { return SwifQL }
+    static func lowerRoot(_ fragments: [SQLable]) -> SQL {
+        guard !fragments.isEmpty else { return SQL.root }
 
         if fragments.count == 1 {
             let only = fragments[0]
-            if let frame = only.parts.first as? SwifQLStructuralFramePart,
+            if let frame = only.parts.first as? SQLStructuralFramePart,
                frame.region == .statement || frame.region == .setResult {
-                return only
+                return SQL(only)
             }
-            return SwifQLableParts(rawParts: [
-                _SwifQLStructuralComposition.statementFrame(for: only)
-            ])
+            return SQL(SQLableParts(rawParts: [
+                _SQLStructuralComposition.statementFrame(for: only)
+            ]))
         }
 
-        var result: SwifQLable = SwifQL
+        var result: SQLable = SQL.root
         for fragment in fragments {
-            result = _SwifQLStructuralComposition.appendStatementContents(
+            result = _SQLStructuralComposition.appendStatementContents(
                 from: fragment,
                 to: result
             )
         }
-        return result
+        return SQL(result)
     }
 }

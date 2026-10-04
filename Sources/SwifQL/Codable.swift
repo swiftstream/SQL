@@ -7,16 +7,16 @@
 
 import Foundation
 
-public protocol SwifQLCodable: Codable, SwifQLable {}
+public protocol SQLCodable: Codable, SQLable {}
 
-extension SwifQLCodable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension SQLCodable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
 
-public protocol SwifQLEncodable: Encodable, SwifQLable {}
+public protocol SQLEncodable: Encodable, SQLable {}
 
-extension SwifQLEncodable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension SQLEncodable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
 
-extension Array: SwifQLCodable where Element: SwifQLCodable {}
+extension Array: SQLCodable where Element: SQLCodable {}

@@ -305,7 +305,7 @@ struct StructuralClauseOwnershipTests {
             children: [nested]
         )
         let base = SwifQLableParts(parts: frame)
-        let merged = _SwifQLStructuralComposition.append(
+        let merged = _SQLStructuralComposition.append(
             base,
             parts: [SwifQLPartOperator.space, SwifQLPartOperator.custom("TAIL")],
             owners: [.groupBy: replacement]
@@ -318,7 +318,7 @@ struct StructuralClauseOwnershipTests {
         #expect((mergedRoot.children.first as? SwifQLStructuralFramePart)?.owner(for: .groupBy) == nestedOwner)
 
         let unframed = SwifQLableParts(parts: SwifQLPartOperator.custom("BASE"))
-        let ownerSet = _SwifQLStructuralComposition.append(
+        let ownerSet = _SQLStructuralComposition.append(
             unframed,
             parts: [SwifQLPartOperator.space, SwifQLPartOperator.custom("TAIL")],
             owners: [.groupBy: replacement]
@@ -326,7 +326,7 @@ struct StructuralClauseOwnershipTests {
         #expect(ownerSet.structuralOwner(for: .groupBy) == replacement)
         #expect(ownerSet.prepare(.psql).plain == "BASE TAIL")
 
-        let ordinaryContinuation = _SwifQLStructuralComposition.append(
+        let ordinaryContinuation = _SQLStructuralComposition.append(
             unframed,
             parts: [SwifQLPartOperator.space, SwifQLPartOperator.custom("TAIL")]
         )

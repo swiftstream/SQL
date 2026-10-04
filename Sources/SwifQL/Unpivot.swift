@@ -4,21 +4,21 @@ import Foundation
 ///
 /// The value keeps the grouped columns and optional alias as semantic state;
 /// parentheses and `AS` are emitted only when the value is rendered.
-public struct UnpivotColumnSet: SwifQLable {
-    public let columns: [[SwifQLPart]]
+public struct UnpivotColumnSet: SQLable {
+    public let columns: [[SQLPart]]
     public let alias: String?
 
     public init(
-        _ first: SwifQLable,
-        _ rest: SwifQLable...,
+        _ first: SQLable,
+        _ rest: SQLable...,
         as alias: KeyPathLastPath? = nil
     ) {
         columns = ([first] + rest).map(\.parts)
         self.alias = alias?.lastPath
     }
 
-    public var parts: [SwifQLPart] {
-        var parts: [SwifQLPart] = [SwifQLPartOperator.openBracket]
+    public var parts: [SQLPart] {
+        var parts: [SQLPart] = [SQLPartOperator.openBracket]
         for (index, columnParts) in columns.enumerated() {
             if index > 0 {
                 parts.append(o: .comma, .space)
@@ -29,13 +29,13 @@ public struct UnpivotColumnSet: SwifQLable {
 
         if let alias {
             parts.append(o: .space, .as, .space)
-            parts.append(SwifQLPartAlias(alias))
+            parts.append(SQLPartAlias(alias))
         }
         return parts
     }
 }
 
-extension SwifQLClauseOwner {
+extension SQLClauseOwner {
     /// The structural owner for DuckDB's simplified UNPIVOT grammar.
     public static let simplifiedUnpivot = Self(
         namespace: "swifql",
@@ -43,27 +43,27 @@ extension SwifQLClauseOwner {
     )
 }
 
-extension SwifQLRenderScope {
+extension SQLRenderScope {
     /// The bounded render scope used by DuckDB's simplified UNPIVOT ORDER BY.
     public static let simplifiedUnpivotOrderBy =
-        SwifQLClauseOwner.simplifiedUnpivot.renderScope(for: .orderBy)
+        SQLClauseOwner.simplifiedUnpivot.renderScope(for: .orderBy)
 }
 
-extension SwifQLable {
+extension SQLable {
     /// Appends DuckDB's simplified UNPIVOT source clause and establishes its
     /// ownership of the output ORDER BY clause.
-    public func unpivot(_ source: SwifQLable) -> SwifQLable {
-        let fragment = SwifQLableParts(parts:
-            [SwifQLPartOperator.space, .custom("UNPIVOT"), .space] + source.parts
+    public func unpivot(_ source: SQLable) -> SQLable {
+        let fragment = SQLableParts(parts:
+            [SQLPartOperator.space, .custom("UNPIVOT"), .space] + source.parts
         )
-        return _SwifQLStructuralComposition.append(
+        return _SQLStructuralComposition.append(
             self,
             parts: fragment.parts,
             owners: [.orderBy: .simplifiedUnpivot]
         )
     }
 
-    private func unpivotOnExpression(_ expression: SwifQLable) -> SwifQLable {
+    private func unpivotOnExpression(_ expression: SQLable) -> SQLable {
         guard let owner = structuralOwner(for: .on) else {
             return expression
         }
@@ -72,11 +72,11 @@ extension SwifQLable {
 
     /// Appends a comma-separated simplified-UNPIVOT ON list while preserving
     /// the current generic ON owner, if one is present.
-    public func on(_ first: SwifQLable, _ rest: SwifQLable...) -> SwifQLable {
-        var parts: [SwifQLPart] = [
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.on,
-            SwifQLPartOperator.space
+    public func on(_ first: SQLable, _ rest: SQLable...) -> SQLable {
+        var parts: [SQLPart] = [
+            SQLPartOperator.space,
+            SQLPartOperator.on,
+            SQLPartOperator.space
         ]
 
         for (index, expression) in ([first] + rest).enumerated() {
@@ -86,7 +86,7 @@ extension SwifQLable {
             parts.append(contentsOf: unpivotOnExpression(expression).parts)
         }
 
-        return structurallyAppending(SwifQLableParts(parts: parts))
+        return structurallyAppending(SQLableParts(parts: parts))
     }
 
     /// Appends one structural `NAME` identifier and one structural `VALUE`
@@ -94,7 +94,7 @@ extension SwifQLable {
     public func into(
         name nameColumn: KeyPathLastPath,
         value valueColumn: KeyPathLastPath
-    ) -> SwifQLable {
+    ) -> SQLable {
         appendUnpivotInto(
             name: nameColumn,
             values: [valueColumn]
@@ -107,7 +107,7 @@ extension SwifQLable {
         name nameColumn: KeyPathLastPath,
         values first: KeyPathLastPath,
         _ rest: KeyPathLastPath...
-    ) -> SwifQLable {
+    ) -> SQLable {
         appendUnpivotInto(
             name: nameColumn,
             values: [first] + rest
@@ -117,24 +117,24 @@ extension SwifQLable {
     private func appendUnpivotInto(
         name nameColumn: KeyPathLastPath,
         values: [KeyPathLastPath]
-    ) -> SwifQLable {
-        var parts: [SwifQLPart] = [
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.into,
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.custom("NAME"),
-            SwifQLPartOperator.space,
-            SwifQLPartColumn(nameColumn.lastPath),
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.custom("VALUE"),
-            SwifQLPartOperator.space
+    ) -> SQLable {
+        var parts: [SQLPart] = [
+            SQLPartOperator.space,
+            SQLPartOperator.into,
+            SQLPartOperator.space,
+            SQLPartOperator.custom("NAME"),
+            SQLPartOperator.space,
+            SQLPartColumn(nameColumn.lastPath),
+            SQLPartOperator.space,
+            SQLPartOperator.custom("VALUE"),
+            SQLPartOperator.space
         ]
         for (index, value) in values.enumerated() {
             if index > 0 {
                 parts.append(o: .comma, .space)
             }
-            parts.append(SwifQLPartColumn(value.lastPath))
+            parts.append(SQLPartColumn(value.lastPath))
         }
-        return structurallyAppending(SwifQLableParts(parts: parts))
+        return structurallyAppending(SQLableParts(parts: parts))
     }
 }

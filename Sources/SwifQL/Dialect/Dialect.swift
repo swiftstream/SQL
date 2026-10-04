@@ -90,13 +90,13 @@ open class SQLDialect {
         self.tableName(tableName) + " AS " + self.alias(alias)
     }
     
-    open func keyPath(_ keyPath: SwifQLPartKeyPath) -> String {
+    open func keyPath(_ keyPath: SQLPartKeyPath) -> String {
         "<key_path_should_be_here: override dialect function to fix>"
     }
 
     open func keyPath(
-        _ keyPath: SwifQLPartKeyPath,
-        context: SwifQLRenderContext
+        _ keyPath: SQLPartKeyPath,
+        context: SQLRenderContext
     ) -> String {
         self.keyPath(keyPath)
     }
@@ -104,13 +104,13 @@ open class SQLDialect {
     /// Selects an open dialect representation when a hybrid value provides
     /// one. Leaving this unset preserves the historical PostgreSQL/MySQL
     /// switch and custom-dialect fallback behavior.
-    open var hybridRepresentationKey: SwifQLHybridRepresentationKey? { nil }
+    open var hybridRepresentationKey: SQLHybridRepresentationKey? { nil }
 
     /// Renders a semantic SQL type. The default preserves the historical
     /// textual spelling, including raw and nested `Type` compatibility.
     open func type(_ type: Type) -> String { type.name }
 
-    func defaultSamplingParts(_ sample: SwifQLPartSampling) -> [SwifQLPart] {
+    func defaultSamplingParts(_ sample: SQLPartSampling) -> [SQLPart] {
         sample.renderedParts(
             argumentParts: sample.arguments.map { $0.parts },
             seedParts: sample.seed?.parts,
@@ -121,21 +121,21 @@ open class SQLDialect {
     /// Renders a structured sampling clause through the normal recursive
     /// parts pipeline. The default keeps sampling arguments as ordinary
     /// values, so custom dialects inherit normal bind collection.
-    open func sampling(_ sample: SwifQLPartSampling) -> [SwifQLPart] {
+    open func sampling(_ sample: SQLPartSampling) -> [SQLPart] {
         defaultSamplingParts(sample)
     }
 
     open func sampling(
-        _ sample: SwifQLPartSampling,
-        observingUnsafeValues observation: SwifQLUnsafeValueObservation
-    ) -> SwifQLObservedParts {
+        _ sample: SQLPartSampling,
+        observingUnsafeValues observation: SQLUnsafeValueObservation
+    ) -> SQLObservedParts {
         .incomplete(sampling(sample))
     }
 
-    func defaultLambdaParts(_ lambda: SwifQLPartLambda) -> [SwifQLPart] {
-        var parts: [SwifQLPart] = [
-            SwifQLPartOperator.custom("lambda"),
-            SwifQLPartOperator.space
+    func defaultLambdaParts(_ lambda: SQLPartLambda) -> [SQLPart] {
+        var parts: [SQLPart] = [
+            SQLPartOperator.custom("lambda"),
+            SQLPartOperator.space
         ]
         for (index, parameter) in lambda.parameters.enumerated() {
             if index > 0 {
@@ -151,21 +151,21 @@ open class SQLDialect {
     /// Renders a structured SQL lambda through the normal recursive parts
     /// pipeline. The default preserves the historical `lambda ... : ...`
     /// spelling and ordinary body-value binding.
-    open func lambda(_ lambda: SwifQLPartLambda) -> [SwifQLPart] {
+    open func lambda(_ lambda: SQLPartLambda) -> [SQLPart] {
         defaultLambdaParts(lambda)
     }
 
     open func lambda(
-        _ lambda: SwifQLPartLambda,
-        observingUnsafeValues observation: SwifQLUnsafeValueObservation
-    ) -> SwifQLObservedParts {
+        _ lambda: SQLPartLambda,
+        observingUnsafeValues observation: SQLUnsafeValueObservation
+    ) -> SQLObservedParts {
         .incomplete(self.lambda(lambda))
     }
 
-    open func hybridOperator(_ hybrid: SwifQLHybridOperator) -> SwifQLPartOperator {
+    open func hybridOperator(_ hybrid: SQLHybridOperator) -> SQLPartOperator {
         if let key = hybridRepresentationKey {
             return hybrid.representation(for: key)
-                ?? SwifQLPartOperator(
+                ?? SQLPartOperator(
                     "<hybrid_operator_requires_explicit_\(key.name)_branch>"
                 )
         }
@@ -173,13 +173,13 @@ open class SQLDialect {
         switch self {
         case .psql:
             return hybrid.representation(for: .psql)
-                ?? SwifQLPartOperator("<hybrid_operator_requires_psql_branch>")
+                ?? SQLPartOperator("<hybrid_operator_requires_psql_branch>")
         case .mysql:
             return hybrid.representation(for: .mysql)
-                ?? SwifQLPartOperator("<hybrid_operator_requires_mysql_branch>")
+                ?? SQLPartOperator("<hybrid_operator_requires_mysql_branch>")
         default:
             return hybrid.representation(for: .mysql)
-                ?? SwifQLPartOperator("<hybrid_operator_requires_mysql_branch>")
+                ?? SQLPartOperator("<hybrid_operator_requires_mysql_branch>")
         }
     }
     
@@ -218,32 +218,32 @@ open class SQLDialect {
 
     open func inlineUnsafeValue(
         _ value: Encodable,
-        context: SwifQLRenderContext
+        context: SQLRenderContext
     ) -> String? {
         nil
     }
 
-    open func starExcludeParts(_ part: SwifQLStarExcludePart) -> [SwifQLPart] {
-        var parts: [SwifQLPart] = [
-            SwifQLPartOperator("EXCLUDE"),
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.openBracket
+    open func starExcludeParts(_ part: SQLStarExcludePart) -> [SQLPart] {
+        var parts: [SQLPart] = [
+            SQLPartOperator("EXCLUDE"),
+            SQLPartOperator.space,
+            SQLPartOperator.openBracket
         ]
         for (index, columnName) in part.columnNames.enumerated() {
             if index > 0 {
                 parts.append(o: .comma, .space)
             }
-            parts.append(SwifQLPartColumn(columnName))
+            parts.append(SQLPartColumn(columnName))
         }
         parts.append(o: .closeBracket)
         return parts
     }
 
-    func defaultStarReplaceParts(_ part: SwifQLStarReplacePart) -> [SwifQLPart] {
-        var parts: [SwifQLPart] = [
-            SwifQLPartOperator("REPLACE"),
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.openBracket
+    func defaultStarReplaceParts(_ part: SQLStarReplacePart) -> [SQLPart] {
+        var parts: [SQLPart] = [
+            SQLPartOperator("REPLACE"),
+            SQLPartOperator.space,
+            SQLPartOperator.openBracket
         ]
         for (index, entry) in part.entries.enumerated() {
             if index > 0 {
@@ -251,36 +251,36 @@ open class SQLDialect {
             }
             parts.append(contentsOf: entry.expressionParts)
             parts.append(o: .space, .as, .space)
-            parts.append(SwifQLPartColumn(entry.columnName))
+            parts.append(SQLPartColumn(entry.columnName))
         }
         parts.append(o: .closeBracket)
         return parts
     }
 
-    open func starReplaceParts(_ part: SwifQLStarReplacePart) -> [SwifQLPart] {
+    open func starReplaceParts(_ part: SQLStarReplacePart) -> [SQLPart] {
         defaultStarReplaceParts(part)
     }
 
     open func starReplaceParts(
-        _ part: SwifQLStarReplacePart,
-        observingUnsafeValues observation: SwifQLUnsafeValueObservation
-    ) -> SwifQLObservedParts {
+        _ part: SQLStarReplacePart,
+        observingUnsafeValues observation: SQLUnsafeValueObservation
+    ) -> SQLObservedParts {
         .incomplete(starReplaceParts(part))
     }
 
-    open func starRenameParts(_ part: SwifQLStarRenamePart) -> [SwifQLPart] {
-        var parts: [SwifQLPart] = [
-            SwifQLPartOperator("RENAME"),
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.openBracket
+    open func starRenameParts(_ part: SQLStarRenamePart) -> [SQLPart] {
+        var parts: [SQLPart] = [
+            SQLPartOperator("RENAME"),
+            SQLPartOperator.space,
+            SQLPartOperator.openBracket
         ]
         for (index, entry) in part.entries.enumerated() {
             if index > 0 {
                 parts.append(o: .comma, .space)
             }
-            parts.append(SwifQLPartColumn(entry.oldColumnName))
+            parts.append(SQLPartColumn(entry.oldColumnName))
             parts.append(o: .space, .as, .space)
-            parts.append(SwifQLPartColumn(entry.newColumnName))
+            parts.append(SQLPartColumn(entry.newColumnName))
         }
         parts.append(o: .closeBracket)
         return parts

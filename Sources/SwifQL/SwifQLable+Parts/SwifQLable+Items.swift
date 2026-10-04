@@ -1,5 +1,5 @@
 //
-//  SwifQLable+Items.swift
+//  SQLable+Items.swift
 //  App
 //
 //  Created by Mihael Isaev on 04.02.2020.
@@ -7,22 +7,22 @@
 
 import Foundation
 
-extension SwifQLable {
-    public subscript (items items: SwifQLable...) -> SwifQLable {
+extension SQLable {
+    public subscript (items items: SQLable...) -> SQLable {
         self.items(items)
     }
     
-    public subscript (items items: [SwifQLable]) -> SwifQLable {
+    public subscript (items items: [SQLable]) -> SQLable {
         self.items(items)
     }
     
     /// Represent provided values in round brackets separated with comma
-    public func items(_ items: SwifQLable...) -> SwifQLable {
+    public func items(_ items: SQLable...) -> SQLable {
         self.items(items)
     }
     /// Represent values provided as array
-    public func items(_ items: [SwifQLable]) -> SwifQLable {
-        var parts: [SwifQLPart] = self.parts
+    public func items(_ items: [SQLable]) -> SQLable {
+        var parts: [SQLPart] = self.parts
         parts.appendSpaceIfNeeded()
         for (i, v) in items.enumerated() {
             if i > 0 {
@@ -31,13 +31,13 @@ extension SwifQLable {
             }
             for p in v.parts {
                 switch p {
-                case let p as SwifQLPartKeyPath:
+                case let p as SQLPartKeyPath:
                     parts.append(p.column)
                 default:
                     parts.append(p)
                 }
             }
         }
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

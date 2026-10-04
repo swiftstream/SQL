@@ -1,6 +1,6 @@
 //
-//  SwifQLable+iLike.swift
-//  SwifQLCore
+//  SQLable+iLike.swift
+//  SQLCore
 //
 //  Created by Mihael Isaev on 16/11/2018.
 //
@@ -9,24 +9,24 @@ import Foundation
 
 //MARK: ILIKE
 
-extension SwifQLable {
+extension SQLable {
     /// Builds query with `ILIKE` parameter
     ///
     /// Example usage:
     /// ```swift
     /// let name = "John"
-    /// SwifQL.select
+    /// SQL.root.select
     ///     // ...
     ///     .where((\User.$name).iLike(name))
     /// ```
-    /// - Parameter part: `SwifQLable` element
+    /// - Parameter part: `SQLable` element
     ///
-    public func iLike(_ part: SwifQLable) -> SwifQLable {
+    public func iLike(_ part: SQLable) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .ilike)
         parts.append(o: .space)
         parts.append(contentsOf: part.parts)
-        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 }

@@ -9,8 +9,8 @@ import Foundation
 
 //MARK: DISTINCT
 
-public class Distinct: SwifQLable {
-    public var parts: [SwifQLPart]
+public class Distinct: SQLable {
+    public var parts: [SQLPart]
 
     /// Narrow internal metadata for declarative SELECT modifier ownership.
     ///
@@ -19,11 +19,11 @@ public class Distinct: SwifQLable {
     /// public API. Never inferred from rendered SQL/token history.
     internal var _declarativeCarriesProjection: Bool
 
-    public convenience init (_ field: SwifQLable...) {
+    public convenience init (_ field: SQLable...) {
         self.init(field)
     }
 
-    public init (_ fields: [SwifQLable]) {
+    public init (_ fields: [SQLable]) {
         parts = []
         _declarativeCarriesProjection = !fields.isEmpty
         parts.append(o: .distinct)
@@ -37,11 +37,11 @@ public class Distinct: SwifQLable {
         }
     }
 
-    public convenience init (on field: SwifQLable...) {
+    public convenience init (on field: SQLable...) {
         self.init(on: field)
     }
 
-    public init (on fields: [SwifQLable]) {
+    public init (on fields: [SQLable]) {
         parts = []
         _declarativeCarriesProjection = false
         parts.append(o: .distinct)
@@ -59,11 +59,11 @@ public class Distinct: SwifQLable {
         parts.append(o: .closeBracket)
     }
 
-    public func andAlso(_ fields: SwifQLable...) -> Distinct {
+    public func andAlso(_ fields: SQLable...) -> Distinct {
         andAlso(fields)
     }
 
-    public func andAlso(_ fields: [SwifQLable]) -> Distinct {
+    public func andAlso(_ fields: [SQLable]) -> Distinct {
         if !fields.isEmpty {
             _declarativeCarriesProjection = true
         }

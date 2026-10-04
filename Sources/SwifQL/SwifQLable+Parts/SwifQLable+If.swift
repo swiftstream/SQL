@@ -1,5 +1,5 @@
 //
-//  SwifQLable+If.swift
+//  SQLable+If.swift
 //  
 //
 //  Created by Mihael Isaev on 25.01.2020.
@@ -9,11 +9,11 @@ import Foundation
 
 //MARK: IF
 
-extension SwifQLable {
-    public var `if`: SwifQLable {
+extension SQLable {
+    public var `if`: SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .if)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

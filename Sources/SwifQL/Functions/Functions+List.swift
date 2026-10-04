@@ -12,8 +12,8 @@ extension Fn.Name {
 }
 
 extension Fn {
-    private static func listFunctionArguments(_ values: [SwifQLable]) -> [SwifQLPart] {
-        var parts: [SwifQLPart] = []
+    private static func listFunctionArguments(_ values: [SQLable]) -> [SQLPart] {
+        var parts: [SQLPart] = []
         for (index, value) in values.enumerated() {
             if index > 0 {
                 parts.append(o: .comma)
@@ -24,23 +24,23 @@ extension Fn {
         return parts
     }
 
-    public static func listTransform(_ list: SwifQLable, _ lambda: SwifQLable) -> SwifQLable {
+    public static func listTransform(_ list: SQLable, _ lambda: SQLable) -> SQLable {
         build(.listTransform, body: listFunctionArguments([list, lambda]))
     }
 
-    public static func listFilter(_ list: SwifQLable, _ lambda: SwifQLable) -> SwifQLable {
+    public static func listFilter(_ list: SQLable, _ lambda: SQLable) -> SQLable {
         build(.listFilter, body: listFunctionArguments([list, lambda]))
     }
 
-    public static func listReduce(_ list: SwifQLable, _ lambda: SwifQLable) -> SwifQLable {
+    public static func listReduce(_ list: SQLable, _ lambda: SQLable) -> SQLable {
         build(.listReduce, body: listFunctionArguments([list, lambda]))
     }
 
     public static func listReduce(
-        _ list: SwifQLable,
-        _ lambda: SwifQLable,
-        _ initialValue: SwifQLable
-    ) -> SwifQLable {
+        _ list: SQLable,
+        _ lambda: SQLable,
+        _ initialValue: SQLable
+    ) -> SQLable {
         build(.listReduce, body: listFunctionArguments([list, lambda, initialValue]))
     }
 }

@@ -8,10 +8,10 @@
 import Foundation
 
 public class QueryParts {
-    public var joins: [SwifQLJoinBuilder] = []
-    public var wheres: [SwifQLable] = []
-    public var groupBy: [SwifQLable] = []
-    public var havings: [SwifQLable] = []
+    public var joins: [SQLJoinBuilder] = []
+    public var wheres: [SQLable] = []
+    public var groupBy: [SQLable] = []
+    public var havings: [SQLable] = []
     public var orderBy: [OrderByItem] = []
     public var offset: Int?
     public var limit: Int?
@@ -32,10 +32,10 @@ public class QueryParts {
         return copy
     }
     
-    public func buildQuery() -> SwifQLable {
-        var query = SwifQL
+    public func buildQuery() -> SQLable {
+        var query: SQLable = SQL.root
         joins.forEach {
-            query = _SwifQLStructuralComposition.appendStatementContents(
+            query = _SQLStructuralComposition.appendStatementContents(
                 from: $0,
                 to: query
             )
@@ -69,9 +69,9 @@ public class QueryParts {
         return query
     }
     
-    public func appended(to query: SwifQLable) -> SwifQLable {
+    public func appended(to query: SQLable) -> SQLable {
         let q = buildQuery()
         guard q.parts.count > 0 else { return query }
-        return _SwifQLStructuralComposition.appendStatementContents(from: q, to: query)
+        return _SQLStructuralComposition.appendStatementContents(from: q, to: query)
     }
 }

@@ -5,12 +5,12 @@
 //  Created by Mihael Isaev on 18.08.2020.
 //
 
-public class IndexItem: SwifQLable {
-    public var parts: [SwifQLPart] {
-        var parts: [SwifQLPart] = []
+public class IndexItem: SQLable {
+    public var parts: [SQLPart] {
+        var parts: [SQLPart] = []
         switch item {
         case .column(let name):
-            parts.append(SwifQLPartColumn(name))
+            parts.append(SQLPartColumn(name))
         case .expression(let expression):
             parts.append(o: .openBracket)
             parts.append(contentsOf: expression.parts)
@@ -23,9 +23,9 @@ public class IndexItem: SwifQLable {
         return parts
     }
     
-    public enum Order: SwifQLable {
-        public var parts: [SwifQLPart] {
-            var parts: [SwifQLPart] = []
+    public enum Order: SQLable {
+        public var parts: [SQLPart] {
+            var parts: [SQLPart] = []
             switch self {
             case .asc: break
             case .ascNullsFirst:
@@ -49,7 +49,7 @@ public class IndexItem: SwifQLable {
     
     public enum Item {
         case column(String)
-        case expression(SwifQLable)
+        case expression(SQLable)
     }
     
     let order: Order
@@ -64,7 +64,7 @@ public class IndexItem: SwifQLable {
         .init(item: .column(column), order: order)
     }
     
-    public static func expression(_ expression: SwifQLable, order: Order = .asc) -> IndexItem {
+    public static func expression(_ expression: SQLable, order: Order = .asc) -> IndexItem {
         .init(item: .expression(expression), order: order)
     }
 }

@@ -12,7 +12,7 @@ private func quotedNestedTypeMember(_ name: String) -> String {
 
 extension TypeStructure {
     /// The historical textual spelling retained for raw compatibility. The
-    /// renderer consumes `TypeStructure` directly through `SwifQLPartType`.
+    /// renderer consumes `TypeStructure` directly through `SQLPartType`.
     internal var legacyName: String {
         switch self {
         case let .collection(constructor, element, length):

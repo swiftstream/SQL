@@ -9,8 +9,8 @@ extension Table {
     public static var select: TableSelector<Self> { .init() }
 }
 
-public class TableSelector<T: Table>: SwifQLable {
-    public var parts: [SwifQLPart] { build() }
+public class TableSelector<T: Table>: SQLable {
+    public var parts: [SQLPart] { build() }
     
     var columns: [String] = []
     var exceptColumns: [String] = []
@@ -688,8 +688,8 @@ public class TableSelector<T: Table>: SwifQLable {
     
     // MARK: Building
     
-    private func build() -> [SwifQLPart] {
-        var query = SwifQL
+    private func build() -> [SQLPart] {
+        var query: SQLable = SQL.root
         if columns.count == 0 {
             if exceptColumns.count > 0 {
                 var cols = T.init().columns.map { $0.name.label }

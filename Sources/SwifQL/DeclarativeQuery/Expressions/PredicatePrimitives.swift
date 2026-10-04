@@ -5,8 +5,8 @@ import Foundation
 /// Exact semantic equivalent of `expression == nil` and `expression.isNull`.
 /// Reuses the existing predicate/operator parts; the NULL keyword itself binds
 /// no values.
-public func IsNull(_ expression: SwifQLable) -> SwifQLable {
-    SwifQLPredicate(operator: .equal, lhs: expression, rhs: nil)
+public func IsNull(_ expression: SQLable) -> SQLable {
+    SQLPredicate(operator: .equal, lhs: expression, rhs: nil)
 }
 
 /// Explicit `IS NOT NULL` predicate node.
@@ -14,8 +14,8 @@ public func IsNull(_ expression: SwifQLable) -> SwifQLable {
 /// Exact semantic equivalent of `expression != nil` and `expression.isNotNull`.
 /// Reuses the existing predicate/operator parts; the NULL keyword itself binds
 /// no values.
-public func IsNotNull(_ expression: SwifQLable) -> SwifQLable {
-    SwifQLPredicate(operator: .notEqual, lhs: expression, rhs: nil)
+public func IsNotNull(_ expression: SQLable) -> SQLable {
+    SQLPredicate(operator: .notEqual, lhs: expression, rhs: nil)
 }
 
 /// Declarative runtime-collection `IN` with predicate-presence omission.
@@ -25,16 +25,16 @@ public func IsNotNull(_ expression: SwifQLable) -> SwifQLable {
 /// snapshots `lhs` and each element exactly once in collection iteration order,
 /// then lowers through the existing legacy membership part semantics.
 public func In<C: Collection>(
-    _ lhs: SwifQLable,
+    _ lhs: SQLable,
     _ items: C
-) -> SwifQLable where C.Element: SwifQLable {
+) -> SQLable where C.Element: SQLable {
     guard !items.isEmpty else {
-        return SwifQLableParts(rawParts: [])
+        return SQLableParts(rawParts: [])
     }
 
-    let lhsSnapshot = SwifQLableParts(rawParts: lhs.parts)
-    let itemSnapshots: [SwifQLable] = items.map { item in
-        SwifQLableParts(rawParts: item.parts)
+    let lhsSnapshot = SQLableParts(rawParts: lhs.parts)
+    let itemSnapshots: [SQLable] = items.map { item in
+        SQLableParts(rawParts: item.parts)
     }
     return lhsSnapshot.in(itemSnapshots)
 }
@@ -46,16 +46,16 @@ public func In<C: Collection>(
 /// snapshots `lhs` and each element exactly once in collection iteration order,
 /// then lowers through the existing legacy membership part semantics.
 public func NotIn<C: Collection>(
-    _ lhs: SwifQLable,
+    _ lhs: SQLable,
     _ items: C
-) -> SwifQLable where C.Element: SwifQLable {
+) -> SQLable where C.Element: SQLable {
     guard !items.isEmpty else {
-        return SwifQLableParts(rawParts: [])
+        return SQLableParts(rawParts: [])
     }
 
-    let lhsSnapshot = SwifQLableParts(rawParts: lhs.parts)
-    let itemSnapshots: [SwifQLable] = items.map { item in
-        SwifQLableParts(rawParts: item.parts)
+    let lhsSnapshot = SQLableParts(rawParts: lhs.parts)
+    let itemSnapshots: [SQLable] = items.map { item in
+        SQLableParts(rawParts: item.parts)
     }
     return lhsSnapshot.notIn(itemSnapshots)
 }

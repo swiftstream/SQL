@@ -15,12 +15,12 @@ public struct Schema<T: AnyTable> {
         self.name = name
     }
 
-    public subscript<V>(dynamicMember keyPath: KeyPath<T, V>) -> SwifQLable {
+    public subscript<V>(dynamicMember keyPath: KeyPath<T, V>) -> SQLable {
         guard let k = keyPath as? Keypathable else { return "<keyPath should conform to Keypathable>" }
-        return SwifQLPartKeyPath(schema: name, table: k.table, paths: k.paths)
+        return SQLPartKeyPath(schema: name, table: k.table, paths: k.paths)
     }
     
-    public var table: SwifQLable {
+    public var table: SQLable {
         Path.SchemaWithTable(schema: name, table: T.tableName)
     }
     

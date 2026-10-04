@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct SwifQLPartKeyPath: SwifQLKeyPathable {
+public struct SQLPartKeyPath: SQLKeyPathable {
     public var schema: String?
     public var table: String?
     public var paths: [String]
@@ -22,13 +22,13 @@ public struct SwifQLPartKeyPath: SwifQLKeyPathable {
         self.paths = paths
         self.asText = asText
     }
-    public var column: SwifQLPartColumn {
+    public var column: SQLPartColumn {
         .init(paths[0])
     }
 }
 
-extension SwifQLPartKeyPath: SwifQLable {
-    public var parts: [SwifQLPart] {
-        SwifQLableParts(parts: self).parts
+extension SQLPartKeyPath: SQLable {
+    public var parts: [SQLPart] {
+        SQLableParts(parts: self).parts
     }
 }

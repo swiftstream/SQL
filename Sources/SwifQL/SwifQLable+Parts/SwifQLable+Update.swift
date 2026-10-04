@@ -1,5 +1,5 @@
 //
-//  SwifQLable+Update.swift
+//  SQLable+Update.swift
 //  SwifQL
 //
 //  Created by Mihael Isaev on 26/11/2018.
@@ -9,19 +9,19 @@ import Foundation
 
 //MARK: UPDATE
 
-extension SwifQLable {
-    public var update: SwifQLable {
+extension SQLable {
+    public var update: SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .update)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
-    public func update(_ tables: SwifQLable...) -> SwifQLable {
+    public func update(_ tables: SQLable...) -> SQLable {
         update(tables)
     }
     
-    public func update(_ tables: [SwifQLable]) -> SwifQLable {
+    public func update(_ tables: [SQLable]) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .update)
@@ -33,6 +33,6 @@ extension SwifQLable {
             }
             parts.append(contentsOf: v.parts)
         }
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

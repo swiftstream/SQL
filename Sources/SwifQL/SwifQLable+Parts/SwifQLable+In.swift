@@ -1,6 +1,6 @@
 //
-//  SwifQLable+In.swift
-//  SwifQLCore
+//  SQLable+In.swift
+//  SQLCore
 //
 //  Created by Mihael Isaev on 16/11/2018.
 //
@@ -9,18 +9,18 @@ import Foundation
 
 //MARK: IN
 
-extension SwifQLable {
+extension SQLable {
     /// Builds query with `IN` parameter
     ///
     /// Example usage:
     /// ```swift
-    /// SwifQL.select
+    /// SQL.root.select
     ///     // ...
     ///     .where((\User.$id).in(aUserID, bUserID))
     /// ```
-    /// - Parameter items: comma separated list of  `SwifQLable` elements
+    /// - Parameter items: comma separated list of  `SQLable` elements
     ///
-    public func `in`(_ items: SwifQLable...) -> SwifQLable {
+    public func `in`(_ items: SQLable...) -> SQLable {
         `in`(items)
     }
 
@@ -28,19 +28,19 @@ extension SwifQLable {
     ///
     /// Example usage:
     /// ```swift
-    /// SwifQL.select
+    /// SQL.root.select
     ///     // ...
     ///     .where((\User.$id).in(userIDsArray))
     /// ```
-    /// - Parameter items: Array of `[SwifQLable]` elements
+    /// - Parameter items: Array of `[SQLable]` elements
     ///
-    public func `in`(_ items: [SwifQLable]) -> SwifQLable {
+    public func `in`(_ items: [SQLable]) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .in)
         parts.append(o: .space)
         parts.append(o: .openBracket)
-        if items.count == 1, let array = items.first as? AnySwifQLEnumArray {
+        if items.count == 1, let array = items.first as? AnySQLEnumArray {
             array.items.enumerated().forEach { i, v in
                 if i > 0 {
                     parts.append(o: .comma)
@@ -58,6 +58,6 @@ extension SwifQLable {
             }
         }
         parts.append(o: .closeBracket)
-        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 }

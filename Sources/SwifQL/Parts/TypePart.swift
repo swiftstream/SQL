@@ -6,7 +6,7 @@
 import Foundation
 
 /// A semantic SQL type value that remains available to the dialect renderer.
-public struct SwifQLPartType: SwifQLPart {
+public struct SQLPartType: SQLPart {
     public let type: Type
 
     public init(_ type: Type) {

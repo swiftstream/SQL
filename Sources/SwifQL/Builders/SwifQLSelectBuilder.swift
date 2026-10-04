@@ -1,5 +1,5 @@
 //
-//  SwifQLSelectBuilder.swift
+//  SQLSelectBuilder.swift
 //  App
 //
 //  Created by Mihael Isaev on 22/02/2019.
@@ -7,16 +7,16 @@
 
 import Foundation
 
-public class SwifQLSelectBuilder: QueryBuilderable {
-    var select: [SwifQLable] = []
-    var froms: [SwifQLable] = []
+public class SQLSelectBuilder: QueryBuilderable {
+    var select: [SQLable] = []
+    var froms: [SQLable] = []
     
     public var queryParts = QueryParts()
     
     public init() {}
     
-    public func copy() -> SwifQLSelectBuilder {
-        let copy = SwifQLSelectBuilder()
+    public func copy() -> SQLSelectBuilder {
+        let copy = SQLSelectBuilder()
         
         copy.select = select
         copy.froms = froms
@@ -28,12 +28,12 @@ public class SwifQLSelectBuilder: QueryBuilderable {
     // MARK: Select
     
     @discardableResult
-    public func select(_ item: SwifQLable...) -> SwifQLSelectBuilder {
+    public func select(_ item: SQLable...) -> SQLSelectBuilder {
         select(item)
     }
     
     @discardableResult
-    public func select(_ items: [SwifQLable]) -> SwifQLSelectBuilder {
+    public func select(_ items: [SQLable]) -> SQLSelectBuilder {
         select.append(contentsOf: items)
         return self
     }
@@ -41,18 +41,18 @@ public class SwifQLSelectBuilder: QueryBuilderable {
     // MARK: From
     
     @discardableResult
-    public func from(_ item: SwifQLable...) -> SwifQLSelectBuilder {
+    public func from(_ item: SQLable...) -> SQLSelectBuilder {
         from(item)
     }
     
     @discardableResult
-    public func from(_ items: [SwifQLable]) -> SwifQLSelectBuilder {
+    public func from(_ items: [SQLable]) -> SQLSelectBuilder {
         froms.append(contentsOf: items)
         return self
     }
     
-    public func build() -> SwifQLable {
-        var query = SwifQL.select(select)
+    public func build() -> SQLable {
+        var query = SQL.root.select(select)
         if froms.count > 0 {
             query = query.from(froms)
         }

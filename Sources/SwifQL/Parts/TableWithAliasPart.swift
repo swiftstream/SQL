@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct SwifQLPartTableWithAlias: SwifQLPart {
+public struct SQLPartTableWithAlias: SQLPart {
     public var schema: String?
     public var table, alias: String
     

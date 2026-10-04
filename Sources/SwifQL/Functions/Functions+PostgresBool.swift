@@ -18,21 +18,21 @@ extension Fn.Name {
 
 extension Fn {
 
-    public static func boolAnd(_ aggregateExpression: SwifQLable) -> SwifQLable {
+    public static func boolAnd(_ aggregateExpression: SQLable) -> SQLable {
         build(.boolAnd, body: aggregateExpression.parts)
     }
 
     @available(*, deprecated, renamed: "boolAnd(_:)")
-    public static func bool_and(_ aggregateExpression: SwifQLable) -> SwifQLable {
+    public static func bool_and(_ aggregateExpression: SQLable) -> SQLable {
         boolAnd(aggregateExpression)
     }
 
-    public static func boolOr(_ aggregateExpression: SwifQLable) -> SwifQLable {
+    public static func boolOr(_ aggregateExpression: SQLable) -> SQLable {
         build(.boolOr, body: aggregateExpression.parts)
     }
 
     @available(*, deprecated, renamed: "boolOr(_:)")
-    public static func bool_or(_ aggregateExpression: SwifQLable) -> SwifQLable {
+    public static func bool_or(_ aggregateExpression: SQLable) -> SQLable {
         boolOr(aggregateExpression)
     }
 }

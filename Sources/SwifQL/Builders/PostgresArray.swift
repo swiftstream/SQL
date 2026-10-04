@@ -9,18 +9,18 @@ import Foundation
 
 public typealias PgArray = PostgresArray
 
-public struct PostgresArray: SwifQLable {
+public struct PostgresArray: SQLable {
     public enum EmptyMode {
         case simple, dollar
     }
     
-    public var parts: [SwifQLPart] = []
+    public var parts: [SQLPart] = []
     
-    public init (_ items: SwifQLable..., emptyMode: EmptyMode = .simple) {
+    public init (_ items: SQLable..., emptyMode: EmptyMode = .simple) {
         self.init(items, emptyMode: emptyMode)
     }
     
-    public init (_ items: [SwifQLable], emptyMode: EmptyMode = .simple) {
+    public init (_ items: [SQLable], emptyMode: EmptyMode = .simple) {
         if items.count == 0 && emptyMode == .dollar {
             parts.append(o: .doubleDollar)
             parts.append(o: .openSquareBracket)

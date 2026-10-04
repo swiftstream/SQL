@@ -29,6 +29,6 @@ public func Columns(
     @IdentifierListBuilder _ content: () -> IdentifierListBuilder.Components
 ) -> FromColumnsRequest {
     let parts = content().parts
-    let names = parts.compactMap { ($0 as? SwifQLPartAlias)?.alias }
+    let names = parts.compactMap { ($0 as? SQLPartAlias)?.alias }
     return FromColumnsRequest(names: names)
 }

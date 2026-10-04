@@ -5,9 +5,9 @@
 //  Created by Mihael Isaev on 12.04.2020.
 //
 
-public class DropSchemaBuilder<Schema: Schemable>: SwifQLable {
-    public var parts: [SwifQLPart] {
-        var query = SwifQL.drop.schema
+public class DropSchemaBuilder<Schema: Schemable>: SQLable {
+    public var parts: [SQLPart] {
+        var query = SQL.root.drop.schema
         if shouldCheckIfExists {
             query = query.if.exists
         }

@@ -1,6 +1,6 @@
 //
-//  SwifQLable+NotLike.swift
-//  SwifQLCore
+//  SQLable+NotLike.swift
+//  SQLCore
 //
 //  Created by Mihael Isaev on 16/11/2018.
 //
@@ -9,19 +9,19 @@ import Foundation
 
 // MARK: NOT LIKE
 
-extension SwifQLable {
+extension SQLable {
     /// Builds query with `NOT LIKE` parameter
     ///
     /// Example usage:
     /// ```swift
     /// let name = "John"
-    /// SwifQL.select
+    /// SQL.root.select
     ///     // ...
     ///     .where((\User.$name).notLike(name))
     /// ```
-    /// - Parameter part: `SwifQLable` element
+    /// - Parameter part: `SQLable` element
     ///
-    public func notLike(_ part: SwifQLable) -> SwifQLable {
+    public func notLike(_ part: SQLable) -> SQLable {
         applyingPatternOperator(.notLike, to: part)
     }
 }

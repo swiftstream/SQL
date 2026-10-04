@@ -1,5 +1,5 @@
 //
-//  SwifQLable+Window.swift
+//  SQLable+Window.swift
 //  SwifQL
 //
 //  Created by Mihael Isaev on 22.05.2020.
@@ -9,19 +9,19 @@ import Foundation
 
 //MARK: Window
 
-extension SwifQLable {
+extension SQLable {
     /// [Learn more →](https://www.postgresqltutorial.com/postgresql-window-function/)
-    public func window(_ expression: SwifQLable) -> SwifQLable {
-        let parts: [SwifQLPart] = [
-            SwifQLPartOperator.space,
+    public func window(_ expression: SQLable) -> SQLable {
+        let parts: [SQLPart] = [
+            SQLPartOperator.space,
             .window,
             .space,
         ] + expression.parts
-        return structurallyAppending(SwifQLableParts(parts: parts))
+        return structurallyAppending(SQLableParts(parts: parts))
     }
     
     /// [Learn more →](https://www.postgresqltutorial.com/postgresql-window-function/)
-    public func window(_ window: SwifQLable, as query: SwifQLable) -> SwifQLable {
+    public func window(_ window: SQLable, as query: SQLable) -> SQLable {
         var parts = window.parts
         parts.append(contentsOf: window.parts)
         parts.append(o: .space)
@@ -30,17 +30,17 @@ extension SwifQLable {
         parts.append(o: .openBracket)
         parts.append(contentsOf: query.parts)
         parts.append(o: .closeBracket)
-        return self.window(SwifQLableParts(rawParts: parts))
+        return self.window(SQLableParts(rawParts: parts))
     }
     
     /// [Learn more →](https://www.postgresqltutorial.com/postgresql-window-function/)
-    public func window(_ window: SwifQLable, asPartitionBy expression: SwifQLable, orderBy: OrderByItem...) -> SwifQLable {
+    public func window(_ window: SQLable, asPartitionBy expression: SQLable, orderBy: OrderByItem...) -> SQLable {
         self.window(window, asPartitionBy: expression, orderBy: orderBy)
     }
     
     /// [Learn more →](https://www.postgresqltutorial.com/postgresql-window-function/)
-    public func window(_ window: SwifQLable, asPartitionBy expression: SwifQLable, orderBy: [OrderByItem]) -> SwifQLable {
-        var query = SwifQL.partition(by: expression)
+    public func window(_ window: SQLable, asPartitionBy expression: SQLable, orderBy: [OrderByItem]) -> SQLable {
+        var query = SQL.root.partition(by: expression)
         if orderBy.count > 0 {
             query = query.orderBy(orderBy)
         }

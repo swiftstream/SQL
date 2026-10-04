@@ -7,9 +7,9 @@
 
 import Foundation
 
-public var SwifQLNull: SwifQLPartNull { .init() }
+public var SQLNull: SQLPartNull { .init() }
 
-public struct SwifQLPartNull: SwifQLPart, SwifQLable {
-    public var parts: [SwifQLPart] { [self] }
+public struct SQLPartNull: SQLPart, SQLable {
+    public var parts: [SQLPart] { [self] }
     public init () {}
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Values: SwifQLable {
+public struct Values: SQLable {
     let rows: [Row]
 
     public init(@ValuesBuilder _ body: () -> ValuesBuilder.Result) {
@@ -15,27 +15,27 @@ public struct Values: SwifQLable {
         self.rows = rows
     }
 
-    public var parts: [SwifQLPart] {
-        let rowPrefix = SwifQLHybridOperator(
-            SwifQLPartOperator("("),
-            SwifQLPartOperator("ROW("),
-            SwifQLPartOperator("(")
+    public var parts: [SQLPart] {
+        let rowPrefix = SQLHybridOperator(
+            SQLPartOperator("("),
+            SQLPartOperator("ROW("),
+            SQLPartOperator("(")
         )
-        var children: [SwifQLPart] = [
-            SwifQLPartOperator("VALUES"),
-            SwifQLPartOperator(" ")
+        var children: [SQLPart] = [
+            SQLPartOperator("VALUES"),
+            SQLPartOperator(" ")
         ]
 
         for (index, row) in rows.enumerated() {
             if index > 0 {
-                children.append(SwifQLPartOperator(","))
-                children.append(SwifQLPartOperator(" "))
+                children.append(SQLPartOperator(","))
+                children.append(SQLPartOperator(" "))
             }
             children.append(rowPrefix)
             _appendRowFields(row.fields, to: &children)
-            children.append(SwifQLPartOperator(")"))
+            children.append(SQLPartOperator(")"))
         }
 
-        return [SwifQLStructuralFramePart(region: .statement, children: children)]
+        return [SQLStructuralFramePart(region: .statement, children: children)]
     }
 }

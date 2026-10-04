@@ -7,50 +7,61 @@
 
 import Foundation
 
-public var SwifQL: SwifQLable { _SwifQL() }
+public struct SQL: SQLable {
+    public var parts: [SQLPart]
 
-public func SwifQL(_ query: SwifQLable) -> SwifQLable {
-    _SwifQL(query)
-}
-
-/// Current-identity declarative root. Additive overload; does not change the
-/// existing `SwifQL` value or unary function meaning.
-public func SwifQL(@SQLBuilder _ content: () -> SQLBuilder.Root) -> SwifQLable {
-    SQLBuilder.lowerRoot(content().fragments)
-}
-
-private struct _SwifQL: SwifQLable {
-    public var parts: [SwifQLPart]
-
-    public init (_ query: SwifQLable? = nil) {
-        self.parts = query?.parts ?? [SwifQLStructuralFramePart(region: .statement)]
+    public init() {
+        self.parts = [SQLStructuralFramePart(region: .statement)]
     }
+
+    public init(_ query: SQLable) {
+        self.parts = query.parts
+    }
+
+    public init(@SQLBuilder _ content: () -> SQLBuilder.Root) {
+        self.parts = content().parts
+    }
+
+    public static var root: SQL { SQL() }
+}
+
+@available(*, deprecated, renamed: "SQL.root")
+public var SwifQL: SQL { SQL.root }
+
+@available(*, deprecated, renamed: "SQL")
+public func SwifQL(_ query: SQLable) -> SQL {
+    SQL(query)
+}
+
+@available(*, deprecated, renamed: "SQL")
+public func SwifQL(@SQLBuilder _ content: () -> SQLBuilder.Root) -> SQL {
+    SQL(content)
 }
 
 infix operator ~
-public func ~ (lhs: SwifQLable, rhs: SwifQLable) -> SwifQLable {
-    if lhs.parts.first is SwifQLStructuralFramePart {
-        if rhs.parts.first is SwifQLStructuralFramePart {
-            return SwifQLableParts(rawParts: lhs.parts + rhs.parts)
+public func ~ (lhs: SQLable, rhs: SQLable) -> SQLable {
+    if lhs.parts.first is SQLStructuralFramePart {
+        if rhs.parts.first is SQLStructuralFramePart {
+            return SQLableParts(rawParts: lhs.parts + rhs.parts)
         }
-        return _SwifQLStructuralComposition.append(
+        return _SQLStructuralComposition.append(
             lhs,
             parts: rhs.parts,
             spacing: .literal
         )
     }
 
-    return SwifQLableParts(rawParts: lhs.parts + rhs.parts)
+    return SQLableParts(rawParts: lhs.parts + rhs.parts)
 }
-public func ~ (lhs: SwifQLable, rhs: SwifQLPartOperator) -> SwifQLable {
-    let fragment = SwifQLableParts(parts: rhs)
-    if lhs.parts.first is SwifQLStructuralFramePart {
-        return _SwifQLStructuralComposition.append(
+public func ~ (lhs: SQLable, rhs: SQLPartOperator) -> SQLable {
+    let fragment = SQLableParts(parts: rhs)
+    if lhs.parts.first is SQLStructuralFramePart {
+        return _SQLStructuralComposition.append(
             lhs,
             parts: fragment.parts,
             spacing: .literal
         )
     }
 
-    return SwifQLableParts(rawParts: lhs.parts + fragment.parts)
+    return SQLableParts(rawParts: lhs.parts + fragment.parts)
 }

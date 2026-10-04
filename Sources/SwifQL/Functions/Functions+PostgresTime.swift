@@ -86,8 +86,8 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func age(_ timestamp1: SwifQLable, _ timestamp2: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = timestamp1.parts
+    public static func age(_ timestamp1: SQLable, _ timestamp2: SQLable) -> SQLable {
+        var parts: [SQLPart] = timestamp1.parts
         parts.append(o: .comma)
         parts.append(o: .space)
         parts.append(contentsOf: timestamp2.parts)
@@ -105,7 +105,7 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func age(_ timestamp1: SwifQLable) -> SwifQLable {
+    public static func age(_ timestamp1: SQLable) -> SQLable {
         build(.age, body: timestamp1.parts)
     }
     
@@ -116,12 +116,12 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html#FUNCTIONS-DATETIME-CURRENT)
-    public static func clockTimestamp() -> SwifQLable {
+    public static func clockTimestamp() -> SQLable {
         build(.clockTimestamp, body: [])
     }
 
     @available(*, deprecated, renamed: "clockTimestamp()")
-    public static func clock_timestamp() -> SwifQLable {
+    public static func clock_timestamp() -> SQLable {
         clockTimestamp()
     }
     
@@ -132,12 +132,12 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html#FUNCTIONS-DATETIME-CURRENT)
-    public static var currentDate: SwifQLable {
-        SwifQLableParts(parts: Name.currentDate.part)
+    public static var currentDate: SQLable {
+        SQLableParts(parts: Name.currentDate.part)
     }
 
     @available(*, deprecated, renamed: "currentDate")
-    public static var current_date: SwifQLable {
+    public static var current_date: SQLable {
         currentDate
     }
     
@@ -148,12 +148,12 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html#FUNCTIONS-DATETIME-CURRENT)
-    public static func currentTime(_ aggregateExpression: SwifQLable) -> SwifQLable {
-        SwifQLableParts(parts: Name.currentTime.part)
+    public static func currentTime(_ aggregateExpression: SQLable) -> SQLable {
+        SQLableParts(parts: Name.currentTime.part)
     }
 
     @available(*, deprecated, renamed: "currentTime(_:)")
-    public static func current_time(_ aggregateExpression: SwifQLable) -> SwifQLable {
+    public static func current_time(_ aggregateExpression: SQLable) -> SQLable {
         currentTime(aggregateExpression)
     }
     
@@ -164,12 +164,12 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html#FUNCTIONS-DATETIME-CURRENT)
-    public static func currentTimestamp(_ aggregateExpression: SwifQLable) -> SwifQLable {
-        SwifQLableParts(parts: Name.currentTimestamp.part)
+    public static func currentTimestamp(_ aggregateExpression: SQLable) -> SQLable {
+        SQLableParts(parts: Name.currentTimestamp.part)
     }
 
     @available(*, deprecated, renamed: "currentTimestamp(_:)")
-    public static func current_timestamp(_ aggregateExpression: SwifQLable) -> SwifQLable {
+    public static func current_timestamp(_ aggregateExpression: SQLable) -> SQLable {
         currentTimestamp(aggregateExpression)
     }
     
@@ -192,8 +192,8 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html#FUNCTIONS-DATETIME-EXTRACT)
-    public static func datePart(_ text: SwifQLable, _ value: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = text.parts
+    public static func datePart(_ text: SQLable, _ value: SQLable) -> SQLable {
+        var parts: [SQLPart] = text.parts
         parts.append(o: .comma)
         parts.append(o: .space)
         parts.append(contentsOf: value.parts)
@@ -201,7 +201,7 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "datePart(_:_:)")
-    public static func date_part(_ text: SwifQLable, _ value: SwifQLable) -> SwifQLable {
+    public static func date_part(_ text: SQLable, _ value: SQLable) -> SQLable {
         datePart(text, value)
     }
     
@@ -224,8 +224,8 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html#FUNCTIONS-DATETIME-TRUNC)
-    public static func dateTrunc(_ text: SwifQLable, _ value: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = text.parts
+    public static func dateTrunc(_ text: SQLable, _ value: SQLable) -> SQLable {
+        var parts: [SQLPart] = text.parts
         parts.append(o: .comma)
         parts.append(o: .space)
         parts.append(contentsOf: value.parts)
@@ -233,7 +233,7 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "dateTrunc(_:_:)")
-    public static func date_trunc(_ text: SwifQLable, _ value: SwifQLable) -> SwifQLable {
+    public static func date_trunc(_ text: SQLable, _ value: SQLable) -> SQLable {
         dateTrunc(text, value)
     }
     
@@ -256,8 +256,8 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html#FUNCTIONS-DATETIME-EXTRACT)
-    public static func extract(_ field: ExtractFieldValue, from value: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = []
+    public static func extract(_ field: ExtractFieldValue, from value: SQLable) -> SQLable {
+        var parts: [SQLPart] = []
         parts.append(safe: field.value)
         parts.append(o: .space)
         parts.append(o: .from)
@@ -285,8 +285,8 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html#FUNCTIONS-DATETIME-EXTRACT)
-    public static func extract(_ field: SwifQLable, from value: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = field.parts
+    public static func extract(_ field: SQLable, from value: SQLable) -> SQLable {
+        var parts: [SQLPart] = field.parts
         parts.append(o: .space)
         parts.append(o: .from)
         parts.append(o: .space)
@@ -305,12 +305,12 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func isFinite(_ interval: SwifQLable) -> SwifQLable {
+    public static func isFinite(_ interval: SQLable) -> SQLable {
         build(.isFinite, body: interval.parts)
     }
 
     @available(*, deprecated, renamed: "isFinite(_:)")
-    public static func isfinite(_ interval: SwifQLable) -> SwifQLable {
+    public static func isfinite(_ interval: SQLable) -> SQLable {
         isFinite(interval)
     }
     
@@ -325,12 +325,12 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func justifyDays(_ interval: SwifQLable) -> SwifQLable {
+    public static func justifyDays(_ interval: SQLable) -> SQLable {
         build(.justifyDays, body: interval.parts)
     }
 
     @available(*, deprecated, renamed: "justifyDays(_:)")
-    public static func justify_days(_ interval: SwifQLable) -> SwifQLable {
+    public static func justify_days(_ interval: SQLable) -> SQLable {
         justifyDays(interval)
     }
     
@@ -345,12 +345,12 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func justifyHours(_ interval: SwifQLable) -> SwifQLable {
+    public static func justifyHours(_ interval: SQLable) -> SQLable {
         build(.justifyHours, body: interval.parts)
     }
 
     @available(*, deprecated, renamed: "justifyHours(_:)")
-    public static func justify_hours(_ interval: SwifQLable) -> SwifQLable {
+    public static func justify_hours(_ interval: SQLable) -> SQLable {
         justifyHours(interval)
     }
     
@@ -365,12 +365,12 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func justifyInterval(_ interval: SwifQLable) -> SwifQLable {
+    public static func justifyInterval(_ interval: SQLable) -> SQLable {
         build(.justifyInterval, body: interval.parts)
     }
 
     @available(*, deprecated, renamed: "justifyInterval(_:)")
-    public static func justify_interval(_ interval: SwifQLable) -> SwifQLable {
+    public static func justify_interval(_ interval: SQLable) -> SQLable {
         justifyInterval(interval)
     }
     
@@ -381,12 +381,12 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static var localTime: SwifQLable {
-        SwifQLableParts(parts: Name.localTime.part)
+    public static var localTime: SQLable {
+        SQLableParts(parts: Name.localTime.part)
     }
 
     @available(*, deprecated, renamed: "localTime")
-    public static var localtime: SwifQLable {
+    public static var localtime: SQLable {
         localTime
     }
     
@@ -397,12 +397,12 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static var localTimestamp: SwifQLable {
-        SwifQLableParts(parts: Name.localTimestamp.part)
+    public static var localTimestamp: SQLable {
+        SQLableParts(parts: Name.localTimestamp.part)
     }
 
     @available(*, deprecated, renamed: "localTimestamp")
-    public static var localtimestamp: SwifQLable {
+    public static var localtimestamp: SQLable {
         localTimestamp
     }
     
@@ -417,8 +417,8 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func makeDate(_ year: SwifQLable, _ month: SwifQLable, _ day: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = year.parts
+    public static func makeDate(_ year: SQLable, _ month: SQLable, _ day: SQLable) -> SQLable {
+        var parts: [SQLPart] = year.parts
         parts.append(o: .comma)
         parts.append(o: .space)
         parts.append(contentsOf: month.parts)
@@ -429,7 +429,7 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "makeDate(_:_:_:)")
-    public static func make_date(_ year: SwifQLable, _ month: SwifQLable, _ day: SwifQLable) -> SwifQLable {
+    public static func make_date(_ year: SQLable, _ month: SQLable, _ day: SQLable) -> SQLable {
         makeDate(year, month, day)
     }
     
@@ -444,14 +444,14 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func makeInterval(years: SwifQLable? = nil,
-                                                   months: SwifQLable? = nil,
-                                                   weeks: SwifQLable? = nil,
-                                                   days: SwifQLable? = nil,
-                                                   hours: SwifQLable? = nil,
-                                                   mins: SwifQLable? = nil,
-                                                   secs: SwifQLable? = nil) -> SwifQLable {
-        var parts: [SwifQLPart] = []
+    public static func makeInterval(years: SQLable? = nil,
+                                                   months: SQLable? = nil,
+                                                   weeks: SQLable? = nil,
+                                                   days: SQLable? = nil,
+                                                   hours: SQLable? = nil,
+                                                   mins: SQLable? = nil,
+                                                   secs: SQLable? = nil) -> SQLable {
+        var parts: [SQLPart] = []
         if let years = years {
             parts.append(o: .custom("years => "))
             if let number = years as? Int {
@@ -520,13 +520,13 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "makeInterval(years:months:weeks:days:hours:mins:secs:)")
-    public static func make_interval(years: SwifQLable? = nil,
-                                                   months: SwifQLable? = nil,
-                                                   weeks: SwifQLable? = nil,
-                                                   days: SwifQLable? = nil,
-                                                   hours: SwifQLable? = nil,
-                                                   mins: SwifQLable? = nil,
-                                                   secs: SwifQLable? = nil) -> SwifQLable {
+    public static func make_interval(years: SQLable? = nil,
+                                                   months: SQLable? = nil,
+                                                   weeks: SQLable? = nil,
+                                                   days: SQLable? = nil,
+                                                   hours: SQLable? = nil,
+                                                   mins: SQLable? = nil,
+                                                   secs: SQLable? = nil) -> SQLable {
         makeInterval(years: years, months: months, weeks: weeks, days: days, hours: hours, mins: mins, secs: secs)
     }
     
@@ -541,8 +541,8 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func makeTime(_ hour: SwifQLable, _ min: SwifQLable, _ sec: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = hour.parts
+    public static func makeTime(_ hour: SQLable, _ min: SQLable, _ sec: SQLable) -> SQLable {
+        var parts: [SQLPart] = hour.parts
         parts.append(o: .comma)
         parts.append(o: .space)
         parts.append(contentsOf: min.parts)
@@ -553,7 +553,7 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "makeTime(_:_:_:)")
-    public static func make_time(_ hour: SwifQLable, _ min: SwifQLable, _ sec: SwifQLable) -> SwifQLable {
+    public static func make_time(_ hour: SQLable, _ min: SQLable, _ sec: SQLable) -> SQLable {
         makeTime(hour, min, sec)
     }
     
@@ -568,13 +568,13 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func makeTimestamp(_ year: SwifQLable,
-                                                       _ month: SwifQLable,
-                                                       _ day: SwifQLable,
-                                                       _ hour: SwifQLable,
-                                                       _ min: SwifQLable,
-                                                       _ sec: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = year.parts
+    public static func makeTimestamp(_ year: SQLable,
+                                                       _ month: SQLable,
+                                                       _ day: SQLable,
+                                                       _ hour: SQLable,
+                                                       _ min: SQLable,
+                                                       _ sec: SQLable) -> SQLable {
+        var parts: [SQLPart] = year.parts
         parts.append(o: .comma)
         parts.append(o: .space)
         parts.append(contentsOf: month.parts)
@@ -594,12 +594,12 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "makeTimestamp(_:_:_:_:_:_:)")
-    public static func make_timestamp(_ year: SwifQLable,
-                                                       _ month: SwifQLable,
-                                                       _ day: SwifQLable,
-                                                       _ hour: SwifQLable,
-                                                       _ min: SwifQLable,
-                                                       _ sec: SwifQLable) -> SwifQLable {
+    public static func make_timestamp(_ year: SQLable,
+                                                       _ month: SQLable,
+                                                       _ day: SQLable,
+                                                       _ hour: SQLable,
+                                                       _ min: SQLable,
+                                                       _ sec: SQLable) -> SQLable {
         makeTimestamp(year, month, day, hour, min, sec)
     }
     
@@ -615,14 +615,14 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func makeTimestampTZ(_ year: SwifQLable,
-                                                          _ month: SwifQLable,
-                                                          _ day: SwifQLable,
-                                                          _ hour: SwifQLable,
-                                                          _ min: SwifQLable,
-                                                          _ sec: SwifQLable,
-                                                          _ timezone: SwifQLable? = nil) -> SwifQLable {
-        var parts: [SwifQLPart] = year.parts
+    public static func makeTimestampTZ(_ year: SQLable,
+                                                          _ month: SQLable,
+                                                          _ day: SQLable,
+                                                          _ hour: SQLable,
+                                                          _ min: SQLable,
+                                                          _ sec: SQLable,
+                                                          _ timezone: SQLable? = nil) -> SQLable {
+        var parts: [SQLPart] = year.parts
         parts.append(o: .comma)
         parts.append(o: .space)
         parts.append(contentsOf: month.parts)
@@ -647,13 +647,13 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "makeTimestampTZ(_:_:_:_:_:_:_:)")
-    public static func make_timestamptz(_ year: SwifQLable,
-                                                          _ month: SwifQLable,
-                                                          _ day: SwifQLable,
-                                                          _ hour: SwifQLable,
-                                                          _ min: SwifQLable,
-                                                          _ sec: SwifQLable,
-                                                          _ timezone: SwifQLable? = nil) -> SwifQLable {
+    public static func make_timestamptz(_ year: SQLable,
+                                                          _ month: SQLable,
+                                                          _ day: SQLable,
+                                                          _ hour: SQLable,
+                                                          _ min: SQLable,
+                                                          _ sec: SQLable,
+                                                          _ timezone: SQLable? = nil) -> SQLable {
         makeTimestampTZ(year, month, day, hour, min, sec, timezone)
     }
     
@@ -664,7 +664,7 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func now() -> SwifQLable {
+    public static func now() -> SQLable {
         build(.now, body: [])
     }
     
@@ -675,12 +675,12 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func statementTimestamp() -> SwifQLable {
+    public static func statementTimestamp() -> SQLable {
         build(.statementTimestamp, body: [])
     }
 
     @available(*, deprecated, renamed: "statementTimestamp()")
-    public static func statement_timestamp() -> SwifQLable {
+    public static func statement_timestamp() -> SQLable {
         statementTimestamp()
     }
     
@@ -691,12 +691,12 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func timeOfDay() -> SwifQLable {
+    public static func timeOfDay() -> SQLable {
         build(.timeOfDay, body: [])
     }
 
     @available(*, deprecated, renamed: "timeOfDay()")
-    public static func timeofday() -> SwifQLable {
+    public static func timeofday() -> SQLable {
         timeOfDay()
     }
     
@@ -707,12 +707,12 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func transactionTimestamp() -> SwifQLable {
+    public static func transactionTimestamp() -> SQLable {
         build(.transactionTimestamp, body: [])
     }
 
     @available(*, deprecated, renamed: "transactionTimestamp()")
-    public static func transaction_timestamp() -> SwifQLable {
+    public static func transaction_timestamp() -> SQLable {
         transactionTimestamp()
     }
     
@@ -727,12 +727,12 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-datetime.html)
-    public static func toTimestamp(_ value: SwifQLable) -> SwifQLable {
+    public static func toTimestamp(_ value: SQLable) -> SQLable {
         build(.toTimestamp, body: value.parts)
     }
 
     @available(*, deprecated, renamed: "toTimestamp(_:)")
-    public static func to_timestamp(_ value: SwifQLable) -> SwifQLable {
+    public static func to_timestamp(_ value: SQLable) -> SQLable {
         toTimestamp(value)
     }
 }

@@ -1,11 +1,11 @@
 /// A readable GROUP BY clause that preserves its selected structural owner.
-public struct SwifQLGroupByPart: SwifQLPart {
-    public let owner: SwifQLClauseOwner?
-    public let fields: [[SwifQLPart]]
+public struct SQLGroupByPart: SQLPart {
+    public let owner: SQLClauseOwner?
+    public let fields: [[SQLPart]]
 
     public init(
-        owner: SwifQLClauseOwner?,
-        fields: [[SwifQLPart]]
+        owner: SQLClauseOwner?,
+        fields: [[SQLPart]]
     ) {
         self.owner = owner
         self.fields = fields

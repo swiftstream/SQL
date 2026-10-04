@@ -33,18 +33,18 @@ extension Path {
     }
 }
 
-extension Path.Identifier: SwifQLable {
-    public var parts: [SwifQLPart] {
-        var parts: [SwifQLPart] = []
+extension Path.Identifier: SQLable {
+    public var parts: [SQLPart] {
+        var parts: [SQLPart] = []
         if let catalog {
-            parts.append(SwifQLPartCatalog(catalog))
+            parts.append(SQLPartCatalog(catalog))
             parts.append(o: .period)
         }
         if let schema {
-            parts.append(SwifQLPartSchema(schema))
+            parts.append(SQLPartSchema(schema))
             parts.append(o: .period)
         }
-        parts.append(SwifQLPartIdentifier(name))
+        parts.append(SQLPartIdentifier(name))
         return parts
     }
 }

@@ -16,28 +16,28 @@ extension Fn.Name {
 
 extension Fn {
     ///
-    public static func arrayAgg(_ aggregateExpression: SwifQLable) -> SwifQLable {
+    public static func arrayAgg(_ aggregateExpression: SQLable) -> SQLable {
         build(.arrayAgg, body: aggregateExpression.parts)
     }
 
     @available(*, deprecated, renamed: "arrayAgg(_:)")
-    public static func array_agg(_ aggregateExpression: SwifQLable) -> SwifQLable {
+    public static func array_agg(_ aggregateExpression: SQLable) -> SQLable {
         arrayAgg(aggregateExpression)
     }
     
     /// `SELECT array_remove(ARRAY[1,2,3,2], 2);` will return {1,3}
-    public static func arrayRemove(_ queryPart: SwifQLable...) -> SwifQLable {
+    public static func arrayRemove(_ queryPart: SQLable...) -> SQLable {
         arrayRemove(queryPart)
     }
 
     @available(*, deprecated, renamed: "arrayRemove(_:)")
-    public static func array_remove(_ queryPart: SwifQLable...) -> SwifQLable {
+    public static func array_remove(_ queryPart: SQLable...) -> SQLable {
         arrayRemove(queryPart)
     }
     
     /// `SELECT array_remove(ARRAY[1,2,3,2], 2);` will return {1,3}
-    public static func arrayRemove(_ queryParts: [SwifQLable]) -> SwifQLable {
-        var parts: [SwifQLPart] = []
+    public static func arrayRemove(_ queryParts: [SQLable]) -> SQLable {
+        var parts: [SQLPart] = []
         for (i, q) in queryParts.enumerated() {
             if i > 0 {
                 parts.append(o: .comma)
@@ -49,7 +49,7 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "arrayRemove(_:)")
-    public static func array_remove(_ queryParts: [SwifQLable]) -> SwifQLable {
+    public static func array_remove(_ queryParts: [SQLable]) -> SQLable {
         arrayRemove(queryParts)
     }
 }

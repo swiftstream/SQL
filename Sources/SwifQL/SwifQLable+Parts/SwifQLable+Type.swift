@@ -1,5 +1,5 @@
 //
-//  SwifQLable+Type.swift
+//  SQLable+Type.swift
 //  
 //
 //  Created by Mihael Isaev on 25.01.2020.
@@ -7,20 +7,20 @@
 
 import Foundation
 
-extension SwifQLable {
-    public var type: SwifQLable {
-        var parts: [SwifQLPart] = self.parts
+extension SQLable {
+    public var type: SQLable {
+        var parts: [SQLPart] = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .type)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
-    public func type(_ name: String) -> SwifQLable {
+    public func type(_ name: String) -> SQLable {
         type(nil, name)
     }
     
-    public func type(_ schema: String?, _ name: String) -> SwifQLable {
-        var parts: [SwifQLPart] = self.parts
+    public func type(_ schema: String?, _ name: String) -> SQLable {
+        var parts: [SQLPart] = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .type)
         if let schema = schema {
@@ -30,6 +30,6 @@ extension SwifQLable {
             parts.append(o: .space)
             parts.append(contentsOf: Path.Table(name).parts)
         }
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

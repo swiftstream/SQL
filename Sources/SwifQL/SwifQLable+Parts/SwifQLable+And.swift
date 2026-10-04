@@ -1,6 +1,6 @@
 //
-//  SwifQLable+And.swift
-//  SwifQLCore
+//  SQLable+And.swift
+//  SQLCore
 //
 //  Created by Mihael Isaev on 16/11/2018.
 //
@@ -9,20 +9,20 @@ import Foundation
 
 //MARK: AND
 
-extension SwifQLable {
-    public var and: SwifQLable {
+extension SQLable {
+    public var and: SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .and)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
-    public func and(_ predicate: SwifQLable) -> SwifQLable {
+    public func and(_ predicate: SQLable) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .and)
         parts.append(o: .space)
         parts.append(contentsOf: predicate.parts)
-        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 }

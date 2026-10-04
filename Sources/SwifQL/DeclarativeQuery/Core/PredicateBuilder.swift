@@ -9,21 +9,21 @@ public enum PredicateBuilder {
     /// Public builder product for reusable clause owners.
     ///
     /// Storage is module-internal only; ordinary call sites receive this type
-    /// from the builder and consume it as `SwifQLable`.
-    public struct Components: SwifQLable {
-        let fragments: [[SwifQLPart]]
+    /// from the builder and consume it as `SQLable`.
+    public struct Components: SQLable {
+        let fragments: [[SQLPart]]
 
-        init(fragments: [[SwifQLPart]]) {
+        init(fragments: [[SQLPart]]) {
             self.fragments = fragments
         }
 
-        public var parts: [SwifQLPart] {
+        public var parts: [SQLPart] {
             _PredicateComposition.join(fragments, with: .and, parenthesized: false)
         }
     }
 
     public static func buildExpression(
-        _ expression: SwifQLable
+        _ expression: SQLable
     ) -> Components {
         let snapshot = expression.parts
         guard !snapshot.isEmpty else {
@@ -65,15 +65,15 @@ public enum PredicateBuilder {
 
 /// Narrow internal ordinary-parts join helper.
 ///
-/// Operates only on snapshotted `[SwifQLPart]` fragments. It does not create a
+/// Operates only on snapshotted `[SQLPart]` fragments. It does not create a
 /// second AST, scan rendered SQL, infer ownership from prior operator tokens,
 /// or hold ambient mutable state.
 enum _PredicateComposition {
     static func join(
-        _ fragments: [[SwifQLPart]],
-        with operator: SwifQLPartOperator,
+        _ fragments: [[SQLPart]],
+        with operator: SQLPartOperator,
         parenthesized: Bool
-    ) -> [SwifQLPart] {
+    ) -> [SQLPart] {
         let surviving = fragments.filter { !$0.isEmpty }
         guard !surviving.isEmpty else {
             return []
@@ -83,7 +83,7 @@ enum _PredicateComposition {
             return surviving[0]
         }
 
-        var parts: [SwifQLPart] = []
+        var parts: [SQLPart] = []
         if parenthesized {
             parts.append(o: .openBracket)
         }
@@ -107,13 +107,13 @@ enum _PredicateComposition {
 /// Non-empty groups always render `( ... )`. Empty groups contribute no parts.
 public func And(
     @PredicateBuilder _ body: () -> PredicateBuilder.Components
-) -> SwifQLable {
+) -> SQLable {
     let joined = _PredicateComposition.join(
         body().fragments,
         with: .and,
         parenthesized: true
     )
-    return SwifQLableParts(rawParts: joined)
+    return SQLableParts(rawParts: joined)
 }
 
 /// Explicit grouped `OR` composition with owned parentheses.
@@ -121,11 +121,11 @@ public func And(
 /// Non-empty groups always render `( ... )`. Empty groups contribute no parts.
 public func Or(
     @PredicateBuilder _ body: () -> PredicateBuilder.Components
-) -> SwifQLable {
+) -> SQLable {
     let joined = _PredicateComposition.join(
         body().fragments,
         with: .or,
         parenthesized: true
     )
-    return SwifQLableParts(rawParts: joined)
+    return SQLableParts(rawParts: joined)
 }

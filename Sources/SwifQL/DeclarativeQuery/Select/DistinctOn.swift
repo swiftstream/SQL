@@ -8,15 +8,15 @@ import Foundation
 @resultBuilder
 public enum DistinctOnBuilder {
     /// Public builder product holding one or more snapshotted key fragments.
-    public struct Components: SwifQLable {
-        let keySnapshots: [[SwifQLPart]]
+    public struct Components: SQLable {
+        let keySnapshots: [[SQLPart]]
 
-        init(keySnapshots: [[SwifQLPart]]) {
+        init(keySnapshots: [[SQLPart]]) {
             self.keySnapshots = keySnapshots
         }
 
-        public var parts: [SwifQLPart] {
-            var parts: [SwifQLPart] = []
+        public var parts: [SQLPart] {
+            var parts: [SQLPart] = []
             for (index, key) in keySnapshots.enumerated() {
                 if index > 0 {
                     parts.append(o: .comma)
@@ -29,7 +29,7 @@ public enum DistinctOnBuilder {
     }
 
     public static func buildExpression(
-        _ expression: SwifQLable
+        _ expression: SQLable
     ) -> Components {
         Components(keySnapshots: [expression.parts])
     }
@@ -48,11 +48,11 @@ public enum DistinctOnBuilder {
 ///
 /// PostgreSQL/Duck token identity only. No MySQL emulation, alias conversion,
 /// value conversion, GROUP BY rewrite, or window fallback.
-public struct DistinctOn: SwifQLable {
-    private let keySnapshots: [[SwifQLPart]]
+public struct DistinctOn: SQLable {
+    private let keySnapshots: [[SQLPart]]
 
-    public var parts: [SwifQLPart] {
-        var parts: [SwifQLPart] = []
+    public var parts: [SQLPart] {
+        var parts: [SQLPart] = []
         parts.append(o: .distinct)
         parts.append(o: .space)
         parts.append(o: .on)
@@ -80,10 +80,10 @@ public struct DistinctOn: SwifQLable {
     ///
     /// At least one key is mandatory. Each key `parts` is evaluated exactly once.
     public init(
-        _ first: SwifQLable,
-        _ rest: SwifQLable...
+        _ first: SQLable,
+        _ rest: SQLable...
     ) {
-        var snapshots: [[SwifQLPart]] = [first.parts]
+        var snapshots: [[SQLPart]] = [first.parts]
         for key in rest {
             snapshots.append(key.parts)
         }

@@ -410,7 +410,7 @@ struct DeclarativeQueryCoreTests: SwifQLTests {
         #expect(afterGroup.current.finalize().prepare(.psql).plain == "AFTER_GROUP")
 
         let root = SQLBuilder.buildFinalResult(afterGroup)
-        let lowered = SQLBuilder.lowerRoot(root.fragments)
+        let lowered = root
         #expect(lowered.prepare(.psql).plain.contains("AFTER_GROUP"))
     }
 }

@@ -1,12 +1,12 @@
 //
-//  SwifQLable+Scoped.swift
+//  SQLable+Scoped.swift
 //  SwifQL
 //
 
 import Foundation
 
-extension SwifQLable {
-    public func scoped(_ scope: SwifQLRenderScope) -> SwifQLable {
-        SwifQLableParts(parts: [SwifQLScopedPart(scope: scope, parts: parts)])
+extension SQLable {
+    public func scoped(_ scope: SQLRenderScope) -> SQLable {
+        SQLableParts(parts: [SQLScopedPart(scope: scope, parts: parts)])
     }
 }

@@ -7,9 +7,9 @@
 
 import Foundation
 
-public class IndexType: SwifQLable {
-    public var parts: [SwifQLPart] {
-        var parts: [SwifQLPart] = []
+public class IndexType: SQLable {
+    public var parts: [SQLPart] {
+        var parts: [SQLPart] = []
         parts.append(o: .custom(name))
         return parts
     }

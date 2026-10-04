@@ -21,9 +21,9 @@ extension Path {
     }
 }
 
-extension Path.Column: SwifQLable {
-    public var parts: [SwifQLPart] {
-        [SwifQLPartKeyPath(table: nil, paths: paths)]
+extension Path.Column: SQLable {
+    public var parts: [SQLPart] {
+        [SQLPartKeyPath(table: nil, paths: paths)]
     }
 }
 

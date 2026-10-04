@@ -7,10 +7,10 @@
 
 import Foundation
 
-public typealias SwifQLBool = SwifQLPartBool
+public typealias SQLBool = SQLPartBool
 
-public struct SwifQLPartBool: SwifQLPart, SwifQLable {
-    public var parts: [SwifQLPart] { [self] }
+public struct SQLPartBool: SQLPart, SQLable {
+    public var parts: [SQLPart] { [self] }
     
     let value: Bool
     

@@ -1,5 +1,5 @@
 //
-//  SwifQLable+Null.swift
+//  SQLable+Null.swift
 //  
 //
 //  Created by Mihael Isaev on 25.01.2020.
@@ -9,21 +9,21 @@ import Foundation
 
 //MARK: NULL
 
-extension SwifQLable {
+extension SQLable {
 
     /// use `null` property to compare column value with `SQL NULL` (aka Swift nil)
     ///
     /// Usage:
     /// ```swift
-    /// SwifQL.select
+    /// SQL.root.select
     ///     // ...
     ///     .where(\User.$name == username
-    ///         && |\User.$status == "active" || \User.$updatedAt == SwifQL.null|)
+    ///         && |\User.$status == "active" || \User.$updatedAt == SQL.root.null|)
     /// ```
-    public var null: SwifQLable {
+    public var null: SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .null)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

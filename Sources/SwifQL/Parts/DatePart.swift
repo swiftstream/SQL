@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct SwifQLPartDate: SwifQLPart {
+public struct SQLPartDate: SQLPart {
     public var date: Date
     
     public init (_ date: Date) {

@@ -81,38 +81,38 @@ extension Path {
     }
 }
 
-extension Path.Catalog: SwifQLable {
-    public var parts: [SwifQLPart] {
-        [SwifQLPartCatalog(name)]
+extension Path.Catalog: SQLable {
+    public var parts: [SQLPart] {
+        [SQLPartCatalog(name)]
     }
 }
 
-extension Path.CatalogWithSchema: SwifQLable {
-    public var parts: [SwifQLPart] {
+extension Path.CatalogWithSchema: SQLable {
+    public var parts: [SQLPart] {
         [
-            SwifQLPartCatalog(catalog),
-            SwifQLPartOperator.period,
-            SwifQLPartSchema(schema)
+            SQLPartCatalog(catalog),
+            SQLPartOperator.period,
+            SQLPartSchema(schema)
         ]
     }
 }
 
-extension Path.CatalogWithSchemaAndTable: SwifQLable {
-    public var parts: [SwifQLPart] {
+extension Path.CatalogWithSchemaAndTable: SQLable {
+    public var parts: [SQLPart] {
         [
-            SwifQLPartCatalog(catalog),
-            SwifQLPartOperator.period,
-            SwifQLPartTable(schema: schema, table: table)
+            SQLPartCatalog(catalog),
+            SQLPartOperator.period,
+            SQLPartTable(schema: schema, table: table)
         ]
     }
 }
 
-extension Path.CatalogWithSchemaAndTableAndColumn: SwifQLable {
-    public var parts: [SwifQLPart] {
+extension Path.CatalogWithSchemaAndTableAndColumn: SQLable {
+    public var parts: [SQLPart] {
         [
-            SwifQLPartCatalog(catalog),
-            SwifQLPartOperator.period,
-            SwifQLPartKeyPath(schema: schema, table: table, paths: paths)
+            SQLPartCatalog(catalog),
+            SQLPartOperator.period,
+            SQLPartKeyPath(schema: schema, table: table, paths: paths)
         ]
     }
 }

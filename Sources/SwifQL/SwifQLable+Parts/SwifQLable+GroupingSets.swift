@@ -2,11 +2,11 @@ import Foundation
 
 private func groupingExpressionParts(
     _ keyword: String,
-    expressions: [[SwifQLPart]]
-) -> [SwifQLPart] {
-    var parts: [SwifQLPart] = [
-        SwifQLPartOperator.custom(keyword),
-        SwifQLPartOperator.openBracket
+    expressions: [[SQLPart]]
+) -> [SQLPart] {
+    var parts: [SQLPart] = [
+        SQLPartOperator.custom(keyword),
+        SQLPartOperator.openBracket
     ]
 
     for (index, expression) in expressions.enumerated() {
@@ -20,13 +20,13 @@ private func groupingExpressionParts(
     return parts
 }
 
-private func groupingSetParts(_ sets: [[[SwifQLPart]]]) -> [SwifQLPart] {
-    var parts: [SwifQLPart] = [
-        SwifQLPartOperator.custom("GROUPING"),
-        SwifQLPartOperator.space,
-        SwifQLPartOperator.custom("SETS"),
-        SwifQLPartOperator.space,
-        SwifQLPartOperator.openBracket
+private func groupingSetParts(_ sets: [[[SQLPart]]]) -> [SQLPart] {
+    var parts: [SQLPart] = [
+        SQLPartOperator.custom("GROUPING"),
+        SQLPartOperator.space,
+        SQLPartOperator.custom("SETS"),
+        SQLPartOperator.space,
+        SQLPartOperator.openBracket
     ]
 
     for (setIndex, set) in sets.enumerated() {
@@ -48,54 +48,54 @@ private func groupingSetParts(_ sets: [[[SwifQLPart]]]) -> [SwifQLPart] {
 }
 
 /// A GROUP BY grouping-set expression.
-public struct GroupingSets: SwifQLable {
-    private let sets: [[[SwifQLPart]]]
+public struct GroupingSets: SQLable {
+    private let sets: [[[SQLPart]]]
 
-    public init(_ sets: [SwifQLable]...) {
+    public init(_ sets: [SQLable]...) {
         self.init(sets)
     }
 
-    public init(_ sets: [[SwifQLable]]) {
+    public init(_ sets: [[SQLable]]) {
         self.sets = sets.map { set in
             set.map(\.parts)
         }
     }
 
-    public var parts: [SwifQLPart] {
+    public var parts: [SQLPart] {
         groupingSetParts(sets)
     }
 }
 
 /// A ROLLUP grouping expression for the existing GROUP BY clause.
-public struct Rollup: SwifQLable {
-    private let expressions: [[SwifQLPart]]
+public struct Rollup: SQLable {
+    private let expressions: [[SQLPart]]
 
-    public init(_ expression: SwifQLable, _ expressions: SwifQLable...) {
+    public init(_ expression: SQLable, _ expressions: SQLable...) {
         self.expressions = ([expression] + expressions).map(\.parts)
     }
 
-    public init(_ expressions: [SwifQLable]) {
+    public init(_ expressions: [SQLable]) {
         self.expressions = expressions.map(\.parts)
     }
 
-    public var parts: [SwifQLPart] {
+    public var parts: [SQLPart] {
         groupingExpressionParts("ROLLUP", expressions: expressions)
     }
 }
 
 /// A CUBE grouping expression for the existing GROUP BY clause.
-public struct Cube: SwifQLable {
-    private let expressions: [[SwifQLPart]]
+public struct Cube: SQLable {
+    private let expressions: [[SQLPart]]
 
-    public init(_ expression: SwifQLable, _ expressions: SwifQLable...) {
+    public init(_ expression: SQLable, _ expressions: SQLable...) {
         self.expressions = ([expression] + expressions).map(\.parts)
     }
 
-    public init(_ expressions: [SwifQLable]) {
+    public init(_ expressions: [SQLable]) {
         self.expressions = expressions.map(\.parts)
     }
 
-    public var parts: [SwifQLPart] {
+    public var parts: [SQLPart] {
         groupingExpressionParts("CUBE", expressions: expressions)
     }
 }

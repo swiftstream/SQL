@@ -1,5 +1,5 @@
 //
-//  SwifQLable+WhereNotExists.swift
+//  SQLable+WhereNotExists.swift
 //  SwifQL
 //
 //  Created by Mihael Isaev on 23/07/2019.
@@ -9,10 +9,10 @@ import Foundation
 
 //MARK: Where Not Exists
 
-extension SwifQLable {
-    public func whereNotExists(_ predicates: SwifQLable) -> SwifQLable {
-        let parts: [SwifQLPart] = [
-            SwifQLPartOperator.space,
+extension SQLable {
+    public func whereNotExists(_ predicates: SQLable) -> SQLable {
+        let parts: [SQLPart] = [
+            SQLPartOperator.space,
             .where,
             .space,
             .not,
@@ -20,7 +20,7 @@ extension SwifQLable {
             .exists,
             .space,
             .openBracket,
-        ] + predicates.parts + [SwifQLPartOperator.closeBracket]
-        return structurallyAppending(SwifQLableParts(parts: parts))
+        ] + predicates.parts + [SQLPartOperator.closeBracket]
+        return structurallyAppending(SQLableParts(parts: parts))
     }
 }

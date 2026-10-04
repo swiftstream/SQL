@@ -221,7 +221,7 @@ struct PreparationObservationTests {
             children: [
                 SwifQLPartUnsafeValue(1),
                 SwifQLPartOperator(","),
-                SwifQLScopedPart(
+                SQLScopedPart(
                     scope: scope,
                     parts: [SwifQLPartUnsafeValue(2)]
                 ),
@@ -503,7 +503,7 @@ struct PreparationObservationTests {
             children: [
                 SwifQLPartUnsafeValue(3),
                 SwifQLPartOperator(","),
-                SwifQLScopedPart(
+                SQLScopedPart(
                     scope: structuralScope,
                     parts: [SwifQLPartUnsafeValue(4)]
                 )

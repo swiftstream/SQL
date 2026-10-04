@@ -9,7 +9,7 @@ import Foundation
 
 public protocol AnyColumn {
     var name: String { get }
-    var type: SwifQL.`Type` { get }
+    var type: Type { get }
     var `default`: ColumnDefault? { get }
     var constraints: [Constraint] { get }
     var inputValue: Encodable? { get }
@@ -36,7 +36,7 @@ extension Optional: AnyOptional {
 @propertyWrapper
 public final class Column<Value>: AnyColumn, ColumnRepresentable, ColumnRootNameable, Encodable where Value: Codable {
     public let name: String
-    public let type: SwifQL.`Type`
+    public let type: Type
     public let `default`: ColumnDefault?
     public let constraints: [Constraint]
     
@@ -83,7 +83,7 @@ public final class Column<Value>: AnyColumn, ColumnRepresentable, ColumnRootName
         self.constraints = constraints
     }
     
-    public init(name: String, type: SwifQL.`Type`, default: ColumnDefault? = nil, constraints: Constraint...) {
+    public init(name: String, type: Type, default: ColumnDefault? = nil, constraints: Constraint...) {
         self.name = name
         self.type = type
         self.default = `default`
@@ -113,30 +113,30 @@ public final class Column<Value>: AnyColumn, ColumnRepresentable, ColumnRootName
 }
 
 public struct ColumnDefault {
-    let query: SwifQLable
+    let query: SQLable
     
-    init (_ query: SwifQLable) {
+    init (_ query: SQLable) {
         self.query = query
     }
     
     public static func `default`(_ v: Any) -> ColumnDefault {
-        var parts: [SwifQLPart] = []
+        var parts: [SQLPart] = []
         parts.append(o: .default)
         parts.append(o: .space)
         parts.append(safe: v)
-        return .init(SwifQLableParts(parts: parts))
+        return .init(SQLableParts(parts: parts))
     }
     
-    public static func `default`(_ expression: SwifQLable) -> ColumnDefault {
-        var parts: [SwifQLPart] = []
+    public static func `default`(_ expression: SQLable) -> ColumnDefault {
+        var parts: [SQLPart] = []
         parts.append(o: .default)
         parts.append(o: .space)
         parts.append(contentsOf: expression.parts)
-        return .init(SwifQLableParts(parts: parts))
+        return .init(SQLableParts(parts: parts))
     }
     
     public static func `default`(sequence name: String) -> ColumnDefault {
-        .init(SwifQLableParts(parts: Op.custom(name)))
+        .init(SQLableParts(parts: Op.custom(name)))
     }
 }
 

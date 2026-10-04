@@ -1,5 +1,5 @@
 //
-//  SwifQLable+Timestamp.swift
+//  SQLable+Timestamp.swift
 //  SwifQL
 //
 //  Created by Mihael Isaev on 02/08/2019.
@@ -18,7 +18,7 @@ import Foundation
 /// SELECT, INSERT, UPDATE, or DELETE.
 /// ```
 /// SwifQL
-///     .with(.init(Table("Table1"), SwifQL.select(Table("Table2").*).from(Table("Table2"))))
+///     .with(.init(Table("Table1"), SQL.root.select(Table("Table2").*).from(Table("Table2"))))
 ///     .select(Table("Table1").*)
 ///     .from(Table("Table1"))
 /// ```
@@ -28,16 +28,16 @@ import Foundation
 /// ```
 /// https://www.postgresql.org/docs/11/queries-with.html
 ///
-extension SwifQLable {
-    public func with(_ withs: With...) -> SwifQLable {
+extension SQLable {
+    public func with(_ withs: With...) -> SQLable {
         with(withs)
     }
     
-    public func with(_ withs: [With]) -> SwifQLable {
-        var fragmentParts: [SwifQLPart] = [
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.with,
-            SwifQLPartOperator.space
+    public func with(_ withs: [With]) -> SQLable {
+        var fragmentParts: [SQLPart] = [
+            SQLPartOperator.space,
+            SQLPartOperator.with,
+            SQLPartOperator.space
         ]
         for (i, v) in withs.enumerated() {
             if i > 0 {
@@ -46,6 +46,6 @@ extension SwifQLable {
             }
             fragmentParts.append(contentsOf: v.parts)
         }
-        return structurallyAppending(SwifQLableParts(parts: fragmentParts))
+        return structurallyAppending(SQLableParts(parts: fragmentParts))
     }
 }

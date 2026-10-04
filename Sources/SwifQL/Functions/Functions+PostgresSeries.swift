@@ -27,8 +27,8 @@ extension Fn {
     /// ```
     ///
     /// [Learn more →](https://www.postgresql.org/docs/11/functions-srf.html)
-    public static func generateSeries(_ start: SwifQLable, _ stop: SwifQLable, _ step: SwifQLable? = nil) -> SwifQLable {
-        var parts: [SwifQLPart] = start.parts
+    public static func generateSeries(_ start: SQLable, _ stop: SQLable, _ step: SQLable? = nil) -> SQLable {
+        var parts: [SQLPart] = start.parts
         parts.append(o: .comma)
         parts.append(o: .space)
         parts.append(contentsOf: stop.parts)
@@ -41,7 +41,7 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "generateSeries(_:_:_:)")
-    public static func generate_series(_ start: SwifQLable, _ stop: SwifQLable, _ step: SwifQLable? = nil) -> SwifQLable {
+    public static func generate_series(_ start: SQLable, _ stop: SQLable, _ step: SQLable? = nil) -> SQLable {
         generateSeries(start, stop, step)
     }
 }

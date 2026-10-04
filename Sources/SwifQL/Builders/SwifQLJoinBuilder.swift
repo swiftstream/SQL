@@ -1,5 +1,5 @@
 //
-//  SwifQLJoinBuilder.swift
+//  SQLJoinBuilder.swift
 //  App
 //
 //  Created by Mihael Isaev on 22/02/2019.
@@ -8,13 +8,13 @@
 import Foundation
 
 public struct JoinMode {
-    let parts: [SwifQLPartOperator]
+    let parts: [SQLPartOperator]
     
-    public init (_ parts: SwifQLPartOperator...) {
+    public init (_ parts: SQLPartOperator...) {
         self.parts = parts
     }
     
-    public init (_ parts: [SwifQLPartOperator]) {
+    public init (_ parts: [SQLPartOperator]) {
         self.parts = parts
     }
     
@@ -58,14 +58,14 @@ public struct JoinMode {
     }
 }
 
-public struct SwifQLJoinBuilder: SwifQLable {
+public struct SQLJoinBuilder: SQLable {
     let mode: JoinMode
-    let table: SwifQLable
-    let matchCondition: SwifQLable?
-    let predicates: SwifQLable?
+    let table: SQLable
+    let matchCondition: SQLable?
+    let predicates: SQLable?
     private let usingColumns: [String]?
     
-    public init (_ mode: JoinMode? = nil, _ table: SwifQLable, on predicates: SwifQLable? = nil) {
+    public init (_ mode: JoinMode? = nil, _ table: SQLable, on predicates: SQLable? = nil) {
         self.mode = mode ?? .none
         self.table = table
         self.matchCondition = nil
@@ -73,7 +73,7 @@ public struct SwifQLJoinBuilder: SwifQLable {
         self.usingColumns = nil
     }
 
-    init (_ mode: JoinMode, _ table: SwifQLable, using columns: [KeyPathLastPath]) {
+    init (_ mode: JoinMode, _ table: SQLable, using columns: [KeyPathLastPath]) {
         self.mode = mode
         self.table = table
         self.matchCondition = nil
@@ -83,9 +83,9 @@ public struct SwifQLJoinBuilder: SwifQLable {
 
     public init(
         _ mode: JoinMode? = nil,
-        _ table: SwifQLable,
-        matchCondition: SwifQLable,
-        on predicates: SwifQLable? = nil
+        _ table: SQLable,
+        matchCondition: SQLable,
+        on predicates: SQLable? = nil
     ) {
         self.mode = mode ?? .none
         self.table = table
@@ -96,8 +96,8 @@ public struct SwifQLJoinBuilder: SwifQLable {
 
     public init(
         _ mode: JoinMode,
-        _ table: SwifQLable,
-        matchCondition: SwifQLable,
+        _ table: SQLable,
+        matchCondition: SQLable,
         using columns: [KeyPathLastPath]
     ) {
         precondition(!columns.isEmpty, "JOIN MATCH_CONDITION USING requires at least one column")
@@ -108,8 +108,8 @@ public struct SwifQLJoinBuilder: SwifQLable {
         self.usingColumns = columns.map(\.lastPath)
     }
     
-    public var parts: [SwifQLPart] {
-        var parts: [SwifQLPart] = []
+    public var parts: [SQLPart] {
+        var parts: [SQLPart] = []
         parts.appendSpaceIfNeeded()
         parts.append(contentsOf: mode.parts)
         parts.append(o: .space)
@@ -134,7 +134,7 @@ public struct SwifQLJoinBuilder: SwifQLable {
                     parts.append(o: .comma)
                     parts.append(o: .space)
                 }
-                parts.append(SwifQLPartColumn(column))
+                parts.append(SQLPartColumn(column))
             }
             parts.append(o: .closeBracket)
         }

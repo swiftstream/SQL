@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SwifQLFormatter {
+struct SQLFormatter {
     private let dialect: SQLDialect
     private let mode: Mode
     

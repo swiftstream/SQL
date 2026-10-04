@@ -7,42 +7,42 @@ public enum SelectBuilder {
     public struct ProjectionItem: SQLBuilder.AliasableItem {
         public typealias Aliased = AliasedProjectionItem
 
-        private let snapshot: [SwifQLPart]
+        private let snapshot: [SQLPart]
 
-        init(snapshotting parts: [SwifQLPart]) {
+        init(snapshotting parts: [SQLPart]) {
             self.snapshot = parts
         }
 
-        public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: snapshot)
+        public func finalize() -> SQLable {
+            SQLableParts(rawParts: snapshot)
         }
 
         public func addingAlias(_ name: String) -> AliasedProjectionItem {
             var parts = snapshot
             parts.appendSpaceIfNeeded()
             parts.append(o: .as, .space)
-            parts.append(SwifQLPartAlias(name))
+            parts.append(SQLPartAlias(name))
             return AliasedProjectionItem(snapshotting: parts)
         }
     }
 
     public struct AliasedProjectionItem: SQLBuilder.FinalizableItem {
-        private let snapshot: [SwifQLPart]
+        private let snapshot: [SQLPart]
 
-        init(snapshotting parts: [SwifQLPart]) {
+        init(snapshotting parts: [SQLPart]) {
             self.snapshot = parts
         }
 
-        public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: snapshot)
+        public func finalize() -> SQLable {
+            SQLableParts(rawParts: snapshot)
         }
     }
 
     public struct Element {
         enum Kind {
-            case projection([SwifQLPart])
-            case modifier([SwifQLPart], carriesProjection: Bool)
-            case alias([SwifQLPart])
+            case projection([SQLPart])
+            case modifier([SQLPart], carriesProjection: Bool)
+            case alias([SQLPart])
         }
 
         let kind: Kind
@@ -56,22 +56,22 @@ public enum SelectBuilder {
         }
     }
 
-    public struct Result: SwifQLable, SQLBuilder.FinalizableItem {
-        private let children: [SwifQLPart]
+    public struct Result: SQLable, SQLBuilder.FinalizableItem {
+        private let children: [SQLPart]
 
-        init(children: [SwifQLPart]) {
+        init(children: [SQLPart]) {
             self.children = children
         }
 
-        public var parts: [SwifQLPart] {
-            [SwifQLStructuralFramePart(region: .statement, children: children)]
+        public var parts: [SQLPart] {
+            [SQLStructuralFramePart(region: .statement, children: children)]
         }
 
-        public func finalize() -> SwifQLable { self }
+        public func finalize() -> SQLable { self }
     }
 
-    public static func buildExpression(_ expression: any SwifQLable) -> Components {
-        let parts = _SwifQLStructuralComposition.nestedEmbeddingParts(from: expression.parts)
+    public static func buildExpression(_ expression: any SQLable) -> Components {
+        let parts = _SQLStructuralComposition.nestedEmbeddingParts(from: expression.parts)
         return Components(elements: [Element(kind: .projection(parts))])
     }
 
@@ -91,7 +91,7 @@ public enum SelectBuilder {
     }
 
     public static func buildExpression(_ request: SQLBuilder.AliasRequest) -> Components {
-        Components(elements: [Element(kind: .alias([SwifQLPartOperator.as, SwifQLPartOperator.space, SwifQLPartAlias(request.name)]))])
+        Components(elements: [Element(kind: .alias([SQLPartOperator.as, SQLPartOperator.space, SQLPartAlias(request.name)]))])
     }
 
     public static func buildBlock() -> Components {
@@ -123,7 +123,7 @@ public enum SelectBuilder {
     }
 
     private static func makeResult(_ elements: [Element]) -> Result {
-        var children: [SwifQLPart] = []
+        var children: [SQLPart] = []
         children.append(o: .select, .space)
         var hasListItem = false
         var previousCanOwnAlias = false
@@ -143,7 +143,7 @@ public enum SelectBuilder {
                 } else {
                     children.append(o: .comma, .space)
                     var orderedParts = parts
-                    if let last = orderedParts.last as? SwifQLPartOperator, last._value == " " {
+                    if let last = orderedParts.last as? SQLPartOperator, last._value == " " {
                         orderedParts.removeLast()
                     }
                     children.append(contentsOf: orderedParts)

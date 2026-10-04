@@ -5,14 +5,14 @@
 
 import Foundation
 
-extension SwifQLable {
+extension SQLable {
     /// Appends one direct parenthesized list of index item parts.
-    public func indexItems(_ items: IndexItem...) -> SwifQLable {
+    public func indexItems(_ items: IndexItem...) -> SQLable {
         indexItems(items)
     }
 
     /// Appends one direct parenthesized list of index item parts.
-    public func indexItems(_ items: [IndexItem]) -> SwifQLable {
+    public func indexItems(_ items: [IndexItem]) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .openBracket)
@@ -23,6 +23,6 @@ extension SwifQLable {
             parts.append(contentsOf: item.parts)
         }
         parts.append(o: .closeBracket)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

@@ -34,8 +34,8 @@ extension Path {
     }
 }
 
-extension Path.SchemaWithTable: SwifQLable {
-    public var parts: [SwifQLPart] {
-        [SwifQLPartTable(schema: schema, table: table)]
+extension Path.SchemaWithTable: SQLable {
+    public var parts: [SQLPart] {
+        [SQLPartTable(schema: schema, table: table)]
     }
 }

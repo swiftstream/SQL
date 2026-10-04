@@ -5,19 +5,19 @@ import Foundation
 public enum GroupByBuilder {
     /// Public inferred builder product; expression storage stays module-local.
     public struct Result {
-        let expressionParts: [[SwifQLPart]]
+        let expressionParts: [[SQLPart]]
 
-        init(expressionParts: [[SwifQLPart]]) {
+        init(expressionParts: [[SQLPart]]) {
             self.expressionParts = expressionParts
         }
     }
 
-    private static func expression(_ value: any SwifQLable) -> Result {
+    private static func expression(_ value: any SQLable) -> Result {
         let parts = value.parts
         return Result(expressionParts: parts.isEmpty ? [] : [parts])
     }
 
-    public static func buildExpression(_ expression: any SwifQLable) -> Result {
+    public static func buildExpression(_ expression: any SQLable) -> Result {
         self.expression(expression)
     }
 

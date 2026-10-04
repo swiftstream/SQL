@@ -1,6 +1,6 @@
 //
-//  SwifQLable+IsNull.swift
-//  SwifQLCore
+//  SQLable+IsNull.swift
+//  SQLCore
 //
 //  Created by Mihael Isaev on 16/11/2018.
 //
@@ -9,11 +9,11 @@ import Foundation
 
 //MARK: IS NULL
 
-extension SwifQLable {
-    public var isNull: SwifQLable {
+extension SQLable {
+    public var isNull: SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .isNull)
-        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 }

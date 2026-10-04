@@ -1,11 +1,11 @@
 //
-//  SwifQLRenderContext.swift
+//  SQLRenderContext.swift
 //  SwifQL
 //
 
 import Foundation
 
-public struct SwifQLRenderScope: Hashable, Sendable {
+public struct SQLRenderScope: Hashable, Sendable {
     public struct IdentityComponent: Hashable, Sendable {
         public let namespace: String
         public let name: String
@@ -35,34 +35,34 @@ public struct SwifQLRenderScope: Hashable, Sendable {
     }
 }
 
-extension SwifQLRenderScope {
-    public static let starPattern = SwifQLRenderScope(
+extension SQLRenderScope {
+    public static let starPattern = SQLRenderScope(
         namespace: "swifql",
         name: "starPattern"
     )
 }
 
-public struct SwifQLRenderContext: Sendable {
-    public let scopes: [SwifQLRenderScope]
+public struct SQLRenderContext: Sendable {
+    public let scopes: [SQLRenderScope]
 
-    internal init(scopes: [SwifQLRenderScope] = []) {
+    internal init(scopes: [SQLRenderScope] = []) {
         self.scopes = scopes
     }
 
-    public var currentScope: SwifQLRenderScope? {
+    public var currentScope: SQLRenderScope? {
         scopes.last
     }
 
-    public func contains(_ scope: SwifQLRenderScope) -> Bool {
+    public func contains(_ scope: SQLRenderScope) -> Bool {
         scopes.contains(scope)
     }
 
-    internal func appending(_ scope: SwifQLRenderScope) -> Self {
+    internal func appending(_ scope: SQLRenderScope) -> Self {
         .init(scopes: scopes + [scope])
     }
 }
 
-struct SwifQLScopedPart: SwifQLPart {
-    let scope: SwifQLRenderScope
-    let parts: [SwifQLPart]
+struct SQLScopedPart: SQLPart {
+    let scope: SQLRenderScope
+    let parts: [SQLPart]
 }

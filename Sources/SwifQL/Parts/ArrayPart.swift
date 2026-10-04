@@ -7,6 +7,6 @@
 
 import Foundation
 
-public protocol SwifQLPartArray: SwifQLPart {
-    var elements: [SwifQLable] { get }
+public protocol SQLPartArray: SQLPart {
+    var elements: [SQLable] { get }
 }

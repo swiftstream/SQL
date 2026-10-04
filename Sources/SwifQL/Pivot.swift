@@ -1,6 +1,6 @@
 import Foundation
 
-extension SwifQLClauseOwner {
+extension SQLClauseOwner {
     /// The structural owner for DuckDB's simplified PIVOT grammar.
     public static let simplifiedPivot = Self(
         namespace: "swifql",
@@ -8,31 +8,31 @@ extension SwifQLClauseOwner {
     )
 }
 
-extension SwifQLRenderScope {
+extension SQLRenderScope {
     /// The bounded render scopes used by DuckDB's simplified PIVOT grammar.
     public static let simplifiedPivotOn =
-        SwifQLClauseOwner.simplifiedPivot.renderScope(for: .on)
+        SQLClauseOwner.simplifiedPivot.renderScope(for: .on)
 
     public static let simplifiedPivotUsing =
-        SwifQLClauseOwner.simplifiedPivot.renderScope(for: .using)
+        SQLClauseOwner.simplifiedPivot.renderScope(for: .using)
 
     /// Owner-derived scopes intentionally share the generic owner identity
     /// derivation used by GROUP BY and ORDER BY rendering.
     public static let simplifiedPivotGroupBy =
-        SwifQLClauseOwner.simplifiedPivot.renderScope(for: .groupBy)
+        SQLClauseOwner.simplifiedPivot.renderScope(for: .groupBy)
 
     public static let simplifiedPivotOrderBy =
-        SwifQLClauseOwner.simplifiedPivot.renderScope(for: .orderBy)
+        SQLClauseOwner.simplifiedPivot.renderScope(for: .orderBy)
 }
 
-extension SwifQLable {
+extension SQLable {
     /// Appends DuckDB's simplified PIVOT source clause and establishes its
     /// ownership of its contextual ON, USING, GROUP BY, and ORDER BY clauses.
-    public func pivot(_ source: SwifQLable) -> SwifQLable {
-        let fragment = SwifQLableParts(parts:
-            [SwifQLPartOperator.space, .custom("PIVOT"), .space] + source.parts
+    public func pivot(_ source: SQLable) -> SQLable {
+        let fragment = SQLableParts(parts:
+            [SQLPartOperator.space, .custom("PIVOT"), .space] + source.parts
         )
-        return _SwifQLStructuralComposition.append(
+        return _SQLStructuralComposition.append(
             self,
             parts: fragment.parts,
             owners: [
@@ -45,9 +45,9 @@ extension SwifQLable {
     }
 
     private func expression(
-        _ expression: SwifQLable,
-        scopedFor kind: SwifQLClauseKind
-    ) -> SwifQLable {
+        _ expression: SQLable,
+        scopedFor kind: SQLClauseKind
+    ) -> SQLable {
         guard let owner = structuralOwner(for: kind) else {
             return expression
         }
@@ -55,36 +55,36 @@ extension SwifQLable {
     }
 
     /// Appends SQL ON and applies context selected by the current root owner.
-    public func on(_ expression: SwifQLable) -> SwifQLable {
+    public func on(_ expression: SQLable) -> SQLable {
         let scopedExpression = self.expression(expression, scopedFor: .on)
-        var parts: [SwifQLPart] = [
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.on,
-            SwifQLPartOperator.space
+        var parts: [SQLPart] = [
+            SQLPartOperator.space,
+            SQLPartOperator.on,
+            SQLPartOperator.space
         ]
         parts.append(contentsOf: scopedExpression.parts)
-        return structurallyAppending(SwifQLableParts(parts: parts))
+        return structurallyAppending(SQLableParts(parts: parts))
     }
 
     /// Appends simplified-PIVOT ON with a non-empty explicit IN list.
     public func on(
-        _ expression: SwifQLable,
-        in first: SwifQLable,
-        _ rest: SwifQLable...
-    ) -> SwifQLable {
+        _ expression: SQLable,
+        in first: SQLable,
+        _ rest: SQLable...
+    ) -> SQLable {
         let scopedExpression = self.expression(expression, scopedFor: .on)
-        var parts: [SwifQLPart] = [
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.on,
-            SwifQLPartOperator.space
+        var parts: [SQLPart] = [
+            SQLPartOperator.space,
+            SQLPartOperator.on,
+            SQLPartOperator.space
         ]
         parts.append(contentsOf: scopedExpression.parts)
         parts.append(contentsOf: [
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.in,
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.openBracket
-        ] as [SwifQLPart])
+            SQLPartOperator.space,
+            SQLPartOperator.in,
+            SQLPartOperator.space,
+            SQLPartOperator.openBracket
+        ] as [SQLPart])
 
         for (index, value) in ([first] + rest).enumerated() {
             if index > 0 {
@@ -94,18 +94,18 @@ extension SwifQLable {
         }
         parts.append(o: .closeBracket)
 
-        return structurallyAppending(SwifQLableParts(parts: parts))
+        return structurallyAppending(SQLableParts(parts: parts))
     }
 
     /// Appends SQL USING and applies context selected by the current root owner.
-    public func using(_ expression: SwifQLable) -> SwifQLable {
+    public func using(_ expression: SQLable) -> SQLable {
         let scopedExpression = self.expression(expression, scopedFor: .using)
-        var parts: [SwifQLPart] = [
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.using,
-            SwifQLPartOperator.space
+        var parts: [SQLPart] = [
+            SQLPartOperator.space,
+            SQLPartOperator.using,
+            SQLPartOperator.space
         ]
         parts.append(contentsOf: scopedExpression.parts)
-        return structurallyAppending(SwifQLableParts(parts: parts))
+        return structurallyAppending(SQLableParts(parts: parts))
     }
 }

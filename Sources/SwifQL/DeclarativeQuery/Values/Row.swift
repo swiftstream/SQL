@@ -1,7 +1,7 @@
 import Foundation
 
 public enum RowFieldValue {
-    case expression([SwifQLPart])
+    case expression([SQLPart])
     case defaultKeyword
 }
 
@@ -9,19 +9,19 @@ public protocol RowField {
     var rowFieldValue: RowFieldValue { get }
 }
 
-public struct DefaultFieldRequest: SwifQLable {
+public struct DefaultFieldRequest: SQLable {
     public init() {}
 
     public var rowFieldValue: RowFieldValue { .defaultKeyword }
 
-    public var parts: [SwifQLPart] { [SwifQLPartOperator.custom("DEFAULT")] }
+    public var parts: [SQLPart] { [SQLPartOperator.custom("DEFAULT")] }
 }
 
 public func Default() -> DefaultFieldRequest {
     DefaultFieldRequest()
 }
 
-public struct Row: SwifQLable {
+public struct Row: SQLable {
     let fields: [RowFieldValue]
 
     public init(@RowBuilder _ body: () -> RowBuilder.Result) {
@@ -36,22 +36,22 @@ public struct Row: SwifQLable {
         self.fields = fields
     }
 
-    public var parts: [SwifQLPart] {
-        var result: [SwifQLPart] = [SwifQLPartOperator("ROW(")]
+    public var parts: [SQLPart] {
+        var result: [SQLPart] = [SQLPartOperator("ROW(")]
         _appendRowFields(fields, to: &result)
-        result.append(SwifQLPartOperator(")"))
+        result.append(SQLPartOperator(")"))
         return result
     }
 }
 
 func _appendRowFields(
     _ fields: [RowFieldValue],
-    to parts: inout [SwifQLPart]
+    to parts: inout [SQLPart]
 ) {
     for (index, field) in fields.enumerated() {
         if index > 0 {
-            parts.append(SwifQLPartOperator(","))
-            parts.append(SwifQLPartOperator(" "))
+            parts.append(SQLPartOperator(","))
+            parts.append(SQLPartOperator(" "))
         }
 
         switch field {
@@ -59,7 +59,7 @@ func _appendRowFields(
             precondition(!fieldParts.isEmpty, "A Row field must produce SQL parts.")
             parts.append(contentsOf: fieldParts)
         case .defaultKeyword:
-            parts.append(SwifQLPartOperator("DEFAULT"))
+            parts.append(SQLPartOperator("DEFAULT"))
         }
     }
 }

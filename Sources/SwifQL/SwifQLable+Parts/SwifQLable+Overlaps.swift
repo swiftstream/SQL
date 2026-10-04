@@ -1,5 +1,5 @@
 //
-//  SwifQLable+Overlaps.swift
+//  SQLable+Overlaps.swift
 //  SwifQL
 //
 //  Created by Mihael Isaev on 02/08/2019.
@@ -9,19 +9,19 @@ import Foundation
 
 //MARK: Overlaps
 
-extension SwifQLable {
-    public var overlaps: SwifQLable {
+extension SQLable {
+    public var overlaps: SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .overlaps)
-        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
     
-    public func overlaps(_ fields: SwifQLable...) -> SwifQLable {
+    public func overlaps(_ fields: SQLable...) -> SQLable {
         overlaps(fields)
     }
     
-    public func overlaps(_ fields: [SwifQLable]) -> SwifQLable {
+    public func overlaps(_ fields: [SQLable]) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .overlaps)
@@ -39,7 +39,6 @@ extension SwifQLable {
         if fields.count > 0 {
             parts.append(o: .closeBracket)
         }
-        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 }
-

@@ -4,19 +4,19 @@
 //
 
 extension Fn {
-    private static var fromBase64FunctionName: SwifQLHybridOperator {
-        SwifQLHybridOperator(
-            SwifQLPartOperator("from_base64"),
-            SwifQLPartOperator("FROM_BASE64"),
-            SwifQLPartOperator("from_base64")
+    private static var fromBase64FunctionName: SQLHybridOperator {
+        SQLHybridOperator(
+            SQLPartOperator("from_base64"),
+            SQLPartOperator("FROM_BASE64"),
+            SQLPartOperator("from_base64")
         )
     }
 
-    public static func fromBase64(_ value: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = [fromBase64FunctionName]
+    public static func fromBase64(_ value: SQLable) -> SQLable {
+        var parts: [SQLPart] = [fromBase64FunctionName]
         parts.append(o: .openBracket)
         parts.append(contentsOf: value.parts)
         parts.append(o: .closeBracket)
-        return SwifQLableParts(parts: parts)
+        return SQLableParts(parts: parts)
     }
 }

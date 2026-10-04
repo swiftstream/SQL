@@ -76,12 +76,12 @@ extension Fn.Name {
 
 extension Fn {
     ///
-        public static func jsonbAgg(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonbAgg(_ aggregateExpression: SQLable) -> SQLable {
             build(.jsonbAgg, body: aggregateExpression.parts)
         }
 
         @available(*, deprecated, renamed: "jsonbAgg(_:)")
-        public static func jsonb_agg(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonb_agg(_ aggregateExpression: SQLable) -> SQLable {
             jsonbAgg(aggregateExpression)
         }
         
@@ -91,30 +91,30 @@ extension Fn {
         /// otherwise, a scalar value is produced.
         /// For any scalar type other than a number, a Boolean, or a null value,
         /// the text representation will be used, in such a fashion that it is a valid json or jsonb value.
-        public static func toJSONB(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func toJSONB(_ aggregateExpression: SQLable) -> SQLable {
             build(.toJSONB, body: aggregateExpression.parts)
         }
 
         @available(*, deprecated, renamed: "toJSONB(_:)")
-        public static func to_jsonb(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func to_jsonb(_ aggregateExpression: SQLable) -> SQLable {
             toJSONB(aggregateExpression)
         }
         
         /// Builds a possibly-heterogeneously-typed JSON array out of a variadic argument list
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbBuildArray(_ items: SwifQLable...) -> SwifQLable {
+        public static func jsonbBuildArray(_ items: SQLable...) -> SQLable {
             jsonbBuildArray(items)
         }
 
         @available(*, deprecated, renamed: "jsonbBuildArray(_:)")
-        public static func jsonb_build_array(_ items: SwifQLable...) -> SwifQLable {
+        public static func jsonb_build_array(_ items: SQLable...) -> SQLable {
             jsonbBuildArray(items)
         }
         
         /// Builds a possibly-heterogeneously-typed JSON array out of a variadic argument list
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbBuildArray(_ items: [SwifQLable]) -> SwifQLable {
-            var parts: [SwifQLPart] = []
+        public static func jsonbBuildArray(_ items: [SQLable]) -> SQLable {
+            var parts: [SQLPart] = []
             for (i, v) in items.enumerated() {
                 if i > 0 {
                     parts.append(o: .comma)
@@ -126,7 +126,7 @@ extension Fn {
         }
 
         @available(*, deprecated, renamed: "jsonbBuildArray(_:)")
-        public static func jsonb_build_array(_ items: [SwifQLable]) -> SwifQLable {
+        public static func jsonb_build_array(_ items: [SQLable]) -> SQLable {
             jsonbBuildArray(items)
         }
         
@@ -137,12 +137,12 @@ extension Fn {
         /// Fn.jsonbBuildObject("foo", 1, "bar", 2)
         /// ```
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbBuildObject(_ items: SwifQLable...) -> SwifQLable {
+        public static func jsonbBuildObject(_ items: SQLable...) -> SQLable {
             jsonbBuildObject(items)
         }
 
         @available(*, deprecated, renamed: "jsonbBuildObject(_:)")
-        public static func jsonb_build_object(_ items: SwifQLable...) -> SwifQLable {
+        public static func jsonb_build_object(_ items: SQLable...) -> SQLable {
             jsonbBuildObject(items)
         }
         
@@ -153,8 +153,8 @@ extension Fn {
         /// Fn.jsonbBuildObject("foo", 1, "bar", 2)
         /// ```
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbBuildObject(_ items: [SwifQLable]) -> SwifQLable {
-            var parts: [SwifQLPart] = []
+        public static func jsonbBuildObject(_ items: [SQLable]) -> SQLable {
+            var parts: [SQLPart] = []
             for (i, v) in items.enumerated() {
                 if i > 0 {
                     parts.append(o: .comma)
@@ -166,7 +166,7 @@ extension Fn {
         }
 
         @available(*, deprecated, renamed: "jsonbBuildObject(_:)")
-        public static func jsonb_build_object(_ items: [SwifQLable]) -> SwifQLable {
+        public static func jsonb_build_object(_ items: [SQLable]) -> SQLable {
             jsonbBuildObject(items)
         }
         
@@ -175,20 +175,20 @@ extension Fn {
         /// in which case they are taken as alternating key/value pairs,
         /// or two dimensions such that each inner array has exactly two elements, which are taken as a key/value pair
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbObject(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonbObject(_ aggregateExpression: SQLable) -> SQLable {
             build(.jsonbObject, body: aggregateExpression.parts)
         }
 
         @available(*, deprecated, renamed: "jsonbObject(_:)")
-        public static func jsonb_object(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonb_object(_ aggregateExpression: SQLable) -> SQLable {
             jsonbObject(aggregateExpression)
         }
         
         /// This form of json_object takes keys and values pairwise from two separate arrays.
         /// In all other respects it is identical to the one-argument form.
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbObject(keys: SwifQLable, values: SwifQLable) -> SwifQLable {
-            var parts: [SwifQLPart] = keys.parts
+        public static func jsonbObject(keys: SQLable, values: SQLable) -> SQLable {
+            var parts: [SQLPart] = keys.parts
             parts.append(o: .comma)
             parts.append(o: .space)
             parts.append(contentsOf: values.parts)
@@ -196,47 +196,47 @@ extension Fn {
         }
 
         @available(*, deprecated, renamed: "jsonbObject(keys:values:)")
-        public static func jsonb_object(keys: SwifQLable, values: SwifQLable) -> SwifQLable {
+        public static func jsonb_object(keys: SQLable, values: SQLable) -> SQLable {
             jsonbObject(keys: keys, values: values)
         }
         
         /// Returns the number of elements in the outermost JSON array
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbArrayLength(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonbArrayLength(_ aggregateExpression: SQLable) -> SQLable {
             build(.jsonbArrayLength, body: aggregateExpression.parts)
         }
 
         @available(*, deprecated, renamed: "jsonbArrayLength(_:)")
-        public static func jsonb_array_length(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonb_array_length(_ aggregateExpression: SQLable) -> SQLable {
             jsonbArrayLength(aggregateExpression)
         }
         
         /// Expands the outermost JSON object into a set of key/value pairs
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbEach(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonbEach(_ aggregateExpression: SQLable) -> SQLable {
             build(.jsonbEach, body: aggregateExpression.parts)
         }
 
         @available(*, deprecated, renamed: "jsonbEach(_:)")
-        public static func jsonb_each(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonb_each(_ aggregateExpression: SQLable) -> SQLable {
             jsonbEach(aggregateExpression)
         }
         
         /// Expands the outermost JSON object into a set of key/value pairs. The returned values will be of type text
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbEachText(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonbEachText(_ aggregateExpression: SQLable) -> SQLable {
             build(.jsonbEachText, body: aggregateExpression.parts)
         }
 
         @available(*, deprecated, renamed: "jsonbEachText(_:)")
-        public static func jsonb_each_text(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonb_each_text(_ aggregateExpression: SQLable) -> SQLable {
             jsonbEachText(aggregateExpression)
         }
         
         /// Returns JSON value pointed to by path_elems (equivalent to #> operator)
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbExtractPath(_ fromJson: SwifQLable, pathElems: [String]) -> SwifQLable {
-            var parts: [SwifQLPart] = fromJson.parts
+        public static func jsonbExtractPath(_ fromJson: SQLable, pathElems: [String]) -> SQLable {
+            var parts: [SQLPart] = fromJson.parts
             parts.append(o: .comma)
             parts.append(o: .space)
             for (i, v) in pathElems.enumerated() {
@@ -250,24 +250,24 @@ extension Fn {
             return build(.jsonbExtractPath, body: parts)
         }
         
-        public static func jsonbExtractPath(_ fromJson: SwifQLable, pathElems: String...) -> SwifQLable {
+        public static func jsonbExtractPath(_ fromJson: SQLable, pathElems: String...) -> SQLable {
             jsonbExtractPath(fromJson, pathElems: pathElems)
         }
 
         @available(*, deprecated, renamed: "jsonbExtractPath(_:pathElems:)")
-        public static func jsonb_extract_path(_ from_json: SwifQLable, path_elems: [String]) -> SwifQLable {
+        public static func jsonb_extract_path(_ from_json: SQLable, path_elems: [String]) -> SQLable {
             jsonbExtractPath(from_json, pathElems: path_elems)
         }
 
         @available(*, deprecated, renamed: "jsonbExtractPath(_:pathElems:)")
-        public static func jsonb_extract_path(_ from_json: SwifQLable, path_elems: String...) -> SwifQLable {
+        public static func jsonb_extract_path(_ from_json: SQLable, path_elems: String...) -> SQLable {
             jsonbExtractPath(from_json, pathElems: path_elems)
         }
         
         /// Returns JSON value pointed to by path_elems as text (equivalent to #>> operator)
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbExtractPathText(_ fromJson: SwifQLable, pathElems: [String]) -> SwifQLable {
-            var parts: [SwifQLPart] = fromJson.parts
+        public static func jsonbExtractPathText(_ fromJson: SQLable, pathElems: [String]) -> SQLable {
+            var parts: [SQLPart] = fromJson.parts
             parts.append(o: .comma)
             parts.append(o: .space)
             for (i, v) in pathElems.enumerated() {
@@ -281,35 +281,35 @@ extension Fn {
             return build(.jsonbExtractPathText, body: parts)
         }
         
-        public static func jsonbExtractPathText(_ fromJson: SwifQLable, pathElems: String...) -> SwifQLable {
+        public static func jsonbExtractPathText(_ fromJson: SQLable, pathElems: String...) -> SQLable {
             jsonbExtractPathText(fromJson, pathElems: pathElems)
         }
 
         @available(*, deprecated, renamed: "jsonbExtractPathText(_:pathElems:)")
-        public static func jsonb_extract_path_text(_ from_json: SwifQLable, path_elems: [String]) -> SwifQLable {
+        public static func jsonb_extract_path_text(_ from_json: SQLable, path_elems: [String]) -> SQLable {
             jsonbExtractPathText(from_json, pathElems: path_elems)
         }
 
         @available(*, deprecated, renamed: "jsonbExtractPathText(_:pathElems:)")
-        public static func jsonb_extract_path_text(_ from_json: SwifQLable, path_elems: String...) -> SwifQLable {
+        public static func jsonb_extract_path_text(_ from_json: SQLable, path_elems: String...) -> SQLable {
             jsonbExtractPathText(from_json, pathElems: path_elems)
         }
         
         /// Returns set of keys in the outermost JSON object.
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbObjectKeys(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonbObjectKeys(_ aggregateExpression: SQLable) -> SQLable {
             build(.jsonbObjectKeys, body: aggregateExpression.parts)
         }
 
         @available(*, deprecated, renamed: "jsonbObjectKeys(_:)")
-        public static func jsonb_object_keys(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonb_object_keys(_ aggregateExpression: SQLable) -> SQLable {
             jsonbObjectKeys(aggregateExpression)
         }
         
         /// Expands the object in from_json to a row whose columns match the record type defined by base (see note below).
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbPopulateRecord(base: SwifQLable, fromJSON: SwifQLable) -> SwifQLable {
-            var parts: [SwifQLPart] = base.parts
+        public static func jsonbPopulateRecord(base: SQLable, fromJSON: SQLable) -> SQLable {
+            var parts: [SQLPart] = base.parts
             parts.append(o: .comma)
             parts.append(o: .space)
             parts.append(contentsOf: fromJSON.parts)
@@ -317,14 +317,14 @@ extension Fn {
         }
 
         @available(*, deprecated, renamed: "jsonbPopulateRecord(base:fromJSON:)")
-        public static func jsonb_populate_record(base: SwifQLable, from_json: SwifQLable) -> SwifQLable {
+        public static func jsonb_populate_record(base: SQLable, from_json: SQLable) -> SQLable {
             jsonbPopulateRecord(base: base, fromJSON: from_json)
         }
         
         /// Expands the outermost array of objects in from_json to a set of rows whose columns match the record type defined by base (see note below).
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbPopulateRecordSet(base: SwifQLable, fromJSON: SwifQLable) -> SwifQLable {
-            var parts: [SwifQLPart] = base.parts
+        public static func jsonbPopulateRecordSet(base: SQLable, fromJSON: SQLable) -> SQLable {
+            var parts: [SQLPart] = base.parts
             parts.append(o: .comma)
             parts.append(o: .space)
             parts.append(contentsOf: fromJSON.parts)
@@ -332,73 +332,73 @@ extension Fn {
         }
 
         @available(*, deprecated, renamed: "jsonbPopulateRecordSet(base:fromJSON:)")
-        public static func jsonb_populate_recordset(base: SwifQLable, from_json: SwifQLable) -> SwifQLable {
+        public static func jsonb_populate_recordset(base: SQLable, from_json: SQLable) -> SQLable {
             jsonbPopulateRecordSet(base: base, fromJSON: from_json)
         }
         
         /// Expands a JSON array to a set of JSON values.
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbArrayElements(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonbArrayElements(_ aggregateExpression: SQLable) -> SQLable {
             build(.jsonbArrayElements, body: aggregateExpression.parts)
         }
 
         @available(*, deprecated, renamed: "jsonbArrayElements(_:)")
-        public static func jsonb_array_elements(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonb_array_elements(_ aggregateExpression: SQLable) -> SQLable {
             jsonbArrayElements(aggregateExpression)
         }
         
         /// Expands a JSON array to a set of text values.
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbArrayElementsText(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonbArrayElementsText(_ aggregateExpression: SQLable) -> SQLable {
             build(.jsonbArrayElementsText, body: aggregateExpression.parts)
         }
 
         @available(*, deprecated, renamed: "jsonbArrayElementsText(_:)")
-        public static func jsonb_array_elements_text(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonb_array_elements_text(_ aggregateExpression: SQLable) -> SQLable {
             jsonbArrayElementsText(aggregateExpression)
         }
         
         /// Returns the type of the outermost JSON value as a text string. Possible types are object, array, string, number, boolean, and null.
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbTypeOf(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonbTypeOf(_ aggregateExpression: SQLable) -> SQLable {
             build(.jsonbTypeOf, body: aggregateExpression.parts)
         }
 
         @available(*, deprecated, renamed: "jsonbTypeOf(_:)")
-        public static func jsonb_typeof(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonb_typeof(_ aggregateExpression: SQLable) -> SQLable {
             jsonbTypeOf(aggregateExpression)
         }
         
         /// Builds an arbitrary record from a JSON object (see note below). As with all functions returning record, the caller must explicitly define the structure of the record with an AS clause.
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbToRecord(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonbToRecord(_ aggregateExpression: SQLable) -> SQLable {
             build(.jsonbToRecord, body: aggregateExpression.parts)
         }
 
         @available(*, deprecated, renamed: "jsonbToRecord(_:)")
-        public static func jsonb_to_record(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonb_to_record(_ aggregateExpression: SQLable) -> SQLable {
             jsonbToRecord(aggregateExpression)
         }
         
         /// Builds an arbitrary set of records from a JSON array of objects (see note below). As with all functions returning record, the caller must explicitly define the structure of the record with an AS clause.
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbToRecordSet(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonbToRecordSet(_ aggregateExpression: SQLable) -> SQLable {
             build(.jsonbToRecordSet, body: aggregateExpression.parts)
         }
 
         @available(*, deprecated, renamed: "jsonbToRecordSet(_:)")
-        public static func jsonb_to_recordset(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonb_to_recordset(_ aggregateExpression: SQLable) -> SQLable {
             jsonbToRecordSet(aggregateExpression)
         }
         
         /// Returns from_json with all object fields that have null values omitted. Other null values are untouched.
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbStripNulls(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonbStripNulls(_ aggregateExpression: SQLable) -> SQLable {
             build(.jsonbStripNulls, body: aggregateExpression.parts)
         }
 
         @available(*, deprecated, renamed: "jsonbStripNulls(_:)")
-        public static func jsonb_strip_nulls(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonb_strip_nulls(_ aggregateExpression: SQLable) -> SQLable {
             jsonbStripNulls(aggregateExpression)
         }
         
@@ -408,7 +408,7 @@ extension Fn {
         /// As with the path orientated operators, negative integers
         /// that appear in path count from the end of JSON arrays.
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-    //    public static func jsonb_set(target: SwifQLable, path text: [String], new_value: SwifQLable, create_missing: Bool? = nil) -> SwifQLable { // TDB
+    //    public static func jsonb_set(target: SQLable, path text: [String], new_value: SQLable, create_missing: Bool? = nil) -> SQLable { // TDB
     //        return _buildFn(.jsonb_set, body: aggregateExpression.parts)
     //    }
         
@@ -419,18 +419,18 @@ extension Fn {
         /// only if target does not exist. As with the path orientated operators, negative integers
         /// that appear in path count from the end of JSON arrays.
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-    //    public static func jsonb_insert(target: SwifQLable, path text: [String], new_value: SwifQLable, insert_after: Bool? = nil) -> SwifQLable { // TDB
+    //    public static func jsonb_insert(target: SQLable, path text: [String], new_value: SQLable, insert_after: Bool? = nil) -> SQLable { // TDB
     //        return _buildFn(.jsonb_insert, body: aggregateExpression.parts)
     //    }
         
         /// Returns from_json as indented JSON text.
         /// [Learn more →](https://www.postgresql.org/docs/current/functions-json.html)
-        public static func jsonbPretty(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonbPretty(_ aggregateExpression: SQLable) -> SQLable {
             build(.jsonbPretty, body: aggregateExpression.parts)
         }
 
         @available(*, deprecated, renamed: "jsonbPretty(_:)")
-        public static func jsonb_pretty(_ aggregateExpression: SwifQLable) -> SwifQLable {
+        public static func jsonb_pretty(_ aggregateExpression: SQLable) -> SQLable {
             jsonbPretty(aggregateExpression)
         }
 }

@@ -15,8 +15,8 @@ extension Fn.Name {
 }
 
 extension Fn {
-    public static func fromUnixTime(_ timeinterval: SwifQLable, _ format: String? = nil) -> SwifQLable {
-        var parts: [SwifQLPart] = timeinterval.parts
+    public static func fromUnixTime(_ timeinterval: SQLable, _ format: String? = nil) -> SQLable {
+        var parts: [SQLPart] = timeinterval.parts
         if let format = format {
             parts.append(o: .comma)
             parts.append(o: .space)
@@ -26,7 +26,7 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "fromUnixTime(_:_:)")
-    public static func from_unixtime(_ timeinterval: SwifQLable, _ format: String? = nil) -> SwifQLable {
+    public static func from_unixtime(_ timeinterval: SQLable, _ format: String? = nil) -> SQLable {
         fromUnixTime(timeinterval, format)
     }
 
@@ -41,8 +41,8 @@ extension Fn {
     /// ```
     /// [Learn more →](https://dev.mysql.com/doc/refman/5.7/en/date-and-time-functions.html#function_date-format)
     /// [Learn more →](https://dev.mysql.com/doc/refman/8.0/en/date-and-time-functions.html#function_date-format)
-    public static func dateFormat(_ datetime: SwifQLable, _ format: String) -> SwifQLable {
-        var parts: [SwifQLPart] = datetime.parts
+    public static func dateFormat(_ datetime: SQLable, _ format: String) -> SQLable {
+        var parts: [SQLPart] = datetime.parts
         parts.append(o: .comma)
         parts.append(o: .space)
         parts.append(o: .custom(format.singleQuotted))
@@ -50,7 +50,7 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "dateFormat(_:_:)")
-    public static func date_format(_ datetime: SwifQLable, _ format: String) -> SwifQLable {
+    public static func date_format(_ datetime: SQLable, _ format: String) -> SQLable {
         dateFormat(datetime, format)
     }
 }

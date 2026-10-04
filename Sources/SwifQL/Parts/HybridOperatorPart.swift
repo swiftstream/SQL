@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct SwifQLHybridRepresentationKey: Hashable, Sendable {
+public struct SQLHybridRepresentationKey: Hashable, Sendable {
     public let namespace: String
     public let name: String
 
@@ -22,16 +22,16 @@ public struct SwifQLHybridRepresentationKey: Hashable, Sendable {
     public static let duck = Self(namespace: "swifql", name: "duck")
 }
 
-public struct SwifQLHybridOperator: SwifQLPart, Equatable {
-    public let representations: [SwifQLHybridRepresentationKey: SwifQLPartOperator]
+public struct SQLHybridOperator: SQLPart, Equatable {
+    public let representations: [SQLHybridRepresentationKey: SQLPartOperator]
 
     public init(
-        representations: [SwifQLHybridRepresentationKey: SwifQLPartOperator]
+        representations: [SQLHybridRepresentationKey: SQLPartOperator]
     ) {
         self.representations = representations
     }
 
-    public init(_ psql: SwifQLPartOperator, _ mysql: SwifQLPartOperator) {
+    public init(_ psql: SQLPartOperator, _ mysql: SQLPartOperator) {
         self.init(
             representations: [
                 .psql: psql,
@@ -41,11 +41,11 @@ public struct SwifQLHybridOperator: SwifQLPart, Equatable {
     }
 
     public init(
-        _ psql: SwifQLPartOperator,
-        _ mysql: SwifQLPartOperator,
-        _ duck: SwifQLPartOperator?
+        _ psql: SQLPartOperator,
+        _ mysql: SQLPartOperator,
+        _ duck: SQLPartOperator?
     ) {
-        var representations: [SwifQLHybridRepresentationKey: SwifQLPartOperator] = [
+        var representations: [SQLHybridRepresentationKey: SQLPartOperator] = [
             .psql: psql,
             .mysql: mysql
         ]
@@ -56,14 +56,14 @@ public struct SwifQLHybridOperator: SwifQLPart, Equatable {
     }
 
     public func representation(
-        for key: SwifQLHybridRepresentationKey
-    ) -> SwifQLPartOperator? {
+        for key: SQLHybridRepresentationKey
+    ) -> SQLPartOperator? {
         representations[key]
     }
 
     public static func == (
-        lhs: SwifQLHybridOperator,
-        rhs: SwifQLHybridOperator
+        lhs: SQLHybridOperator,
+        rhs: SQLHybridOperator
     ) -> Bool {
         guard lhs.representations.count == rhs.representations.count else {
             return false
@@ -75,8 +75,8 @@ public struct SwifQLHybridOperator: SwifQLPart, Equatable {
     }
 }
 
-extension SwifQLHybridOperator: SwifQLable {
-    public var parts: [SwifQLPart] {
+extension SQLHybridOperator: SQLable {
+    public var parts: [SQLPart] {
         [self]
     }
 }

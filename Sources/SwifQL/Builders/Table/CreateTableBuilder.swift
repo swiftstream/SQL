@@ -5,9 +5,9 @@
 //  Created by Mihael Isaev on 29.01.2020.
 //
 
-public class CreateTableBuilder<T: Table>: SwifQLable {
-    public var parts: [SwifQLPart] {
-        var query = SwifQL.create.table
+public class CreateTableBuilder<T: Table>: SQLable {
+    public var parts: [SQLPart] {
+        var query = SQL.root.create.table
         if shouldCheckIfNotExists {
             query = query.if.not.exists
         }
@@ -35,37 +35,37 @@ public class CreateTableBuilder<T: Table>: SwifQLable {
     
     // MARK: KeyPath
     
-    public func column<V>(_ keyPath: KeyPath<T, V>, _ type: SwifQL.`Type`) -> Self where V: ColumnRepresentable {
+    public func column<V>(_ keyPath: KeyPath<T, V>, _ type: Type) -> Self where V: ColumnRepresentable {
         column(keyPath, type: type, default: nil, constraints: [])
     }
     
-    public func column<V>(_ keyPath: KeyPath<T, V>, _ type: SwifQL.`Type`, _ constraints: Constraint...) -> Self where V: ColumnRepresentable {
+    public func column<V>(_ keyPath: KeyPath<T, V>, _ type: Type, _ constraints: Constraint...) -> Self where V: ColumnRepresentable {
         column(keyPath, type: type, default: nil, constraints: constraints)
     }
     
-    public func column<V>(_ keyPath: KeyPath<T, V>, _ type: SwifQL.`Type`, _ `default`: ColumnDefault, _ constraints: Constraint...) -> Self where V: ColumnRepresentable {
+    public func column<V>(_ keyPath: KeyPath<T, V>, _ type: Type, _ `default`: ColumnDefault, _ constraints: Constraint...) -> Self where V: ColumnRepresentable {
         column(keyPath, type: type, default: `default`, constraints: constraints)
     }
     
-    public func column<V>(_ keyPath: KeyPath<T, V>, type: SwifQL.`Type`, `default`: ColumnDefault?, constraints: [Constraint]) -> Self where V: ColumnRepresentable {
+    public func column<V>(_ keyPath: KeyPath<T, V>, type: Type, `default`: ColumnDefault?, constraints: [Constraint]) -> Self where V: ColumnRepresentable {
         column(T.key(for: keyPath), type: type, default: `default`, constraints: constraints)
     }
     
     // MARK: String
     
-    public func column(_ name: String, _ type: SwifQL.`Type`) -> Self {
+    public func column(_ name: String, _ type: Type) -> Self {
         column(name, type: type, default: nil, constraints: [])
     }
     
-    public func column(_ name: String, _ type: SwifQL.`Type`, _ constraints: Constraint...) -> Self {
+    public func column(_ name: String, _ type: Type, _ constraints: Constraint...) -> Self {
         column(name, type: type, default: nil, constraints: constraints)
     }
     
-    public func column(_ name: String, _ type: SwifQL.`Type`, _ `default`: ColumnDefault, _ constraints: Constraint...) -> Self {
+    public func column(_ name: String, _ type: Type, _ `default`: ColumnDefault, _ constraints: Constraint...) -> Self {
         column(name, type: type, default: `default`, constraints: constraints)
     }
     
-    public func column(_ name: String, type: SwifQL.`Type`, `default`: ColumnDefault?, constraints: [Constraint]) -> Self {
+    public func column(_ name: String, type: Type, `default`: ColumnDefault?, constraints: [Constraint]) -> Self {
         let newColumn = NewColumn(name, type)
         if let expression = `default`?.query {
             newColumn.default(expression: expression)

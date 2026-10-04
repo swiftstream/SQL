@@ -1,5 +1,5 @@
 //
-//  SwifQLable+Types.swift
+//  SQLable+Types.swift
 //  SwifQL
 //
 //  Created by Mihael Isaev on 04/11/2018.
@@ -7,94 +7,94 @@
 
 import Foundation
 
-extension Optional: SwifQLable, CustomStringConvertible where Wrapped: SwifQLable {
-    public var parts: [SwifQLPart] {
+extension Optional: SQLable, CustomStringConvertible where Wrapped: SQLable {
+    public var parts: [SQLPart] {
         switch self {
         case .none:
-            return [SwifQLPartSafeValue(nil)]
+            return [SQLPartSafeValue(nil)]
         case .some(let value):
             return value.parts
         }
     }
 }
-extension Optional: RowField where Wrapped: SwifQLable {}
-extension String: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension Optional: RowField where Wrapped: SQLable {}
+extension String: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension UUID: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension UUID: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension Decimal: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension Decimal: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension Double: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension Double: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension Float: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension Float: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension UInt: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension UInt: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension UInt8: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension UInt8: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension UInt16: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension UInt16: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension UInt32: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension UInt32: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension UInt64: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension UInt64: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension Int: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension Int: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension Int8: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension Int8: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension Int16: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension Int16: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension Int32: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension Int32: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension Int64: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension Int64: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension Date: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartDate(self)] }
+extension Date: SQLable {
+    public var parts: [SQLPart] { [SQLPartDate(self)] }
 }
-extension PureDate: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension PureDate: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension PureTime: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension PureTime: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension DateTime: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension DateTime: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension Interval: SwifQLable {
-    public var parts: [SwifQLPart] { [SwifQLPartUnsafeValue(self)] }
+extension Interval: SQLable {
+    public var parts: [SQLPart] { [SQLPartUnsafeValue(self)] }
 }
-extension Data: SwifQLable {
-    public var parts: [SwifQLPart] {
+extension Data: SQLable {
+    public var parts: [SQLPart] {
         return [
-            SwifQLPartOperator("decode"),
-            SwifQLPartOperator.openBracket,
-            SwifQLPartSafeValue(base64EncodedString()),
-            SwifQLPartOperator.comma,
-            SwifQLPartOperator.space,
-            SwifQLPartSafeValue("base64"),
-            SwifQLPartOperator.closeBracket
+            SQLPartOperator("decode"),
+            SQLPartOperator.openBracket,
+            SQLPartSafeValue(base64EncodedString()),
+            SQLPartOperator.comma,
+            SQLPartOperator.space,
+            SQLPartSafeValue("base64"),
+            SQLPartOperator.closeBracket
         ]
     }
 }
-public protocol SwifQLRawRepresentable: RawRepresentable, SwifQLable {}
-extension SwifQLRawRepresentable {
-    public var parts: [SwifQLPart] {
-        if let a = self.rawValue as? SwifQLable {
+public protocol SQLRawRepresentable: RawRepresentable, SQLable {}
+extension SQLRawRepresentable {
+    public var parts: [SQLPart] {
+        if let a = self.rawValue as? SQLable {
             return a.parts
         }
         return []

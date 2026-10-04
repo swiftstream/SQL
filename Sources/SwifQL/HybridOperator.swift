@@ -7,9 +7,9 @@
 
 import Foundation
 
-extension SwifQLHybridOperator {
+extension SQLHybridOperator {
     
-    public typealias HybridResult = SwifQLHybridOperator
+    public typealias HybridResult = SQLHybridOperator
     
     public static var random: HybridResult {
         .init("random()".operator, "rand()".operator, "random()".operator)
@@ -20,5 +20,5 @@ extension SwifQLHybridOperator {
     }
 }
 extension String {
-    fileprivate var `operator`: SwifQLPartOperator { .init(self) }
+    fileprivate var `operator`: SQLPartOperator { .init(self) }
 }

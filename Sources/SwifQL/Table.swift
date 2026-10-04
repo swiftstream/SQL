@@ -37,14 +37,14 @@ public protocol Table: AnyTable, ColumnRoot {
     @_disfavoredOverload
     init ()
     
-    static subscript<V>(dynamicMember keyPath: KeyPath<Self, V>) -> SwifQLable { get }
+    static subscript<V>(dynamicMember keyPath: KeyPath<Self, V>) -> SQLable { get }
 }
 
 extension Table {
-    public static subscript<V>(dynamicMember keyPath: KeyPath<Self, V>) -> SwifQLable {
+    public static subscript<V>(dynamicMember keyPath: KeyPath<Self, V>) -> SQLable {
         guard let k = keyPath as? Keypathable else { return "<keyPath should conform to Keypathable>" }
         let schema: String? = (Self.self as? Schemable.Type)?.schemaName
-        return SwifQLPartKeyPath(schema: schema, table: Self.tableName, paths: k.paths)
+        return SQLPartKeyPath(schema: schema, table: Self.tableName, paths: k.paths)
     }
 }
 

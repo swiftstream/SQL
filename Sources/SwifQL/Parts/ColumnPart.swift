@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct SwifQLPartColumn: SwifQLPart {
+public struct SQLPartColumn: SQLPart {
     public var name: String
     
     public init (_ name: String) {

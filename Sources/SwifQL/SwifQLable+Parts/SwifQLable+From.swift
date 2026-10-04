@@ -1,6 +1,6 @@
 //
-//  SwifQLable+From.swift
-//  SwifQLCore
+//  SQLable+From.swift
+//  SQLCore
 //
 //  Created by Mihael Isaev on 13/11/2018.
 //
@@ -9,15 +9,15 @@ import Foundation
 
 //MARK: From
 
-extension SwifQLable {
-    public func from(_ tables: SwifQLable...) -> SwifQLable {
+extension SQLable {
+    public func from(_ tables: SQLable...) -> SQLable {
         from(tables)
     }
-    public func from(_ tables: [SwifQLable]) -> SwifQLable {
-        var parts: [SwifQLPart] = [
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.from,
-            SwifQLPartOperator.space
+    public func from(_ tables: [SQLable]) -> SQLable {
+        var parts: [SQLPart] = [
+            SQLPartOperator.space,
+            SQLPartOperator.from,
+            SQLPartOperator.space
         ]
         for (i, v) in tables.enumerated() {
             if i > 0 {
@@ -26,6 +26,6 @@ extension SwifQLable {
             }
             parts.append(contentsOf: v.parts)
         }
-        return structurallyAppending(SwifQLableParts(parts: parts))
+        return structurallyAppending(SQLableParts(parts: parts))
     }
 }

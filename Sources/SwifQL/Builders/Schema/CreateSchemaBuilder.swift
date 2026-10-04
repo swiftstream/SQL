@@ -5,9 +5,9 @@
 //  Created by Mihael Isaev on 12.04.2020.
 //
 
-public class CreateSchemaBuilder<Schema: Schemable>: SwifQLable {
-    public var parts: [SwifQLPart] {
-        var query = SwifQL.create.schema
+public class CreateSchemaBuilder<Schema: Schemable>: SQLable {
+    public var parts: [SQLPart] {
+        var query = SQL.root.create.schema
         if shouldCheckIfNotExists {
             query = query.if.not.exists
         }

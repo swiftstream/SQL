@@ -9,10 +9,10 @@ import Foundation
 
 //MARK: WITH
 
-public class With: SwifQLable {
-    public var parts: [SwifQLPart]
+public class With: SQLable {
+    public var parts: [SQLPart]
     
-    public init(_ table: SwifQLable, columns: [SwifQLable] = [], _ query: SwifQLable) {
+    public init(_ table: SQLable, columns: [SQLable] = [], _ query: SQLable) {
         parts = table.parts
         if !columns.isEmpty {
             parts.append(o: .space)
@@ -30,7 +30,7 @@ public class With: SwifQLable {
         parts.append(o: .as)
         parts.append(o: .space)
         parts.append(o: .openBracket)
-        parts.append(contentsOf: _SwifQLStructuralComposition.withQueryPartsInsideParentheses(for: query))
+        parts.append(contentsOf: _SQLStructuralComposition.withQueryPartsInsideParentheses(for: query))
         parts.append(o: .closeBracket)
     }
 }

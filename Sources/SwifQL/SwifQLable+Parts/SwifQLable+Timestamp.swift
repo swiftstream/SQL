@@ -1,5 +1,5 @@
 //
-//  SwifQLable+Timestamp.swift
+//  SQLable+Timestamp.swift
 //  SwifQL
 //
 //  Created by Mihael Isaev on 02/08/2019.
@@ -9,17 +9,17 @@ import Foundation
 
 //MARK: Timestamp
 
-extension SwifQLable {
-    public var timestamp: SwifQLable {
+extension SQLable {
+    public var timestamp: SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .timestamp)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
-    public func timestamp(_ fields: SwifQLable...) -> SwifQLable {
+    public func timestamp(_ fields: SQLable...) -> SQLable {
         timestamp(fields)
     }
-    public func timestamp(_ fields: [SwifQLable]) -> SwifQLable {
+    public func timestamp(_ fields: [SQLable]) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .timestamp)
@@ -31,6 +31,6 @@ extension SwifQLable {
             }
             parts.append(contentsOf: v.parts)
         }
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

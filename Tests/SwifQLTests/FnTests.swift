@@ -188,13 +188,13 @@ struct FnTests: SwifQLTests {
     func historicalDataParts() {
         let data = Data([1, 2, 3])
         let expectedTypes = [
-            "SwifQLPartOperator",
-            "SwifQLPartOperator",
-            "SwifQLPartSafeValue",
-            "SwifQLPartOperator",
-            "SwifQLPartOperator",
-            "SwifQLPartSafeValue",
-            "SwifQLPartOperator"
+            "SQLPartOperator",
+            "SQLPartOperator",
+            "SQLPartSafeValue",
+            "SQLPartOperator",
+            "SQLPartOperator",
+            "SQLPartSafeValue",
+            "SQLPartOperator"
         ]
 
         #expect(data.parts.count == 7)

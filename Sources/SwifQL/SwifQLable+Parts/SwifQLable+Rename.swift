@@ -1,5 +1,5 @@
 //
-//  SwifQLable+Rename.swift
+//  SQLable+Rename.swift
 //  SwifQL
 //
 //  Created by Mihael Isaev on 12.04.2020.
@@ -7,11 +7,11 @@
 
 import Foundation
 
-extension SwifQLable {
-    public var rename: SwifQLable {
-        var parts: [SwifQLPart] = self.parts
+extension SQLable {
+    public var rename: SQLable {
+        var parts: [SQLPart] = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .rename)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

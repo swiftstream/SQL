@@ -20,9 +20,9 @@ public enum FromBuilder {
         }
 
         public let kind: Kind
-        let parts: [SwifQLPart]
+        let parts: [SQLPart]
 
-        init(kind: Kind, parts: [SwifQLPart]) {
+        init(kind: Kind, parts: [SQLPart]) {
             self.kind = kind
             self.parts = parts
         }
@@ -36,7 +36,7 @@ public enum FromBuilder {
     }
 
     public protocol NestedStatementCurrent: AliasableCurrent {
-        var statementParts: [SwifQLPart] { get }
+        var statementParts: [SQLPart] { get }
     }
 
     public protocol AliasableSourceState: SourceState {
@@ -70,14 +70,14 @@ public enum FromBuilder {
 
     /// One snapshotted source with a statically typed local continuation state.
     public struct Source<State: SourceState>: CurrentState {
-        let snapshot: [SwifQLPart]
+        let snapshot: [SQLPart]
 
-        init(snapshot: [SwifQLPart]) {
+        init(snapshot: [SQLPart]) {
             self.snapshot = snapshot
         }
 
-        public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: snapshot)
+        public func finalize() -> SQLable {
+            SQLableParts(rawParts: snapshot)
         }
 
         public func asFromItem() -> FromItem {
@@ -87,14 +87,14 @@ public enum FromBuilder {
 
     /// Open direct nested SELECT item before its FROM continuation.
     public struct NestedSelectOpen: NestedStatementCurrent {
-        public let statementParts: [SwifQLPart]
+        public let statementParts: [SQLPart]
 
-        init(statementParts: [SwifQLPart]) {
+        init(statementParts: [SQLPart]) {
             self.statementParts = statementParts
         }
 
-        public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: FromBuilder.derivedParts(statementParts, alias: nil))
+        public func finalize() -> SQLable {
+            SQLableParts(rawParts: FromBuilder.derivedParts(statementParts, alias: nil))
         }
 
         public func addingAlias(_ name: String) -> NestedAliased {
@@ -104,14 +104,14 @@ public enum FromBuilder {
 
     /// Nested SELECT after its FROM/clause fragments, still aliasable.
     public struct NestedStatementOpen: NestedStatementCurrent {
-        public let statementParts: [SwifQLPart]
+        public let statementParts: [SQLPart]
 
-        init(statementParts: [SwifQLPart]) {
+        init(statementParts: [SQLPart]) {
             self.statementParts = statementParts
         }
 
-        public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: FromBuilder.derivedParts(statementParts, alias: nil))
+        public func finalize() -> SQLable {
+            SQLableParts(rawParts: FromBuilder.derivedParts(statementParts, alias: nil))
         }
 
         public func addingAlias(_ name: String) -> NestedAliased {
@@ -121,16 +121,16 @@ public enum FromBuilder {
 
     /// Completed derived item. It cannot accept another alias or clause.
     public struct NestedAliased: CurrentState {
-        let statementParts: [SwifQLPart]
+        let statementParts: [SQLPart]
         let alias: String
 
-        init(statementParts: [SwifQLPart], alias: String) {
+        init(statementParts: [SQLPart], alias: String) {
             self.statementParts = statementParts
             self.alias = alias
         }
 
-        public func finalize() -> SwifQLable {
-            SwifQLableParts(rawParts: FromBuilder.derivedParts(statementParts, alias: alias))
+        public func finalize() -> SQLable {
+            SQLableParts(rawParts: FromBuilder.derivedParts(statementParts, alias: alias))
         }
     }
 
@@ -175,29 +175,29 @@ public enum FromBuilder {
     }
 
     /// Completed FROM clause lowered into one ordinary statement frame.
-    public struct Result: SwifQLable, SQLBuilder.FinalizableItem {
-        private let children: [SwifQLPart]
+    public struct Result: SQLable, SQLBuilder.FinalizableItem {
+        private let children: [SQLPart]
 
-        init(children: [SwifQLPart]) {
+        init(children: [SQLPart]) {
             self.children = children
         }
 
-        public var parts: [SwifQLPart] {
-            [SwifQLStructuralFramePart(region: .statement, children: children)]
+        public var parts: [SQLPart] {
+            [SQLStructuralFramePart(region: .statement, children: children)]
         }
 
-        public func finalize() -> SwifQLable { self }
+        public func finalize() -> SQLable { self }
     }
 
     // MARK: - Expressions
 
-    public static func buildExpression(_ expression: any SwifQLable) -> Source<SourceOpen> {
-        Source(snapshot: _SwifQLStructuralComposition.nestedEmbeddingParts(from: expression.parts))
+    public static func buildExpression(_ expression: any SQLable) -> Source<SourceOpen> {
+        Source(snapshot: _SQLStructuralComposition.nestedEmbeddingParts(from: expression.parts))
     }
 
     public static func buildExpression(_ expression: SelectBuilder.Result) -> NestedSelectOpen {
         let parts = expression.parts
-        let children = (parts.first as? SwifQLStructuralFramePart)?.children ?? parts
+        let children = (parts.first as? SQLStructuralFramePart)?.children ?? parts
         return NestedSelectOpen(statementParts: children)
     }
 
@@ -417,7 +417,7 @@ public enum FromBuilder {
             parts.append(o: .space, .openBracket)
             for (index, name) in next.names.enumerated() {
                 if index > 0 { parts.append(o: .comma, .space) }
-                parts.append(SwifQLPartAlias(name))
+                parts.append(SQLPartAlias(name))
             }
             parts.append(o: .closeBracket)
         }
@@ -543,7 +543,7 @@ public enum FromBuilder {
     }
 
     private static func makeResult(_ items: [FromItem]) -> Result {
-        var children: [SwifQLPart] = []
+        var children: [SQLPart] = []
         children.append(o: .custom("FROM"), .space)
         var hasItem = false
         for item in items {
@@ -562,13 +562,13 @@ public enum FromBuilder {
         return Result(children: children)
     }
 
-    private static func derivedSourceParts(_ result: Result) -> [SwifQLPart] {
-        guard let frame = result.parts.first as? SwifQLStructuralFramePart else { return result.parts }
-        return [SwifQLPartOperator.openBracket, frame, SwifQLPartOperator.closeBracket]
+    private static func derivedSourceParts(_ result: Result) -> [SQLPart] {
+        guard let frame = result.parts.first as? SQLStructuralFramePart else { return result.parts }
+        return [SQLPartOperator.openBracket, frame, SQLPartOperator.closeBracket]
     }
 
-    private static func appendStatementBody(_ statementParts: [SwifQLPart], _ result: Result) -> [SwifQLPart] {
-        let children = (result.parts.first as? SwifQLStructuralFramePart)?.children ?? result.parts
+    private static func appendStatementBody(_ statementParts: [SQLPart], _ result: Result) -> [SQLPart] {
+        let children = (result.parts.first as? SQLStructuralFramePart)?.children ?? result.parts
         var parts = statementParts
         parts.appendSpaceIfNeeded()
         parts.append(contentsOf: children)
@@ -576,55 +576,55 @@ public enum FromBuilder {
     }
 
     fileprivate static func finalizeNestedClause(
-        _ statementParts: [SwifQLPart],
-        appending predicateParts: [SwifQLPart],
-        with appendClause: (SwifQLable, SwifQLable) -> SwifQLable
-    ) -> [SwifQLPart] {
+        _ statementParts: [SQLPart],
+        appending predicateParts: [SQLPart],
+        with appendClause: (SQLable, SQLable) -> SQLable
+    ) -> [SQLPart] {
         guard !predicateParts.isEmpty else { return statementParts }
-        let statement = SwifQLableParts(parts: [SwifQLStructuralFramePart(region: .statement, children: statementParts)])
-        let appended = appendClause(statement, SwifQLableParts(rawParts: predicateParts))
-        return (appended.parts.first as? SwifQLStructuralFramePart)?.children ?? appended.parts
+        let statement = SQLableParts(parts: [SQLStructuralFramePart(region: .statement, children: statementParts)])
+        let appended = appendClause(statement, SQLableParts(rawParts: predicateParts))
+        return (appended.parts.first as? SQLStructuralFramePart)?.children ?? appended.parts
     }
 
     fileprivate static func finalizeNestedClause(
-        _ statementParts: [SwifQLPart],
-        applying appendClause: (SwifQLable) -> SwifQLable
-    ) -> [SwifQLPart] {
-        let statement = SwifQLableParts(parts: [SwifQLStructuralFramePart(region: .statement, children: statementParts)])
+        _ statementParts: [SQLPart],
+        applying appendClause: (SQLable) -> SQLable
+    ) -> [SQLPart] {
+        let statement = SQLableParts(parts: [SQLStructuralFramePart(region: .statement, children: statementParts)])
         let appended = appendClause(statement)
-        return (appended.parts.first as? SwifQLStructuralFramePart)?.children ?? appended.parts
+        return (appended.parts.first as? SQLStructuralFramePart)?.children ?? appended.parts
     }
 
-    private static func _fromAddingGroupBy(_ request: GroupByClause, to statement: SwifQLable) -> SwifQLable {
+    private static func _fromAddingGroupBy(_ request: GroupByClause, to statement: SQLable) -> SQLable {
         let expressions = request.expressionParts
             .filter { !$0.isEmpty }
-            .map { SwifQLableParts(rawParts: $0) as SwifQLable }
+            .map { SQLableParts(rawParts: $0) as SQLable }
         guard !expressions.isEmpty else { return statement }
         return statement.groupBy(expressions)
     }
 
-    private static func _fromAddingOrderBy(_ request: OrderByClause, to statement: SwifQLable) -> SwifQLable {
+    private static func _fromAddingOrderBy(_ request: OrderByClause, to statement: SQLable) -> SQLable {
         guard !request.items.isEmpty else { return statement }
         return statement.orderBy(request.items)
     }
 
-    private static func _fromAddingLimit(_ request: LimitClause, to statement: SwifQLable) -> SwifQLable {
+    private static func _fromAddingLimit(_ request: LimitClause, to statement: SQLable) -> SQLable {
         guard !request.countParts.isEmpty else { return statement }
-        return statement.limit(SwifQLableParts(rawParts: request.countParts))
+        return statement.limit(SQLableParts(rawParts: request.countParts))
     }
 
-    private static func _fromAddingOffset(_ request: OffsetClause, to statement: SwifQLable) -> SwifQLable {
+    private static func _fromAddingOffset(_ request: OffsetClause, to statement: SQLable) -> SQLable {
         guard !request.countParts.isEmpty else { return statement }
-        return statement.offset(SwifQLableParts(rawParts: request.countParts))
+        return statement.offset(SQLableParts(rawParts: request.countParts))
     }
 
-    private static func derivedParts(_ statementParts: [SwifQLPart], alias: String?) -> [SwifQLPart] {
-        var parts: [SwifQLPart] = [SwifQLPartOperator.openBracket]
-        parts.append(SwifQLStructuralFramePart(region: .statement, children: statementParts))
-        parts.append(SwifQLPartOperator.closeBracket)
+    private static func derivedParts(_ statementParts: [SQLPart], alias: String?) -> [SQLPart] {
+        var parts: [SQLPart] = [SQLPartOperator.openBracket]
+        parts.append(SQLStructuralFramePart(region: .statement, children: statementParts))
+        parts.append(SQLPartOperator.closeBracket)
         if let alias {
             parts.append(o: .space, .custom("AS"), .space)
-            parts.append(SwifQLPartAlias(alias))
+            parts.append(SQLPartAlias(alias))
         }
         return parts
     }
@@ -642,22 +642,22 @@ extension FromBuilder.Source: FromBuilder.AliasableCurrent where State: FromBuil
     public func addingAlias(_ name: String) -> Aliased {
         var parts = snapshot
         parts.append(o: .space, .custom("AS"), .space)
-        parts.append(SwifQLPartAlias(name))
+        parts.append(SQLPartAlias(name))
         return FromBuilder.Source<State.Aliased>(snapshot: parts)
     }
 }
 
 private func _nestedStatementParts(
-    _ statementParts: [SwifQLPart],
-    appending predicateParts: [SwifQLPart],
-    with appendClause: (SwifQLable, SwifQLable) -> SwifQLable
-) -> [SwifQLPart] {
+    _ statementParts: [SQLPart],
+    appending predicateParts: [SQLPart],
+    with appendClause: (SQLable, SQLable) -> SQLable
+) -> [SQLPart] {
     FromBuilder.finalizeNestedClause(statementParts, appending: predicateParts, with: appendClause)
 }
 
 private func _nestedStatementParts(
-    _ statementParts: [SwifQLPart],
-    applying appendClause: (SwifQLable) -> SwifQLable
-) -> [SwifQLPart] {
+    _ statementParts: [SQLPart],
+    applying appendClause: (SQLable) -> SQLable
+) -> [SQLPart] {
     FromBuilder.finalizeNestedClause(statementParts, applying: appendClause)
 }

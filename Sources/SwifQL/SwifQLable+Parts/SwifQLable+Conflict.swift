@@ -1,5 +1,5 @@
 //
-//  SwifQLable+Conflict.swift
+//  SQLable+Conflict.swift
 //  SwifQL
 //
 //  Created by Mihael Isaev on 24/07/2019.
@@ -9,19 +9,19 @@ import Foundation
 
 //MARK: Conflict
 
-extension SwifQLable {
-    public var conflict: SwifQLable {
+extension SQLable {
+    public var conflict: SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .conflict)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
-    public func conflict(_ paths: KeyPathLastPath...) -> SwifQLable {
+    public func conflict(_ paths: KeyPathLastPath...) -> SQLable {
         conflict(paths)
     }
     
-    public func conflict(_ paths: [KeyPathLastPath]) -> SwifQLable {
+    public func conflict(_ paths: [KeyPathLastPath]) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .conflict)
@@ -32,9 +32,9 @@ extension SwifQLable {
                 parts.append(o: .comma)
                 parts.append(o: .space)
             }
-            parts.append(SwifQLPartAlias(p.lastPath))
+            parts.append(SQLPartAlias(p.lastPath))
         }
         parts.append(o: .closeBracket)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

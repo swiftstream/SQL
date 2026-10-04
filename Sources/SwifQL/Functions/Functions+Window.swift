@@ -47,12 +47,12 @@ extension Fn {
     /// row_number()
     /// ```
     /// [Learn more →](https://www.postgresql.org/docs/current/functions-window.html)
-    public static func rowNumber() -> SwifQLable {
+    public static func rowNumber() -> SQLable {
         build(.rowNumber, body: [])
     }
 
     @available(*, deprecated, renamed: "rowNumber()")
-    public static func row_number() -> SwifQLable {
+    public static func row_number() -> SQLable {
         rowNumber()
     }
     
@@ -68,7 +68,7 @@ extension Fn {
     /// rank()
     /// ```
     /// [Learn more →](https://www.postgresql.org/docs/current/functions-window.html)
-    public static func rank() -> SwifQLable {
+    public static func rank() -> SQLable {
         build(.rank, body: [])
     }
     
@@ -84,12 +84,12 @@ extension Fn {
     /// dense_rank()
     /// ```
     /// [Learn more →](https://www.postgresql.org/docs/current/functions-window.html)
-    public static func denseRank() -> SwifQLable {
+    public static func denseRank() -> SQLable {
         build(.denseRank, body: [])
     }
 
     @available(*, deprecated, renamed: "denseRank()")
-    public static func dense_rank() -> SwifQLable {
+    public static func dense_rank() -> SQLable {
         denseRank()
     }
     
@@ -104,12 +104,12 @@ extension Fn {
     /// percent_rank()
     /// ```
     /// [Learn more →](https://www.postgresql.org/docs/current/functions-window.html)
-    public static func percentRank() -> SwifQLable {
+    public static func percentRank() -> SQLable {
         build(.percentRank, body: [])
     }
 
     @available(*, deprecated, renamed: "percentRank()")
-    public static func percent_rank() -> SwifQLable {
+    public static func percent_rank() -> SQLable {
         percentRank()
     }
     
@@ -124,12 +124,12 @@ extension Fn {
     /// cume_dist()
     /// ```
     /// [Learn more →](https://www.postgresql.org/docs/current/functions-window.html)
-    public static func cumeDist() -> SwifQLable {
+    public static func cumeDist() -> SQLable {
         build(.cumeDist, body: [])
     }
 
     @available(*, deprecated, renamed: "cumeDist()")
-    public static func cume_dist() -> SwifQLable {
+    public static func cume_dist() -> SQLable {
         cumeDist()
     }
     
@@ -144,12 +144,12 @@ extension Fn {
     /// ntile()
     /// ```
     /// [Learn more →](https://www.postgresql.org/docs/current/functions-window.html)
-    public static func nTile(_ num_buckets: SwifQLable) -> SwifQLable {
+    public static func nTile(_ num_buckets: SQLable) -> SQLable {
         build(.nTile, body: num_buckets.parts)
     }
 
     @available(*, deprecated, renamed: "nTile(_:)")
-    public static func ntile(_ num_buckets: SwifQLable) -> SwifQLable {
+    public static func ntile(_ num_buckets: SQLable) -> SQLable {
         nTile(num_buckets)
     }
     
@@ -169,8 +169,8 @@ extension Fn {
     /// [Examples →](https://www.postgresqltutorial.com/postgresql-lag-function/)
     ///
     /// [Learn more →](https://www.postgresql.org/docs/current/functions-window.html)
-    public static func lag(_ value: SwifQLable, _ offset: SwifQLable? = nil) -> SwifQLable {
-        var parts: [SwifQLPart] = value.parts
+    public static func lag(_ value: SQLable, _ offset: SQLable? = nil) -> SQLable {
+        var parts: [SQLPart] = value.parts
         if let offset = offset {
             parts.append(o: .comma)
             parts.append(o: .space)
@@ -195,8 +195,8 @@ extension Fn {
     /// [Examples →](https://www.postgresqltutorial.com/postgresql-lead-function/)
     ///
     /// [Learn more →](https://www.postgresql.org/docs/current/functions-window.html)
-    public static func lead(_ value: SwifQLable, _ offset: SwifQLable? = nil) -> SwifQLable {
-        var parts: [SwifQLPart] = value.parts
+    public static func lead(_ value: SQLable, _ offset: SQLable? = nil) -> SQLable {
+        var parts: [SQLPart] = value.parts
         if let offset = offset {
             parts.append(o: .comma)
             parts.append(o: .space)
@@ -216,12 +216,12 @@ extension Fn {
     /// first_value()
     /// ```
     /// [Learn more →](https://www.postgresql.org/docs/current/functions-window.html)
-    public static func firstValue(_ value: SwifQLable) -> SwifQLable {
+    public static func firstValue(_ value: SQLable) -> SQLable {
         build(.firstValue, body: value.parts)
     }
 
     @available(*, deprecated, renamed: "firstValue(_:)")
-    public static func first_value(_ value: SwifQLable) -> SwifQLable {
+    public static func first_value(_ value: SQLable) -> SQLable {
         firstValue(value)
     }
     
@@ -236,12 +236,12 @@ extension Fn {
     /// last_value()
     /// ```
     /// [Learn more →](https://www.postgresql.org/docs/current/functions-window.html)
-    public static func lastValue(_ value: SwifQLable) -> SwifQLable {
+    public static func lastValue(_ value: SQLable) -> SQLable {
         build(.lastValue, body: value.parts)
     }
 
     @available(*, deprecated, renamed: "lastValue(_:)")
-    public static func last_value(_ value: SwifQLable) -> SwifQLable {
+    public static func last_value(_ value: SQLable) -> SQLable {
         lastValue(value)
     }
     
@@ -257,8 +257,8 @@ extension Fn {
     /// nth_value()
     /// ```
     /// [Learn more →](https://www.postgresql.org/docs/current/functions-window.html)
-    public static func nthValue(_ value: SwifQLable, _ nth: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = value.parts
+    public static func nthValue(_ value: SQLable, _ nth: SQLable) -> SQLable {
+        var parts: [SQLPart] = value.parts
         parts.append(o: .comma)
         parts.append(o: .space)
         parts.append(contentsOf: nth.parts)
@@ -266,7 +266,7 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "nthValue(_:_:)")
-    public static func nth_value(_ value: SwifQLable, _ nth: SwifQLable) -> SwifQLable {
+    public static func nth_value(_ value: SQLable, _ nth: SQLable) -> SQLable {
         nthValue(value, nth)
     }
 }

@@ -91,12 +91,12 @@ protocol _AliasKeyPath {}
 
 extension KeyPath: _AliasKeyPath where Value: AnyAlias {}
 
-extension KeyPath: SwifQLable, CustomStringConvertible where Root: ColumnRoot, Value: ColumnRootNameable {
-    public var parts: [SwifQLPart] {
+extension KeyPath: SQLable, CustomStringConvertible where Root: ColumnRoot, Value: ColumnRootNameable {
+    public var parts: [SQLPart] {
         if let kp = self as? Keypathable {
             return Path.Schema(kp.schema).table(kp.table).column(Root.key(for: self)).parts
         }
-        return [SwifQLPartAlias(Root.key(for: self))]
+        return [SQLPartAlias(Root.key(for: self))]
     }
 }
 

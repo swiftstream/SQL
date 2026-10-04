@@ -6,7 +6,7 @@
 import Foundation
 
 /// A structured, caller-extensible `COPY` option.
-public struct CopyOption: SwifQLable {
+public struct CopyOption: SQLable {
     /// An open identity for a native `COPY` option name.
     public struct Name: Hashable, Sendable {
         public let rawValue: String
@@ -17,19 +17,19 @@ public struct CopyOption: SwifQLable {
     }
 
     public let name: Name
-    public let value: SwifQLable?
+    public let value: SQLable?
 
-    public init(name: Name, value: SwifQLable? = nil) {
+    public init(name: Name, value: SQLable? = nil) {
         self.name = name
         self.value = value
     }
 
-    public init(_ name: Name, value: SwifQLable? = nil) {
+    public init(_ name: Name, value: SQLable? = nil) {
         self.init(name: name, value: value)
     }
 
-    public var parts: [SwifQLPart] {
-        var parts: [SwifQLPart] = [SwifQLPartOperator.custom(name.rawValue)]
+    public var parts: [SQLPart] {
+        var parts: [SQLPart] = [SQLPartOperator.custom(name.rawValue)]
         if let value {
             parts.append(o: .space)
             parts.append(contentsOf: value.parts)
@@ -37,54 +37,54 @@ public struct CopyOption: SwifQLable {
         return parts
     }
 
-    public static func format(_ value: SwifQLable) -> Self {
+    public static func format(_ value: SQLable) -> Self {
         Self(name: Name("FORMAT"), value: value)
     }
 
     public static var header: Self { Self(name: Name("HEADER")) }
 
-    public static func header(_ value: SwifQLable) -> Self {
+    public static func header(_ value: SQLable) -> Self {
         Self(name: Name("HEADER"), value: value)
     }
 
     public static func header(_ value: Bool) -> Self {
-        header(SwifQLBool(value))
+        header(SQLBool(value))
     }
 
-    public static func delimiter(_ value: SwifQLable) -> Self {
+    public static func delimiter(_ value: SQLable) -> Self {
         Self(name: Name("DELIMITER"), value: value)
     }
 
-    public static func compression(_ value: SwifQLable) -> Self {
+    public static func compression(_ value: SQLable) -> Self {
         Self(name: Name("COMPRESSION"), value: value)
     }
 
-    public static func null(_ value: SwifQLable) -> Self {
+    public static func null(_ value: SQLable) -> Self {
         Self(name: Name("NULL"), value: value)
     }
 
     public static var array: Self { Self(name: Name("ARRAY")) }
 
-    public static func array(_ value: SwifQLable) -> Self {
+    public static func array(_ value: SQLable) -> Self {
         Self(name: Name("ARRAY"), value: value)
     }
 
     public static func array(_ value: Bool) -> Self {
-        array(SwifQLBool(value))
+        array(SQLBool(value))
     }
 
-    public static func rowGroupSize(_ value: SwifQLable) -> Self {
+    public static func rowGroupSize(_ value: SQLable) -> Self {
         Self(name: Name("ROW_GROUP_SIZE"), value: value)
     }
 
-    public static func compressionLevel(_ value: SwifQLable) -> Self {
+    public static func compressionLevel(_ value: SQLable) -> Self {
         Self(name: Name("COMPRESSION_LEVEL"), value: value)
     }
 
     public static var schema: Self { Self(name: Name("SCHEMA")) }
 }
 
-private func appendCopyOptions(_ options: [CopyOption], to parts: inout [SwifQLPart]) {
+private func appendCopyOptions(_ options: [CopyOption], to parts: inout [SQLPart]) {
     guard !options.isEmpty else { return }
 
     parts.append(o: .space, .openBracket)
@@ -97,13 +97,13 @@ private func appendCopyOptions(_ options: [CopyOption], to parts: inout [SwifQLP
     parts.append(o: .closeBracket)
 }
 
-extension SwifQLable {
+extension SQLable {
     /// Copies a structural table to an ordinary destination expression.
     public func copy(
         _ table: Path.Table,
-        to destination: SwifQLable,
+        to destination: SQLable,
         options: CopyOption...
-    ) -> SwifQLable {
+    ) -> SQLable {
         copy(table, to: destination, options: options)
     }
 
@@ -111,9 +111,9 @@ extension SwifQLable {
     /// a caller-owned ordered option collection.
     public func copy(
         _ table: Path.Table,
-        to destination: SwifQLable,
+        to destination: SQLable,
         options: [CopyOption]
-    ) -> SwifQLable {
+    ) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .custom("COPY"), .space)
@@ -121,7 +121,7 @@ extension SwifQLable {
         parts.append(o: .space, .to, .space)
         parts.append(contentsOf: destination.parts)
         appendCopyOptions(options, to: &parts)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     /// Copies an ordinary source expression into a structural table. The
@@ -129,9 +129,9 @@ extension SwifQLable {
     /// forms and is intentionally independent of preparation mode.
     public func copy(
         _ table: Path.Table,
-        from source: SwifQLable,
+        from source: SQLable,
         options: CopyOption...
-    ) -> SwifQLable {
+    ) -> SQLable {
         copy(table, from: source, options: options)
     }
 
@@ -139,9 +139,9 @@ extension SwifQLable {
     /// caller-owned ordered option collection.
     public func copy(
         _ table: Path.Table,
-        from source: SwifQLable,
+        from source: SQLable,
         options: [CopyOption]
-    ) -> SwifQLable {
+    ) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .custom("COPY"), .space)
@@ -150,26 +150,26 @@ extension SwifQLable {
         parts.append(contentsOf: source.parts)
         parts.append(o: .closeBracket)
         appendCopyOptions(options, to: &parts)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     /// Copies a parenthesized query result to an ordinary destination
     /// expression.
     public func copy(
-        query: SwifQLable,
-        to destination: SwifQLable,
+        query: SQLable,
+        to destination: SQLable,
         options: CopyOption...
-    ) -> SwifQLable {
+    ) -> SQLable {
         copy(query: query, to: destination, options: options)
     }
 
     /// Copies a parenthesized query result to an ordinary destination
     /// expression using a caller-owned ordered option collection.
     public func copy(
-        query: SwifQLable,
-        to destination: SwifQLable,
+        query: SQLable,
+        to destination: SQLable,
         options: [CopyOption]
-    ) -> SwifQLable {
+    ) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .custom("COPY"), .space, .openBracket)
@@ -177,7 +177,7 @@ extension SwifQLable {
         parts.append(o: .closeBracket, .space, .to, .space)
         parts.append(contentsOf: destination.parts)
         appendCopyOptions(options, to: &parts)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 
     /// Copies all objects or one schema from a structural source catalog to a
@@ -186,7 +186,7 @@ extension SwifQLable {
         fromDatabase source: Path.Catalog,
         to destination: Path.Catalog,
         options: CopyOption...
-    ) -> SwifQLable {
+    ) -> SQLable {
         copy(fromDatabase: source, to: destination, options: options)
     }
 
@@ -195,7 +195,7 @@ extension SwifQLable {
         fromDatabase source: Path.Catalog,
         to destination: Path.Catalog,
         options: [CopyOption]
-    ) -> SwifQLable {
+    ) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .custom("COPY"), .space, .custom("FROM DATABASE"), .space)
@@ -203,6 +203,6 @@ extension SwifQLable {
         parts.append(o: .space, .to, .space)
         parts.append(contentsOf: destination.parts)
         appendCopyOptions(options, to: &parts)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

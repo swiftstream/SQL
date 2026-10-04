@@ -3,30 +3,30 @@ import Foundation
 /// Reusable identifier-name list builder for later column-list owners.
 ///
 /// Every `String` child is an SQL identifier NAME and lowers through existing
-/// `SwifQLPartAlias` identifier rendering. It never lowers through ordinary
+/// `SQLPartAlias` identifier rendering. It never lowers through ordinary
 /// String value semantics and never binds values.
 @resultBuilder
 public enum IdentifierListBuilder {
     /// Public builder product for reusable clause owners.
-    public struct Components: SwifQLable {
+    public struct Components: SQLable {
         let names: [String]
 
         init(names: [String]) {
             self.names = names
         }
 
-        public var parts: [SwifQLPart] {
+        public var parts: [SQLPart] {
             guard !names.isEmpty else {
                 return []
             }
 
-            var parts: [SwifQLPart] = []
+            var parts: [SQLPart] = []
             for (index, name) in names.enumerated() {
                 if index > 0 {
                     parts.append(o: .comma)
                     parts.append(o: .space)
                 }
-                parts.append(SwifQLPartAlias(name))
+                parts.append(SQLPartAlias(name))
             }
             return parts
         }
@@ -39,7 +39,7 @@ public enum IdentifierListBuilder {
     }
 
     public static func buildExpression(
-        _ path: any SwifQLable
+        _ path: any SQLable
     ) -> Components {
         guard let name = structuralColumnName(from: path) else {
             preconditionFailure("Identifier lists accept only a single structural column path or a String name.")
@@ -48,10 +48,10 @@ public enum IdentifierListBuilder {
         return Components(names: [name])
     }
 
-    static func structuralColumnName(from path: any SwifQLable) -> String? {
+    static func structuralColumnName(from path: any SQLable) -> String? {
         let parts = path.parts
         guard parts.count == 1,
-              let keyPath = parts.first as? SwifQLPartKeyPath,
+              let keyPath = parts.first as? SQLPartKeyPath,
               !keyPath.asText,
               let name = keyPath.paths.last,
               !name.isEmpty else {

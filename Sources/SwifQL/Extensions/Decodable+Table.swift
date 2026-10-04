@@ -8,7 +8,7 @@
 import Foundation
 
 extension Decodable {
-    public static var table: SwifQLable {
+    public static var table: SQLable {
         let tableName: String
         if let model = Self.self as? AnyTable.Type {
             tableName = model.tableName

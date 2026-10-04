@@ -4,34 +4,34 @@ import Foundation
 public enum JoinBuilder {
     public protocol JoinState: FromBuilder.CurrentState {}
 
-    public struct JoinOpen: JoinState, FromBuilder.AliasableCurrent, SwifQLable {
+    public struct JoinOpen: JoinState, FromBuilder.AliasableCurrent, SQLable {
         public typealias Aliased = JoinSourceAliased
 
-        let joinParts: [SwifQLPart]
+        let joinParts: [SQLPart]
 
-        init(modeParts: [SwifQLPartOperator], sourceParts: [SwifQLPart]) {
-            var parts: [SwifQLPart] = []
+        init(modeParts: [SQLPartOperator], sourceParts: [SQLPart]) {
+            var parts: [SQLPart] = []
             parts.append(contentsOf: modeParts)
             parts.append(o: .space)
             parts.append(contentsOf: sourceParts)
             self.joinParts = parts
         }
 
-        init(joinParts: [SwifQLPart]) {
+        init(joinParts: [SQLPart]) {
             self.joinParts = joinParts
         }
 
-        public var parts: [SwifQLPart] { joinParts }
-        public func finalize() -> SwifQLable { SwifQLableParts(rawParts: joinParts) }
+        public var parts: [SQLPart] { joinParts }
+        public func finalize() -> SQLable { SQLableParts(rawParts: joinParts) }
 
         public func addingAlias(_ name: String) -> JoinSourceAliased {
             var parts = joinParts
             parts.append(o: .space, .custom("AS"), .space)
-            parts.append(SwifQLPartAlias(name))
+            parts.append(SQLPartAlias(name))
             return JoinSourceAliased(joinParts: parts)
         }
 
-        func addingOn(_ predicateParts: [SwifQLPart]) -> JoinOnQualified {
+        func addingOn(_ predicateParts: [SQLPart]) -> JoinOnQualified {
             var parts = joinParts
             if !predicateParts.isEmpty {
                 parts.append(o: .space, .custom("ON"), .space)
@@ -45,24 +45,24 @@ public enum JoinBuilder {
             parts.append(o: .space, .custom("USING"), .space, .openBracket)
             for (index, name) in names.enumerated() {
                 if index > 0 { parts.append(o: .comma, .space) }
-                parts.append(SwifQLPartColumn(name))
+                parts.append(SQLPartColumn(name))
             }
             parts.append(o: .closeBracket)
             return JoinUsing(joinParts: parts)
         }
     }
 
-    public struct JoinSourceAliased: JoinState, SwifQLable {
-        let joinParts: [SwifQLPart]
+    public struct JoinSourceAliased: JoinState, SQLable {
+        let joinParts: [SQLPart]
 
-        init(joinParts: [SwifQLPart]) {
+        init(joinParts: [SQLPart]) {
             self.joinParts = joinParts
         }
 
-        public var parts: [SwifQLPart] { joinParts }
-        public func finalize() -> SwifQLable { SwifQLableParts(rawParts: joinParts) }
+        public var parts: [SQLPart] { joinParts }
+        public func finalize() -> SQLable { SQLableParts(rawParts: joinParts) }
 
-        func addingOn(_ predicateParts: [SwifQLPart]) -> JoinOnQualified {
+        func addingOn(_ predicateParts: [SQLPart]) -> JoinOnQualified {
             var parts = joinParts
             if !predicateParts.isEmpty {
                 parts.append(o: .space, .custom("ON"), .space)
@@ -76,79 +76,79 @@ public enum JoinBuilder {
             parts.append(o: .space, .custom("USING"), .space, .openBracket)
             for (index, name) in names.enumerated() {
                 if index > 0 { parts.append(o: .comma, .space) }
-                parts.append(SwifQLPartColumn(name))
+                parts.append(SQLPartColumn(name))
             }
             parts.append(o: .closeBracket)
             return JoinUsing(joinParts: parts)
         }
     }
 
-    public struct JoinOnQualified: JoinState, SwifQLable {
-        let joinParts: [SwifQLPart]
+    public struct JoinOnQualified: JoinState, SQLable {
+        let joinParts: [SQLPart]
 
-        init(joinParts: [SwifQLPart]) {
+        init(joinParts: [SQLPart]) {
             self.joinParts = joinParts
         }
 
-        public var parts: [SwifQLPart] { joinParts }
-        public func finalize() -> SwifQLable { SwifQLableParts(rawParts: joinParts) }
+        public var parts: [SQLPart] { joinParts }
+        public func finalize() -> SQLable { SQLableParts(rawParts: joinParts) }
     }
 
-    public struct JoinUsing: JoinState, FromBuilder.AliasableCurrent, SwifQLable {
+    public struct JoinUsing: JoinState, FromBuilder.AliasableCurrent, SQLable {
         public typealias Aliased = JoinUsingAliased
-        let joinParts: [SwifQLPart]
+        let joinParts: [SQLPart]
 
-        init(joinParts: [SwifQLPart]) {
+        init(joinParts: [SQLPart]) {
             self.joinParts = joinParts
         }
 
-        public var parts: [SwifQLPart] { joinParts }
-        public func finalize() -> SwifQLable { SwifQLableParts(rawParts: joinParts) }
+        public var parts: [SQLPart] { joinParts }
+        public func finalize() -> SQLable { SQLableParts(rawParts: joinParts) }
 
         public func addingAlias(_ name: String) -> JoinUsingAliased {
             var parts = joinParts
             parts.append(o: .space, .custom("AS"), .space)
-            parts.append(SwifQLPartAlias(name))
+            parts.append(SQLPartAlias(name))
             return JoinUsingAliased(joinParts: parts)
         }
     }
 
-    public struct JoinUsingAliased: JoinState, SwifQLable {
-        let joinParts: [SwifQLPart]
+    public struct JoinUsingAliased: JoinState, SQLable {
+        let joinParts: [SQLPart]
 
-        init(joinParts: [SwifQLPart]) {
+        init(joinParts: [SQLPart]) {
             self.joinParts = joinParts
         }
 
-        public var parts: [SwifQLPart] { joinParts }
-        public func finalize() -> SwifQLable { SwifQLableParts(rawParts: joinParts) }
+        public var parts: [SQLPart] { joinParts }
+        public func finalize() -> SQLable { SQLableParts(rawParts: joinParts) }
     }
 
-    public struct OnRequest: SwifQLable {
-        let predicateParts: [SwifQLPart]
+    public struct OnRequest: SQLable {
+        let predicateParts: [SQLPart]
 
-        init(parts: [SwifQLPart]) { self.predicateParts = parts }
+        init(parts: [SQLPart]) { self.predicateParts = parts }
 
-        public var parts: [SwifQLPart] {
+        public var parts: [SQLPart] {
             guard !predicateParts.isEmpty else { return [] }
-            var parts: [SwifQLPart] = []
+            var parts: [SQLPart] = []
             parts.append(o: .custom("ON"), .space)
             parts.append(contentsOf: predicateParts)
             return parts
         }
     }
 
-    public struct UsingRequest: SwifQLable {
+    public struct UsingRequest: SQLable {
         let names: [String]
 
         init(names: [String]) { self.names = names }
 
-        public var parts: [SwifQLPart] {
-            var parts: [SwifQLPart] = []
+        public var parts: [SQLPart] {
+            var parts: [SQLPart] = []
             parts.append(o: .custom("USING"), .space, .openBracket)
             for (index, name) in names.enumerated() {
                 if index > 0 { parts.append(o: .comma, .space) }
-                parts.append(SwifQLPartColumn(name))
+                parts.append(SQLPartColumn(name))
             }
             parts.append(o: .closeBracket)
             return parts

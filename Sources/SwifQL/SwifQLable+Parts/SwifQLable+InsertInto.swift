@@ -1,27 +1,27 @@
 //
-//  SwifQLable+InsertInto.swift
-//  SwifQLCore
+//  SQLable+InsertInto.swift
+//  SQLCore
 //
 //  Created by Mihael Isaev on 13/11/2018.
 //
 
 import Foundation
 
-extension SwifQLable {
-    public subscript (newColumns items: NewColumn...) -> SwifQLable {
+extension SQLable {
+    public subscript (newColumns items: NewColumn...) -> SQLable {
         newColumns(items)
     }
     
-    public subscript (newColumns items: [NewColumn]) -> SwifQLable {
+    public subscript (newColumns items: [NewColumn]) -> SQLable {
         newColumns(items)
     }
     
-    public func newColumns(_ items: NewColumn...) -> SwifQLable {
+    public func newColumns(_ items: NewColumn...) -> SQLable {
         newColumns(items)
     }
     
-    public func newColumns(_ items: [NewColumn]) -> SwifQLable {
-        var parts: [SwifQLPart] = self.parts
+    public func newColumns(_ items: [NewColumn]) -> SQLable {
+        var parts: [SQLPart] = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .openBracket)
         items.enumerated().forEach { i, v in
@@ -32,32 +32,32 @@ extension SwifQLable {
             parts.append(contentsOf: v.parts)
         }
         parts.append(o: .closeBracket)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
-    public subscript (fields items: SwifQLable...) -> SwifQLable {
+    public subscript (fields items: SQLable...) -> SQLable {
         fields(items)
     }
     
-    public subscript (fields items: [SwifQLable]) -> SwifQLable {
-        fields(items)
-    }
-    
-    /// Represent just a list of fields in round brackets separated by comma
-    public func fields(_ items: SwifQLable...) -> SwifQLable {
+    public subscript (fields items: [SQLable]) -> SQLable {
         fields(items)
     }
     
     /// Represent just a list of fields in round brackets separated by comma
-    public func fields(_ items: [SwifQLable]) -> SwifQLable {
-        var parts: [SwifQLPart] = self.parts
+    public func fields(_ items: SQLable...) -> SQLable {
+        fields(items)
+    }
+    
+    /// Represent just a list of fields in round brackets separated by comma
+    public func fields(_ items: [SQLable]) -> SQLable {
+        var parts: [SQLPart] = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .openBracket)
-        items.compactMap { v -> SwifQLPart? in
-            if let part = v.parts.first as? SwifQLKeyPathable, let lastPath = part.paths.last {
-                return SwifQLPartColumn(lastPath)
+        items.compactMap { v -> SQLPart? in
+            if let part = v.parts.first as? SQLKeyPathable, let lastPath = part.paths.last {
+                return SQLPartColumn(lastPath)
             } else if let name = v as? String {
-                return SwifQLPartColumn(name)
+                return SQLPartColumn(name)
             }
             return nil
         }
@@ -70,44 +70,44 @@ extension SwifQLable {
             parts.append(v)
         }
         parts.append(o: .closeBracket)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
-    public var insert: SwifQLable {
-        var parts: [SwifQLPart] = self.parts
+    public var insert: SQLable {
+        var parts: [SQLPart] = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .insert)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
-    public var into: SwifQLable {
-        var parts: [SwifQLPart] = self.parts
+    public var into: SQLable {
+        var parts: [SQLPart] = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .into)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
-    public subscript (table item: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = self.parts
+    public subscript (table item: SQLable) -> SQLable {
+        var parts: [SQLPart] = self.parts
         parts.appendSpaceIfNeeded()
         if let name = item as? String {
-            parts.append(SwifQLPartTable(name))
+            parts.append(SQLPartTable(name))
         } else {
             parts.append(contentsOf: item.parts)
         }
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
-    public func insertInto(_ table: SwifQLable, fields: SwifQLable...) -> SwifQLable {
+    public func insertInto(_ table: SQLable, fields: SQLable...) -> SQLable {
         insertInto(table, fields: fields)
     }
-    public func insertInto(_ table: SwifQLable, fields: [SwifQLable]) -> SwifQLable {
+    public func insertInto(_ table: SQLable, fields: [SQLable]) -> SQLable {
         insert.into[table: table].fields(fields)
     }
 
     /// Appends `INSERT INTO` and a target table without synthesizing an empty
     /// field list.
-    public func insertInto(_ table: SwifQLable) -> SwifQLable {
+    public func insertInto(_ table: SQLable) -> SQLable {
         insert.into[table: table]
     }
 

@@ -1,6 +1,6 @@
 //
-//  SwifQLable+Like.swift
-//  SwifQLCore
+//  SQLable+Like.swift
+//  SQLCore
 //
 //  Created by Mihael Isaev on 16/11/2018.
 //
@@ -9,31 +9,31 @@ import Foundation
 
 //MARK: LIKE
 
-extension SwifQLable {
+extension SQLable {
     var ownsStarProjectionSemanticRole: Bool {
-        let receiverParts: [SwifQLPart]
-        if let frame = parts.first as? SwifQLStructuralFramePart {
+        let receiverParts: [SQLPart]
+        if let frame = parts.first as? SQLStructuralFramePart {
             receiverParts = frame.children
         } else {
             receiverParts = parts
         }
 
         for part in receiverParts.reversed() {
-            if let operation = part as? SwifQLPartOperator,
+            if let operation = part as? SQLPartOperator,
                operation._value == " " {
                 continue
             }
 
-            return (part as? SwifQLSemanticRoleCarryingPart)?.semanticRole == .starProjection
+            return (part as? SQLSemanticRoleCarryingPart)?.semanticRole == .starProjection
         }
 
         return false
     }
 
     func applyingPatternOperator(
-        _ operation: SwifQLPartOperator,
-        to pattern: SwifQLable
-    ) -> SwifQLable {
+        _ operation: SQLPartOperator,
+        to pattern: SQLable
+    ) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(operation)
@@ -43,7 +43,7 @@ extension SwifQLable {
         } else {
             parts.append(contentsOf: pattern.parts)
         }
-        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(
+        return _SQLStructuralComposition.reconstructingWholeValueTransform(
             from: self,
             resultParts: parts
         )
@@ -54,13 +54,13 @@ extension SwifQLable {
     /// Example usage:
     /// ```swift
     /// let name = "John"
-    /// SwifQL.select
+    /// SQL.root.select
     ///     // ...
     ///     .where((\User.$name).like(name))
     /// ```
-    /// - Parameter part: `SwifQLable` element
+    /// - Parameter part: `SQLable` element
     ///
-    public func like(_ part: SwifQLable) -> SwifQLable {
+    public func like(_ part: SQLable) -> SQLable {
         applyingPatternOperator(.like, to: part)
     }
 }

@@ -6,25 +6,25 @@
 import Foundation
 
 /// One expression-and-target entry for a star `REPLACE` modifier.
-public struct StarReplacement: SwifQLable {
-    public let expressionParts: [SwifQLPart]
+public struct StarReplacement: SQLable {
+    public let expressionParts: [SQLPart]
     public let columnName: String
 
-    public init(_ expression: SwifQLable, as column: KeyPathLastPath) {
+    public init(_ expression: SQLable, as column: KeyPathLastPath) {
         expressionParts = expression.parts
         columnName = column.lastPath
     }
 
-    public var parts: [SwifQLPart] {
+    public var parts: [SQLPart] {
         var parts = expressionParts
         parts.append(o: .space, .as, .space)
-        parts.append(SwifQLPartColumn(columnName))
+        parts.append(SQLPartColumn(columnName))
         return parts
     }
 }
 
 /// One old-and-new structural-name entry for a star `RENAME` modifier.
-public struct StarRename: SwifQLable {
+public struct StarRename: SQLable {
     public let oldColumnName: String
     public let newColumnName: String
 
@@ -33,13 +33,13 @@ public struct StarRename: SwifQLable {
         newColumnName = newColumn.lastPath
     }
 
-    public var parts: [SwifQLPart] {
+    public var parts: [SQLPart] {
         [
-            SwifQLPartColumn(oldColumnName),
-            SwifQLPartOperator.space,
-            SwifQLPartOperator.as,
-            SwifQLPartOperator.space,
-            SwifQLPartColumn(newColumnName)
+            SQLPartColumn(oldColumnName),
+            SQLPartOperator.space,
+            SQLPartOperator.as,
+            SQLPartOperator.space,
+            SQLPartColumn(newColumnName)
         ]
     }
 }

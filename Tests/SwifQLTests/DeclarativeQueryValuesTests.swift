@@ -189,7 +189,8 @@ struct DeclarativeQueryValuesTests: SwifQLTests {
         let expectedPsqlSplit = #"INSERT INTO "User" ("id", "name", "createdAt") VALUES ($1, $2, DEFAULT), ($3, $4, DEFAULT)"#
         let expectedValues = ["1", "John", "2", "Kate"]
 
-        for query in [pathColumns, stringColumns] {
+        let queries: [any SQLable] = [pathColumns, stringColumns]
+        for query in queries {
             let psql = query.prepare(.psql)
             #expect(psql.plain == expectedPsql)
             #expect(psql.splitted.query == expectedPsqlSplit)

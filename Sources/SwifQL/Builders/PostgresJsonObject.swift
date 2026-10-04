@@ -9,22 +9,22 @@ import Foundation
 
 public typealias PgJsonObject = PostgresJsonObject
 
-public class PostgresJsonObject: SwifQLable {
+public class PostgresJsonObject: SQLable {
     private struct Field {
         enum KeyMode {
             case `default`, keyPath
         }
-        let key: SwifQLable
+        let key: SQLable
         let mode: KeyMode
-        let value: SwifQLable
+        let value: SQLable
     }
     
     private var fields: [Field] = []
     
-    public var parts: [SwifQLPart] {
-        var parts: [SwifQLPart] = []
+    public var parts: [SQLPart] {
+        var parts: [SQLPart] = []
         parts.appendSpaceIfNeeded()
-        var body: [SwifQLPart] = []
+        var body: [SQLPart] = []
         for (i, v) in fields.enumerated() {
             if i > 0 {
                 body.append(o: .comma)
@@ -34,7 +34,7 @@ public class PostgresJsonObject: SwifQLable {
             case .default:
                 body.append(contentsOf: v.key.parts)
             case .keyPath:
-                if let key = v.key as? SwifQLUniversalKeyPathSimple {
+                if let key = v.key as? SQLUniversalKeyPathSimple {
                     body.append(o: .custom(key.lastPath.singleQuotted))
                 } else {
                     body.append(o: .custom(String(describing: v.key).singleQuotted))
@@ -49,13 +49,13 @@ public class PostgresJsonObject: SwifQLable {
     
     public init () {}
     
-    public func field(key: SwifQLable, value: SwifQLable) -> PostgresJsonObject {
+    public func field(key: SQLable, value: SQLable) -> PostgresJsonObject {
         let field = Field(key: key, mode: .default, value: value)
         fields.append(field)
         return self
     }
     
-    public func field(keyPathAsKey: SwifQLable, value: SwifQLable) -> PostgresJsonObject {
+    public func field(keyPathAsKey: SQLable, value: SQLable) -> PostgresJsonObject {
         let field = Field(key: keyPathAsKey, mode: .keyPath, value: value)
         fields.append(field)
         return self

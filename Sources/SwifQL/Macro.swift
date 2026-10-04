@@ -3,7 +3,7 @@
 //  SwifQL
 //
 
-public struct MacroParameter: SwifQLable {
+public struct MacroParameter: SQLable {
     public let name: String
     public let type: Type?
 
@@ -12,26 +12,26 @@ public struct MacroParameter: SwifQLable {
         self.type = type
     }
 
-    public var parts: [SwifQLPart] {
-        [SwifQLPartIdentifier(name)]
+    public var parts: [SQLPart] {
+        [SQLPartIdentifier(name)]
     }
 
-    fileprivate var declarationParts: [SwifQLPart] {
-        var parts: [SwifQLPart] = [SwifQLPartIdentifier(name)]
+    fileprivate var declarationParts: [SQLPart] {
+        var parts: [SQLPart] = [SQLPartIdentifier(name)]
         if let type {
             parts.append(o: .space)
-            parts.append(SwifQLPartType(type))
+            parts.append(SQLPartType(type))
         }
         return parts
     }
 }
 
-extension SwifQLable {
-    public func macroParameters(_ parameters: MacroParameter...) -> SwifQLable {
+extension SQLable {
+    public func macroParameters(_ parameters: MacroParameter...) -> SQLable {
         macroParameters(parameters)
     }
 
-    public func macroParameters(_ parameters: [MacroParameter]) -> SwifQLable {
+    public func macroParameters(_ parameters: [MacroParameter]) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .openBracket)
@@ -42,16 +42,16 @@ extension SwifQLable {
             parts.append(contentsOf: parameter.declarationParts)
         }
         parts.append(o: .closeBracket)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }
 
 extension Fn {
-    public static func call(_ name: Path.Identifier, _ arguments: SwifQLable...) -> SwifQLable {
+    public static func call(_ name: Path.Identifier, _ arguments: SQLable...) -> SQLable {
         call(name, arguments)
     }
 
-    public static func call(_ name: Path.Identifier, _ arguments: [SwifQLable]) -> SwifQLable {
+    public static func call(_ name: Path.Identifier, _ arguments: [SQLable]) -> SQLable {
         var parts = name.parts
         parts.append(o: .openBracket)
         for (index, argument) in arguments.enumerated() {
@@ -61,6 +61,6 @@ extension Fn {
             parts.append(contentsOf: argument.parts)
         }
         parts.append(o: .closeBracket)
-        return SwifQLableParts(parts: parts)
+        return SQLableParts(parts: parts)
     }
 }

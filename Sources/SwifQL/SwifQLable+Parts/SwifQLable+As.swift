@@ -1,5 +1,5 @@
 //
-//  SwifQLable+As.swift
+//  SQLable+As.swift
 //  
 //
 //  Created by Mihael Isaev on 25.01.2020.
@@ -9,27 +9,27 @@ import Foundation
 
 //MARK: AS
 
-extension SwifQLable {
-    public var `as`: SwifQLable {
+extension SQLable {
+    public var `as`: SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .as)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
     
-    public func `as`(_ type: Type) -> SwifQLable {
-        var parts: [SwifQLPart] = self.parts
+    public func `as`(_ type: Type) -> SQLable {
+        var parts: [SQLPart] = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .as)
         parts.append(o: .space)
-        parts.append(SwifQLPartType(type))
-        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
+        parts.append(SQLPartType(type))
+        return _SQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 
-    public func `as`(_ expression: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = []
+    public func `as`(_ expression: SQLable) -> SQLable {
+        var parts: [SQLPart] = []
         parts.append(o: .space, .as, .space)
         parts.append(contentsOf: expression.parts)
-        return _SwifQLStructuralComposition.appendingPostfix(parts, to: self)
+        return _SQLStructuralComposition.appendingPostfix(parts, to: self)
     }
 }

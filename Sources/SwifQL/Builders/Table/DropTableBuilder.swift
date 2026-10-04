@@ -5,9 +5,9 @@
 //  Created by Mihael Isaev on 29.01.2020.
 //
 
-public class DropTableBuilder<T: Table>: SwifQLable {
-    public var parts: [SwifQLPart] {
-        var query = SwifQL.drop.table
+public class DropTableBuilder<T: Table>: SQLable {
+    public var parts: [SQLPart] {
+        var query = SQL.root.drop.table
         if shouldCheckIfExists {
             query = query.if.exists
         }

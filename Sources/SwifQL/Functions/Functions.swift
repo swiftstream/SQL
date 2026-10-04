@@ -19,37 +19,37 @@ extension Fn {
         
         public static func custom(_ name: String) -> Name { .init(name) }
         
-        var part: SwifQLPartOperator { .init(name) }
+        var part: SQLPartOperator { .init(name) }
     }
 }
 
 //MARK: Function builders
 
 extension Fn {
-    public static func build(_ fn: Name) -> SwifQLable {
+    public static func build(_ fn: Name) -> SQLable {
         build(fn, body: nil)
     }
-    public static func build(_ fn: Name, body: SwifQLPart...) -> SwifQLable {
+    public static func build(_ fn: Name, body: SQLPart...) -> SQLable {
         build(fn, body: body)
     }
-    public static func build(_ fn: Name, body: [SwifQLPart]? = nil) -> SwifQLable {
-        var parts: [SwifQLPart] = []
+    public static func build(_ fn: Name, body: [SQLPart]? = nil) -> SQLable {
+        var parts: [SQLPart] = []
         parts.append(f: fn)
         if let body = body {
             parts.append(o: .openBracket)
             parts.append(contentsOf: body)
             parts.append(o: .closeBracket)
         }
-        return SwifQLableParts(parts: parts)
+        return SQLableParts(parts: parts)
     }
 }
 
-public func Select(_ queryPart: SwifQLable...) -> SwifQLable {
+public func Select(_ queryPart: SQLable...) -> SQLable {
     Select(queryPart)
 }
 
-public func Select(_ queryParts: [SwifQLable]) -> SwifQLable {
-    var parts: [SwifQLPart] = []
+public func Select(_ queryParts: [SQLable]) -> SQLable {
+    var parts: [SQLPart] = []
     parts.append(o: .select)
     parts.append(o: .space)
     for (i, q) in queryParts.enumerated() {
@@ -59,17 +59,17 @@ public func Select(_ queryParts: [SwifQLable]) -> SwifQLable {
         }
         parts.append(contentsOf: q.parts)
     }
-    return SwifQLableParts(parts: parts)
+    return SQLableParts(parts: parts)
 }
 
-public var Select: SwifQLable { Fn.build(.custom("SELECT")) }
+public var Select: SQLable { Fn.build(.custom("SELECT")) }
 
-//MARK: [SwifQLPart] extension
+//MARK: [SQLPart] extension
 
-extension Array where Element == SwifQLPart {
+extension Array where Element == SQLPart {
     public mutating func appendSpaceIfNeeded() {
         if count == 0 { return }
-        if let last = last as? SwifQLPartOperator, last._value == " " {
+        if let last = last as? SQLPartOperator, last._value == " " {
             return
         }
         append(o: .space)
@@ -77,13 +77,13 @@ extension Array where Element == SwifQLPart {
     public mutating func append(f: Fn.Name) {
         append(f.part)
     }
-    public mutating func append(o: SwifQLPartOperator...) {
+    public mutating func append(o: SQLPartOperator...) {
         o.forEach { append($0) }
     }
-    public mutating func append(h: SwifQLHybridOperator...) {
+    public mutating func append(h: SQLHybridOperator...) {
         h.forEach { append($0) }
     }
     public mutating func append(safe value: Any) {
-        append(SwifQLPartSafeValue(value))
+        append(SQLPartSafeValue(value))
     }
 }

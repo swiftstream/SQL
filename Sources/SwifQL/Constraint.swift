@@ -8,9 +8,9 @@
 import Foundation
 
 public struct Constraint {
-    let query: SwifQLable
+    let query: SQLable
     
-    init (_ query: SwifQLable) {
+    init (_ query: SQLable) {
         self.query = query
     }
     
@@ -18,23 +18,23 @@ public struct Constraint {
     var isNotNull = false
     
     public static var primaryKey: Constraint {
-        var constraint = Constraint(SwifQL.primary.key)
+        var constraint = Constraint(SQL.root.primary.key)
         constraint.isPrimaryKey = true
         return constraint
     }
     
     public static var unique: Constraint {
-        .init(SwifQL.unique)
+        .init(SQL.root.unique)
     }
     
     public static var notNull: Constraint {
-        var constraint = Constraint(SwifQL.not.null)
+        var constraint = Constraint(SQL.root.not.null)
         constraint.isNotNull = true
         return constraint
     }
     
-    public static func check(name: String? = nil, _ expression: SwifQLable) -> Constraint {
-        var query = SwifQL
+    public static func check(name: String? = nil, _ expression: SQLable) -> Constraint {
+        var query: SQLable = SQL.root
         if let name = name {
             query = query.constraint[any: Path.Column(name)]
         }
@@ -50,7 +50,7 @@ public struct Constraint {
     }
     
     public static func references(_ schema: String? = nil, _ table: String, onDelete: ReferentialAction? = nil, onUpdate: ReferentialAction? = nil) -> Constraint {
-        var query = SwifQL.references[any: Path.SchemaWithTable(schema: schema, table: table)]
+        var query = SQL.root.references[any: Path.SchemaWithTable(schema: schema, table: table)]
         if let action = onDelete {
             query = query.on.delete[any: action]
         }

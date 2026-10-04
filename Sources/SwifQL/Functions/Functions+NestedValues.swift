@@ -12,8 +12,8 @@ extension Fn.Name {
 }
 
 extension Fn {
-    private static func nestedValueArguments(_ values: [SwifQLable]) -> [SwifQLPart] {
-        var parts: [SwifQLPart] = []
+    private static func nestedValueArguments(_ values: [SQLable]) -> [SQLPart] {
+        var parts: [SQLPart] = []
         for (index, value) in values.enumerated() {
             if index > 0 {
                 parts.append(o: .comma)
@@ -24,24 +24,24 @@ extension Fn {
         return parts
     }
 
-    public static func listValue(_ values: SwifQLable...) -> SwifQLable {
+    public static func listValue(_ values: SQLable...) -> SQLable {
         listValue(values)
     }
 
-    public static func listValue(_ values: [SwifQLable]) -> SwifQLable {
+    public static func listValue(_ values: [SQLable]) -> SQLable {
         build(.listValue, body: nestedValueArguments(values))
     }
 
-    public static func arrayValue(_ values: SwifQLable...) -> SwifQLable {
+    public static func arrayValue(_ values: SQLable...) -> SQLable {
         arrayValue(values)
     }
 
-    public static func arrayValue(_ values: [SwifQLable]) -> SwifQLable {
+    public static func arrayValue(_ values: [SQLable]) -> SQLable {
         precondition(!values.isEmpty, "arrayValue requires at least one value")
         return build(.arrayValue, body: nestedValueArguments(values))
     }
 
-    public static func map(_ keys: SwifQLable, _ values: SwifQLable) -> SwifQLable {
+    public static func map(_ keys: SQLable, _ values: SQLable) -> SQLable {
         build(.map, body: nestedValueArguments([keys, values]))
     }
 }

@@ -5,12 +5,12 @@
 //  Created by Mihael Isaev on 29.01.2020.
 //
 
-public class UpdateTableBuilder<T: Table>: SwifQLable {
-    public var parts: [SwifQLPart] {
+public class UpdateTableBuilder<T: Table>: SQLable {
+    public var parts: [SQLPart] {
         let table = Path.Schema(schemaName).table(T.tableName)
-        var parts: [SwifQLPart] = []
+        var parts: [SQLPart] = []
         if combinedAlterActions.count > 0 {
-            var combinedParts = SwifQL.alter.table[any: table].parts
+            var combinedParts = SQL.root.alter.table[any: table].parts
             combinedParts.append(o: .space)
             combinedAlterActions.enumerated().forEach { i, action in
                 if i > 0 {
@@ -23,7 +23,7 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
             parts.append(contentsOf: combinedParts)
         }
         standAloneAlterActions.forEach { action in
-            var standAloneParts = SwifQL.alter.table[any: table].parts
+            var standAloneParts = SQL.root.alter.table[any: table].parts
             standAloneParts.append(o: .space)
             standAloneParts.append(contentsOf: action)
             standAloneParts.append(o: .semicolon)
@@ -35,22 +35,22 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
             parts.append(contentsOf: actionParts)
         }
         if let newName = renameTableTo {
-            var renameParts = SwifQL.alter.table[any: table].parts
+            var renameParts = SQL.root.alter.table[any: table].parts
             renameParts.append(o: .space)
             renameParts.append(o: .rename)
             renameParts.append(o: .space)
             renameParts.append(o: .to)
             renameParts.append(o: .space)
-            renameParts.append(SwifQLPartColumn(newName))
+            renameParts.append(SQLPartColumn(newName))
             renameParts.append(o: .semicolon)
             parts.append(contentsOf: renameParts)
         }
         return parts
     }
     
-    var combinedAlterActions: [[SwifQLPart]] = []
-    var standAloneAlterActions: [[SwifQLPart]] = []
-    var otherActions: [[SwifQLPart]] = []
+    var combinedAlterActions: [[SQLPart]] = []
+    var standAloneAlterActions: [[SQLPart]] = []
+    var otherActions: [[SQLPart]] = []
     var renameTableTo: String?
     var schemaName: String?
     
@@ -73,7 +73,7 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     // MARK: - ADD COLUMN
     
     public func addColumn(_ newColumn: NewColumn) -> Self {
-        var parts: [SwifQLPart] = []
+        var parts: [SQLPart] = []
         parts.append(o: .add)
         parts.append(o: .space)
         parts.append(o: .column)
@@ -86,45 +86,45 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     // MARK: KeyPath
     
     /// Adds a new column to a table.
-    public func addColumn<V>(_ keyPath: KeyPath<T, V>, _ type: SwifQL.`Type`, checkIfNotExists: Bool = false) -> Self where V: ColumnRepresentable {
+    public func addColumn<V>(_ keyPath: KeyPath<T, V>, _ type: Type, checkIfNotExists: Bool = false) -> Self where V: ColumnRepresentable {
         addColumn(keyPath, type: type, default: nil, checkIfNotExists: checkIfNotExists, constraints: [])
     }
     
     /// Adds a new column to a table.
-    public func addColumn<V>(_ keyPath: KeyPath<T, V>, _ type: SwifQL.`Type`, checkIfNotExists: Bool = false, _ constraints: Constraint...) -> Self where V: ColumnRepresentable {
+    public func addColumn<V>(_ keyPath: KeyPath<T, V>, _ type: Type, checkIfNotExists: Bool = false, _ constraints: Constraint...) -> Self where V: ColumnRepresentable {
         addColumn(keyPath, type: type, default: nil, checkIfNotExists: checkIfNotExists, constraints: constraints)
     }
     
     /// Adds a new column to a table.
-    public func addColumn<V>(_ keyPath: KeyPath<T, V>, _ type: SwifQL.`Type`, _ `default`: ColumnDefault, checkIfNotExists: Bool = false, _ constraints: Constraint...) -> Self where V: ColumnRepresentable {
+    public func addColumn<V>(_ keyPath: KeyPath<T, V>, _ type: Type, _ `default`: ColumnDefault, checkIfNotExists: Bool = false, _ constraints: Constraint...) -> Self where V: ColumnRepresentable {
         addColumn(keyPath, type: type, default: `default`, checkIfNotExists: checkIfNotExists, constraints: constraints)
     }
     
     /// Adds a new column to a table.
-    public func addColumn<V>(_ keyPath: KeyPath<T, V>, type: SwifQL.`Type`, `default`: ColumnDefault?, checkIfNotExists: Bool = false, constraints: [Constraint]) -> Self where V: ColumnRepresentable {
+    public func addColumn<V>(_ keyPath: KeyPath<T, V>, type: Type, `default`: ColumnDefault?, checkIfNotExists: Bool = false, constraints: [Constraint]) -> Self where V: ColumnRepresentable {
         addColumn(T.key(for: keyPath), type: type, default: `default`, checkIfNotExists: checkIfNotExists, constraints: constraints)
     }
     
     // MARK: String
     
     /// Adds a new column to a table.
-    public func addColumn(_ name: String, _ type: SwifQL.`Type`, checkIfNotExists: Bool = false) -> Self {
+    public func addColumn(_ name: String, _ type: Type, checkIfNotExists: Bool = false) -> Self {
         addColumn(name, type: type, default: nil, checkIfNotExists: checkIfNotExists, constraints: [])
     }
     
     /// Adds a new column to a table.
-    public func addColumn(_ name: String, _ type: SwifQL.`Type`, checkIfNotExists: Bool = false, _ constraints: Constraint...) -> Self {
+    public func addColumn(_ name: String, _ type: Type, checkIfNotExists: Bool = false, _ constraints: Constraint...) -> Self {
         addColumn(name, type: type, default: nil, checkIfNotExists: checkIfNotExists, constraints: constraints)
     }
     
     /// Adds a new column to a table.
-    public func addColumn(_ name: String, _ type: SwifQL.`Type`, _ `default`: ColumnDefault, checkIfNotExists: Bool = false, _ constraints: Constraint...) -> Self {
+    public func addColumn(_ name: String, _ type: Type, _ `default`: ColumnDefault, checkIfNotExists: Bool = false, _ constraints: Constraint...) -> Self {
         addColumn(name, type: type, default: `default`, checkIfNotExists: checkIfNotExists, constraints: constraints)
     }
     
     /// Adds a new column to a table.
-    public func addColumn(_ name: String, type: SwifQL.`Type`, `default`: ColumnDefault?, checkIfNotExists: Bool = false, constraints: [Constraint]) -> Self {
-        var parts: [SwifQLPart] = []
+    public func addColumn(_ name: String, type: Type, `default`: ColumnDefault?, checkIfNotExists: Bool = false, constraints: [Constraint]) -> Self {
+        var parts: [SQLPart] = []
         parts.append(o: .add)
         parts.append(o: .space)
         parts.append(o: .column)
@@ -137,9 +137,9 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
             parts.append(o: .exists)
         }
         parts.append(o: .space)
-        parts.append(SwifQLPartColumn(name))
+        parts.append(SQLPartColumn(name))
         parts.append(o: .space)
-        parts.append(SwifQLPartType(type))
+        parts.append(SQLPartType(type))
         if let expression = `default` {
             parts.append(o: .space)
             parts.append(contentsOf: expression.query.parts)
@@ -181,7 +181,7 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     /// .dropColumn("qwe", cascade: true) // default `false`
     /// ```
     public func dropColumn(_ name: String, checkIfExists: Bool = false, cascade: Bool = false) -> Self {
-        var parts = SwifQL.parts
+        var parts = SQL.root.parts
         parts.append(o: .drop)
         parts.append(o: .space)
         parts.append(o: .column)
@@ -192,7 +192,7 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
             parts.append(o: .exists)
         }
         parts.append(o: .space)
-        parts.append(SwifQLPartColumn(name))
+        parts.append(SQLPartColumn(name))
         if cascade {
             parts.append(o: .space)
             parts.append(o: .cascade)
@@ -209,7 +209,7 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     }
     
     /// Use for adding/changing the default value for a column.
-    public func setDefault<V>(_ keyPath: KeyPath<T, V>, expression: SwifQLable)  -> Self where V: ColumnRepresentable {
+    public func setDefault<V>(_ keyPath: KeyPath<T, V>, expression: SQLable)  -> Self where V: ColumnRepresentable {
         setDefault(T.key(for: keyPath), expression: expression)
     }
     
@@ -220,30 +220,30 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     
     /// Use for adding/changing the default value for a column.
     public func setDefault(_ name: String, constant v: Any) -> Self {
-        var parts = SwifQL.parts
+        var parts = SQL.root.parts
         parts.append(o: .alter)
         parts.append(o: .space)
         parts.append(o: .column)
         parts.append(o: .space)
-        parts.append(SwifQLPartColumn(name))
+        parts.append(SQLPartColumn(name))
         parts.append(o: .space)
         parts.append(o: .set)
         parts.append(o: .space)
         parts.append(o: .default)
         parts.append(o: .space)
-        parts.append(SwifQLPartSafeValue(v))
+        parts.append(SQLPartSafeValue(v))
         combinedAlterActions.append(parts)
         return self
     }
     
     /// Use for adding/changing the default value for a column.
-    public func setDefault(_ name: String, expression: SwifQLable) -> Self {
-        var parts = SwifQL.parts
+    public func setDefault(_ name: String, expression: SQLable) -> Self {
+        var parts = SQL.root.parts
         parts.append(o: .alter)
         parts.append(o: .space)
         parts.append(o: .column)
         parts.append(o: .space)
-        parts.append(SwifQLPartColumn(name))
+        parts.append(SQLPartColumn(name))
         parts.append(o: .space)
         parts.append(o: .set)
         parts.append(o: .space)
@@ -256,12 +256,12 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     
     /// Use for adding/changing the default value for a column.
     public func setDefault(_ name: String, sequence: String) -> Self {
-        var parts = SwifQL.parts
+        var parts = SQL.root.parts
         parts.append(o: .alter)
         parts.append(o: .space)
         parts.append(o: .column)
         parts.append(o: .space)
-        parts.append(SwifQLPartColumn(name))
+        parts.append(SQLPartColumn(name))
         parts.append(o: .space)
         parts.append(o: .set)
         parts.append(o: .space)
@@ -281,12 +281,12 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     
     /// Use for removing the default value for a column.
     public func dropDefault(_ name: String) -> Self {
-        var parts = SwifQL.parts
+        var parts = SQL.root.parts
         parts.append(o: .alter)
         parts.append(o: .space)
         parts.append(o: .column)
         parts.append(o: .space)
-        parts.append(SwifQLPartColumn(name))
+        parts.append(SQLPartColumn(name))
         parts.append(o: .space)
         parts.append(o: .drop)
         parts.append(o: .space)
@@ -304,12 +304,12 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     
     /// Use for removing NOT NULL mark for a column.
     public func setNotNull(_ name: String) -> Self {
-        var parts = SwifQL.parts
+        var parts = SQL.root.parts
         parts.append(o: .alter)
         parts.append(o: .space)
         parts.append(o: .column)
         parts.append(o: .space)
-        parts.append(SwifQLPartColumn(name))
+        parts.append(SQLPartColumn(name))
         parts.append(o: .space)
         parts.append(o: .set)
         parts.append(o: .space)
@@ -329,12 +329,12 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     
     /// Use for removing NOT NULL mark for a column.
     public func dropNotNull(_ name: String) -> Self {
-        var parts = SwifQL.parts
+        var parts = SQL.root.parts
         parts.append(o: .alter)
         parts.append(o: .space)
         parts.append(o: .column)
         parts.append(o: .space)
-        parts.append(SwifQLPartColumn(name))
+        parts.append(SQLPartColumn(name))
         parts.append(o: .space)
         parts.append(o: .drop)
         parts.append(o: .space)
@@ -354,16 +354,16 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     
     /// For changing the table name or a column name.
     public func renameColumn(_ name: String, to: String) -> Self {
-        var parts = SwifQL.parts
+        var parts = SQL.root.parts
         parts.append(o: .rename)
         parts.append(o: .space)
         parts.append(o: .column)
         parts.append(o: .space)
-        parts.append(SwifQLPartColumn(name))
+        parts.append(SQLPartColumn(name))
         parts.append(o: .space)
         parts.append(o: .to)
         parts.append(o: .space)
-        parts.append(SwifQLPartColumn(to))
+        parts.append(SQLPartColumn(to))
         standAloneAlterActions.append(parts)
         return self
     }
@@ -372,12 +372,12 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     
     /// Use for dropping a table constraint.
     public func dropConstraint(_ name: String) -> Self {
-        var parts = SwifQL.parts
+        var parts = SQL.root.parts
         parts.append(o: .drop)
         parts.append(o: .space)
         parts.append(o: .constraint)
         parts.append(o: .space)
-        parts.append(SwifQLPartColumn(name))
+        parts.append(SQLPartColumn(name))
         otherActions.append(parts)
         return self
     }
@@ -387,7 +387,7 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     /// Use to add UNIQUE mark to one or several columns.
     public func addUnique(to columns: String...) -> Self {
         guard columns.count > 0 else { return self }
-        var parts = SwifQL.parts
+        var parts = SQL.root.parts
         parts.append(o: .add)
         parts.append(o: .space)
         parts.append(o: .unique)
@@ -398,7 +398,7 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
                 parts.append(o: .comma)
                 parts.append(o: .space)
             }
-            parts.append(SwifQLPartColumn(name))
+            parts.append(SQLPartColumn(name))
         }
         parts.append(o: .closeBracket)
         combinedAlterActions.append(parts)
@@ -410,7 +410,7 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     /// Use to add PRIMARY KEY mark to one or several columns.
     public func addPrimaryKey(to columns: String...) -> Self {
         guard columns.count > 0 else { return self }
-        var parts = SwifQL.parts
+        var parts = SQL.root.parts
         parts.append(o: .add)
         parts.append(o: .space)
         parts.append(o: .primary)
@@ -423,7 +423,7 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
                 parts.append(o: .comma)
                 parts.append(o: .space)
             }
-            parts.append(SwifQLPartColumn(name))
+            parts.append(SQLPartColumn(name))
         }
         parts.append(o: .closeBracket)
         combinedAlterActions.append(parts)
@@ -434,16 +434,16 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     
     /// Drops index by its name.
     public func dropIndex(schema: String? = nil, name: String) -> Self {
-        var parts = SwifQL.parts
+        var parts = SQL.root.parts
         parts.append(o: .drop)
         parts.append(o: .space)
         parts.append(o: .index)
         parts.append(o: .space)
         if let schema = schema {
-            parts.append(SwifQLPartColumn(schema))
+            parts.append(SQLPartColumn(schema))
             parts.append(o: .period)
         }
-        parts.append(SwifQLPartColumn(name))
+        parts.append(SQLPartColumn(name))
         otherActions.append(parts)
         return self
     }
@@ -451,14 +451,14 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     // MARK: - CREATE INDEX
     
     /// Creates index for one or several columns.
-    public func createIndex(unique: Bool = false, name: String? = nil, items: IndexItem..., type: IndexType? = nil, where condition: SwifQLable? = nil) -> Self {
+    public func createIndex(unique: Bool = false, name: String? = nil, items: IndexItem..., type: IndexType? = nil, where condition: SQLable? = nil) -> Self {
         createIndex(unique: unique, name: name, items: items, type: type, where: condition)
     }
     
     /// Creates index for one or several columns.
-    public func createIndex(unique: Bool = false, name: String? = nil, items: [IndexItem], type: IndexType? = nil, where condition: SwifQLable? = nil) -> Self {
+    public func createIndex(unique: Bool = false, name: String? = nil, items: [IndexItem], type: IndexType? = nil, where condition: SQLable? = nil) -> Self {
         guard items.count > 0 else { return self }
-        var parts = SwifQL.parts
+        var parts = SQL.root.parts
         parts.append(o: .create)
         if unique {
             parts.append(o: .space)
@@ -468,7 +468,7 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
         parts.append(o: .index)
         if let name = name {
             parts.append(o: .space)
-            parts.append(SwifQLPartColumn(name))
+            parts.append(SQLPartColumn(name))
         }
         parts.append(o: .space)
         parts.append(o: .on)
@@ -504,14 +504,14 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     
     /// A check constraint helps in validating the records that are being inserted into a table.
     /// We can do this by combining the ALTER TABLE command with the ADD CHECK statement.
-    public func addCheck(constraintName: String? = nil, _ expression: SwifQLable) -> Self {
-        var parts = SwifQL.parts
+    public func addCheck(constraintName: String? = nil, _ expression: SQLable) -> Self {
+        var parts = SQL.root.parts
         parts.append(o: .add)
         if let constraintName = constraintName {
             parts.append(o: .space)
             parts.append(o: .constraint)
             parts.append(o: .space)
-            parts.append(SwifQLPartColumn(constraintName))
+            parts.append(SQLPartColumn(constraintName))
         }
         parts.append(o: .space)
         parts.append(o: .check)
@@ -531,13 +531,13 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
     
     public func addForeignKey(column: String, constraintName: String? = nil, schema: String? = nil, table: String, columns: [String], onDelete: ReferentialAction? = nil, onUpdate: ReferentialAction? = nil) -> Self {
         guard columns.count > 0 else { return self }
-        var parts = SwifQL.parts
+        var parts = SQL.root.parts
         parts.append(o: .add)
         if let constraintName = constraintName {
             parts.append(o: .space)
             parts.append(o: .constraint)
             parts.append(o: .space)
-            parts.append(SwifQLPartColumn(constraintName))
+            parts.append(SQLPartColumn(constraintName))
         }
         parts.append(o: .space)
         parts.append(o: .foreign)
@@ -545,19 +545,19 @@ public class UpdateTableBuilder<T: Table>: SwifQLable {
         parts.append(o: .key)
         parts.append(o: .space)
         parts.append(o: .openBracket)
-        parts.append(SwifQLPartColumn(column))
+        parts.append(SQLPartColumn(column))
         parts.append(o: .closeBracket)
         parts.append(o: .space)
         parts.append(o: .references)
         parts.append(o: .space)
-        parts.append(SwifQLPartTable(schema: schema, table: table))
+        parts.append(SQLPartTable(schema: schema, table: table))
         parts.append(o: .openBracket)
         columns.enumerated().forEach { i, name in
             if i > 0 {
                 parts.append(o: .comma)
                 parts.append(o: .space)
             }
-            parts.append(SwifQLPartColumn(name))
+            parts.append(SQLPartColumn(name))
         }
         parts.append(o: .closeBracket)
         if let action = onDelete {

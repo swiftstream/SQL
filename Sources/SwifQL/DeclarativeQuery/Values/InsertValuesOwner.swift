@@ -63,20 +63,20 @@ public enum InsertBuilder {
     }
 }
 
-public struct Insert: SwifQLable {
-    private let targetParts: [SwifQLPart]
+public struct Insert: SQLable {
+    private let targetParts: [SQLPart]
     private let bodyFragments: [InsertBuilder.Fragment]
 
     public init(
-        _ target: any SwifQLable,
+        _ target: any SQLable,
         @InsertBuilder _ body: () -> InsertBuilder.Result
     ) {
         self.targetParts = target.parts
         self.bodyFragments = body().fragments
     }
 
-    public var parts: [SwifQLPart] {
-        var result: [SwifQLPart] = []
+    public var parts: [SQLPart] {
+        var result: [SQLPart] = []
         result.append(o: .insert, .space, .into, .space)
         result.append(contentsOf: targetParts)
 
@@ -87,16 +87,16 @@ public struct Insert: SwifQLable {
                 result.append(o: .space, .openBracket)
                 for (index, name) in request.names.enumerated() {
                     if index > 0 { result.append(o: .comma, .space) }
-                    result.append(SwifQLPartAlias(name))
+                    result.append(SQLPartAlias(name))
                 }
                 result.append(o: .closeBracket)
 
             case .values(let values):
                 result.append(o: .space, .custom("VALUES"), .space)
-                let rowPrefix = SwifQLHybridOperator(
-                    SwifQLPartOperator("("),
-                    SwifQLPartOperator("ROW("),
-                    SwifQLPartOperator("(")
+                let rowPrefix = SQLHybridOperator(
+                    SQLPartOperator("("),
+                    SQLPartOperator("ROW("),
+                    SQLPartOperator("(")
                 )
                 for (index, row) in values.rows.enumerated() {
                     if index > 0 { result.append(o: .comma, .space) }

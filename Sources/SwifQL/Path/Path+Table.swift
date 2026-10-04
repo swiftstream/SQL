@@ -32,9 +32,9 @@ extension Path {
     }
 }
 
-extension Path.Table: SwifQLable {
-    public var parts: [SwifQLPart] {
-        [SwifQLPartTable(name)]
+extension Path.Table: SQLable {
+    public var parts: [SQLPart] {
+        [SQLPartTable(name)]
     }
 }
 

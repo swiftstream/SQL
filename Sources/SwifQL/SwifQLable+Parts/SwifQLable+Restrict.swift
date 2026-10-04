@@ -1,5 +1,5 @@
 //
-//  SwifQLable+Restrict.swift
+//  SQLable+Restrict.swift
 //  SwifQL
 //
 //  Created by Mihael Isaev on 29.01.2020.
@@ -9,11 +9,11 @@ import Foundation
 
 //MARK: RESTRICT
 
-extension SwifQLable {
-    public var restrict: SwifQLable {
+extension SQLable {
+    public var restrict: SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .restrict)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

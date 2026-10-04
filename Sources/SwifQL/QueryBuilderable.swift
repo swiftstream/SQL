@@ -15,17 +15,17 @@ extension QueryBuilderable {
     // MARK: Join
     
     @discardableResult
-    public func join(_ mode: JoinMode, _ table: SwifQLable, on predicates: SwifQLable) -> Self {
-        join(SwifQLJoinBuilder(mode, table, on: predicates))
+    public func join(_ mode: JoinMode, _ table: SQLable, on predicates: SQLable) -> Self {
+        join(SQLJoinBuilder(mode, table, on: predicates))
     }
     
     @discardableResult
-    public func join(_ item: SwifQLJoinBuilder...) -> Self {
+    public func join(_ item: SQLJoinBuilder...) -> Self {
         join(item)
     }
     
     @discardableResult
-    public func join(_ items: [SwifQLJoinBuilder]) -> Self {
+    public func join(_ items: [SQLJoinBuilder]) -> Self {
         queryParts.joins.append(contentsOf: items)
         return self
     }
@@ -33,12 +33,12 @@ extension QueryBuilderable {
     // MARK: Where
     
     @discardableResult
-    public func `where`(_ item: SwifQLable...) -> Self {
+    public func `where`(_ item: SQLable...) -> Self {
         `where`(item)
     }
     
     @discardableResult
-    public func `where`(_ items: [SwifQLable]) -> Self {
+    public func `where`(_ items: [SQLable]) -> Self {
         queryParts.wheres.append(contentsOf: items)
         return self
     }
@@ -46,12 +46,12 @@ extension QueryBuilderable {
     // MARK: Group by
     
     @discardableResult
-    public func groupBy(_ item: SwifQLable...) -> Self {
+    public func groupBy(_ item: SQLable...) -> Self {
         groupBy(item)
     }
     
     @discardableResult
-    public func groupBy(_ items: [SwifQLable]) -> Self {
+    public func groupBy(_ items: [SQLable]) -> Self {
         queryParts.groupBy.append(contentsOf: items)
         return self
     }
@@ -59,12 +59,12 @@ extension QueryBuilderable {
     // MARK: Having
     
     @discardableResult
-    public func having(_ item: SwifQLable...) -> Self {
+    public func having(_ item: SQLable...) -> Self {
         having(item)
     }
     
     @discardableResult
-    public func having(_ items: [SwifQLable]) -> Self {
+    public func having(_ items: [SQLable]) -> Self {
         queryParts.havings.append(contentsOf: items)
         return self
     }

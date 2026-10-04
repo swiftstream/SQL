@@ -8,10 +8,10 @@
 import Foundation
 
 public typealias Op = Operator
-public typealias Operator = SwifQLPartOperator
+public typealias Operator = SQLPartOperator
 
-extension SwifQLPartOperator {
-    public typealias Result = SwifQLPartOperator
+extension SQLPartOperator {
+    public typealias Result = SQLPartOperator
     
     public static var left: Result { "LEFT".operator }
     public static var right: Result { "RIGHT".operator }
@@ -372,5 +372,5 @@ extension SwifQLPartOperator {
 }
 
 extension String {
-    fileprivate var `operator`: SwifQLPartOperator { .init(self) }
+    fileprivate var `operator`: SQLPartOperator { .init(self) }
 }

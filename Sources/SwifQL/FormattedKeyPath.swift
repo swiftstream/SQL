@@ -35,9 +35,9 @@ public struct FormattedKeyPath {
     }
 }
 
-extension FormattedKeyPath: SwifQLable {
-    public var parts: [SwifQLPart] {
-        [SwifQLPartKeyPath(table: _table, paths: _paths)]
+extension FormattedKeyPath: SQLable {
+    public var parts: [SQLPart] {
+        [SQLPartKeyPath(table: _table, paths: _paths)]
     }
 }
 

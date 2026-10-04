@@ -1,7 +1,7 @@
 import Foundation
 
 /// An open, value-semantic identity for a sampling method.
-public struct SampleMethod: Hashable, Sendable, SwifQLable {
+public struct SampleMethod: Hashable, Sendable, SQLable {
     public let namespace: String
     public let name: String
 
@@ -26,8 +26,8 @@ public struct SampleMethod: Hashable, Sendable, SwifQLable {
     public static let bernoulli = Self(namespace: "swifql", name: "bernoulli")
     public static let reservoir = Self(namespace: "swifql", name: "reservoir")
 
-    public var parts: [SwifQLPart] {
-        [SwifQLPartOperator(name)]
+    public var parts: [SQLPart] {
+        [SQLPartOperator(name)]
     }
 }
 
@@ -47,50 +47,50 @@ public struct SampleArgumentRole: Hashable, Sendable {
 
 /// A value-semantic ordered sampling argument whose expression remains intact
 /// until a dialect chooses its exact grammar and bindability policy.
-public struct SampleArgument: SwifQLable {
-    public let value: SwifQLable
+public struct SampleArgument: SQLable {
+    public let value: SQLable
     public let role: SampleArgumentRole?
 
-    public init(_ value: SwifQLable, role: SampleArgumentRole? = nil) {
+    public init(_ value: SQLable, role: SampleArgumentRole? = nil) {
         self.value = value
         self.role = role
     }
 
-    public init(percentage value: SwifQLable) {
+    public init(percentage value: SQLable) {
         self.init(value, role: .percentage)
     }
 
-    public init(rows value: SwifQLable) {
+    public init(rows value: SQLable) {
         self.init(value, role: .rows)
     }
 
-    public var parts: [SwifQLPart] {
+    public var parts: [SQLPart] {
         value.parts
     }
 }
 
 /// A size convenience retained for existing sampling call sites. Its semantic
-/// value remains an ordinary `SwifQLable`; the selected dialect owns whether
+/// value remains an ordinary `SQLable`; the selected dialect owns whether
 /// the value is bound or represented as a parser constant.
-public struct SampleSize: SwifQLable {
+public struct SampleSize: SQLable {
     public enum Kind: Equatable, Sendable {
         case percentage
         case rows
     }
 
     public let kind: Kind
-    public let value: SwifQLable
+    public let value: SQLable
 
-    public init(_ value: SwifQLable, kind: Kind) {
+    public init(_ value: SQLable, kind: Kind) {
         self.kind = kind
         self.value = value
     }
 
-    public init(percentage value: SwifQLable) {
+    public init(percentage value: SQLable) {
         self.init(value, kind: .percentage)
     }
 
-    public init(rows value: SwifQLable) {
+    public init(rows value: SQLable) {
         self.init(value, kind: .rows)
     }
 
@@ -98,33 +98,33 @@ public struct SampleSize: SwifQLable {
         SampleArgument(value, role: kind == .percentage ? .percentage : .rows)
     }
 
-    public var parts: [SwifQLPart] {
+    public var parts: [SQLPart] {
         value.parts
     }
 }
 
 /// The optional seed role in USING SAMPLE remains separate from method
 /// arguments while retaining its original expression/value semantics.
-public struct SampleSeed: SwifQLable {
-    public let value: SwifQLable
+public struct SampleSeed: SQLable {
+    public let value: SQLable
 
-    public init(_ value: SwifQLable) {
+    public init(_ value: SQLable) {
         self.value = value
     }
 
-    public var parts: [SwifQLPart] { value.parts }
+    public var parts: [SQLPart] { value.parts }
 }
 
 /// The optional repeatability role in TABLESAMPLE remains separate from method
 /// arguments while retaining its original expression/value semantics.
-public struct SampleRepeatability: SwifQLable {
-    public let value: SwifQLable
+public struct SampleRepeatability: SQLable {
+    public let value: SQLable
 
-    public init(_ value: SwifQLable) {
+    public init(_ value: SQLable) {
         self.value = value
     }
 
-    public var parts: [SwifQLPart] { value.parts }
+    public var parts: [SQLPart] { value.parts }
 }
 
 /// The two currently modeled sampling clause identities remain distinct while
@@ -143,7 +143,7 @@ public struct SampleConstruct: Hashable, Sendable {
 }
 
 /// A structured sampling value passed to the single dialect rendering hook.
-public struct SwifQLPartSampling: SwifQLPart {
+public struct SQLPartSampling: SQLPart {
     public let construct: SampleConstruct
     public let method: SampleMethod?
     public let arguments: [SampleArgument]
@@ -165,11 +165,11 @@ public struct SwifQLPartSampling: SwifQLPart {
     }
 
     internal func renderedParts(
-        argumentParts: [[SwifQLPart]],
-        seedParts: [SwifQLPart]?,
-        repeatabilityParts: [SwifQLPart]?
-    ) -> [SwifQLPart] {
-        var parts: [SwifQLPart] = []
+        argumentParts: [[SQLPart]],
+        seedParts: [SQLPart]?,
+        repeatabilityParts: [SQLPart]?
+    ) -> [SQLPart] {
+        var parts: [SQLPart] = []
         let firstRole = arguments.first?.role
 
         if construct == .usingSample {
@@ -223,7 +223,7 @@ public struct SwifQLPartSampling: SwifQLPart {
         }
 
         return [
-            SwifQLPartOperator(
+            SQLPartOperator(
                 "<sampling_construct_requires_explicit_\(construct.name)_branch>"
             )
         ]
@@ -231,7 +231,7 @@ public struct SwifQLPartSampling: SwifQLPart {
 }
 
 /// The value-semantic options inside a distinct USING SAMPLE clause.
-public struct Sample: SwifQLable {
+public struct Sample: SQLable {
     public let arguments: [SampleArgument]
     public let method: SampleMethod?
     public let seed: SampleSeed?
@@ -239,7 +239,7 @@ public struct Sample: SwifQLable {
     public init(
         arguments: [SampleArgument],
         method: SampleMethod? = nil,
-        seed: SwifQLable? = nil
+        seed: SQLable? = nil
     ) {
         self.arguments = arguments
         self.method = method
@@ -254,12 +254,12 @@ public struct Sample: SwifQLable {
         self.init(arguments: [size.argument], method: method, seed: seed)
     }
 
-    public init(_ size: SampleSize, method: SampleMethod, seed: SwifQLable) {
+    public init(_ size: SampleSize, method: SampleMethod, seed: SQLable) {
         self.init(arguments: [size.argument], method: method, seed: seed)
     }
 
-    public var parts: [SwifQLPart] {
-        [SwifQLPartSampling(
+    public var parts: [SQLPart] {
+        [SQLPartSampling(
             construct: .usingSample,
             method: method,
             arguments: arguments,
@@ -270,16 +270,16 @@ public struct Sample: SwifQLable {
 
 /// The value-semantic options inside a distinct TABLESAMPLE table-reference
 /// suffix.
-public struct TableSample: SwifQLable {
+public struct TableSample: SQLable {
     public let arguments: [SampleArgument]
     public let method: SampleMethod?
     public let repeatable: SampleRepeatability?
-    private let sourceSnapshot: [SwifQLPart]?
+    private let sourceSnapshot: [SQLPart]?
 
     public init(
         arguments: [SampleArgument],
         method: SampleMethod? = nil,
-        repeatable: SwifQLable? = nil
+        repeatable: SQLable? = nil
     ) {
         self.arguments = arguments
         self.method = method
@@ -287,7 +287,7 @@ public struct TableSample: SwifQLable {
         self.sourceSnapshot = nil
     }
 
-    init(source: SwifQLable, options: TableSampleBuilder.Options) {
+    init(source: SQLable, options: TableSampleBuilder.Options) {
         self.arguments = options.arguments
         self.method = options.method
         self.repeatable = options.repeatable.map(SampleRepeatability.init)
@@ -306,12 +306,12 @@ public struct TableSample: SwifQLable {
         self.init(arguments: [size.argument], method: method, repeatable: repeatable)
     }
 
-    public init(_ size: SampleSize, method: SampleMethod, repeatable: SwifQLable) {
+    public init(_ size: SampleSize, method: SampleMethod, repeatable: SQLable) {
         self.init(arguments: [size.argument], method: method, repeatable: repeatable)
     }
 
-    public var parts: [SwifQLPart] {
-        let samplingPart = SwifQLPartSampling(
+    public var parts: [SQLPart] {
+        let samplingPart = SQLPartSampling(
             construct: .tableSample,
             method: method,
             arguments: arguments,
@@ -328,19 +328,19 @@ public struct TableSample: SwifQLable {
     }
 }
 
-extension SwifQLable {
+extension SQLable {
     /// Appends a SELECT-level USING SAMPLE clause.
-    public func usingSample(_ sample: Sample) -> SwifQLable {
-        return structurallyAppending(SwifQLableParts(parts:
-            [SwifQLPartOperator.space] + sample.parts
+    public func usingSample(_ sample: Sample) -> SQLable {
+        return structurallyAppending(SQLableParts(parts:
+            [SQLPartOperator.space] + sample.parts
         ))
     }
 
     /// Appends a TABLESAMPLE suffix to a table reference.
-    public func tableSample(_ sample: TableSample) -> SwifQLable {
+    public func tableSample(_ sample: TableSample) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(contentsOf: sample.parts)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

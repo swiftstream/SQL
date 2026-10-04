@@ -1,5 +1,5 @@
 //
-//  SwifQLable+After.swift
+//  SQLable+After.swift
 //  SwifQL
 //
 //  Created by Mihael Isaev on 27.01.2020.
@@ -9,11 +9,11 @@ import Foundation
 
 //MARK: AFTER
 
-extension SwifQLable {
-    public var after: SwifQLable {
+extension SQLable {
+    public var after: SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .after)
-        return _SwifQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
 }

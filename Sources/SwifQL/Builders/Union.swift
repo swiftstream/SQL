@@ -9,19 +9,19 @@ import Foundation
 
 //MARK: UNION
 
-public class Union: SwifQLable {
-    public var parts: [SwifQLPart]
+public class Union: SQLable {
+    public var parts: [SQLPart]
     
-    public convenience init (_ selection: SwifQLable...) {
+    public convenience init (_ selection: SQLable...) {
         self.init(selection)
     }
 
-    public convenience init (all selection: SwifQLable...) {
+    public convenience init (all selection: SQLable...) {
         self.init(selection, all: true)
     }
     
-    public init (_ selections: [SwifQLable], all: Bool = false) {
-        var children: [SwifQLPart] = []
+    public init (_ selections: [SQLable], all: Bool = false) {
+        var children: [SQLPart] = []
         for (i, v) in selections.enumerated() {
             if i > 0 {
                 children.append(o: .space)
@@ -32,16 +32,16 @@ public class Union: SwifQLable {
                 }
                 children.append(o: .space)
             }
-            children.append(contentsOf: _SwifQLStructuralComposition.nestedStatementValueParts(for: v))
+            children.append(contentsOf: _SQLStructuralComposition.nestedStatementValueParts(for: v))
         }
         if selections.isEmpty {
-            children = [SwifQLPartOperator.openBracket]
+            children = [SQLPartOperator.openBracket]
         }
-        parts = [SwifQLStructuralFramePart(region: .setResult, children: children)]
+        parts = [SQLStructuralFramePart(region: .setResult, children: children)]
     }
 }
 
-enum _SwifQLSetOperationKind {
+enum _SQLSetOperationKind {
     case union
     case unionAll
     case unionByName
@@ -51,49 +51,49 @@ enum _SwifQLSetOperationKind {
     case except
     case exceptAll
 
-    var operatorParts: [SwifQLPart] {
+    var operatorParts: [SQLPart] {
         switch self {
         case .union:
-            return [SwifQLPartOperator.union]
+            return [SQLPartOperator.union]
         case .unionAll:
-            return [SwifQLPartOperator.union, SwifQLPartOperator.space, SwifQLPartOperator.all]
+            return [SQLPartOperator.union, SQLPartOperator.space, SQLPartOperator.all]
         case .unionByName:
-            return [SwifQLPartOperator.union, SwifQLPartOperator.space, SwifQLPartOperator.custom("BY NAME")]
+            return [SQLPartOperator.union, SQLPartOperator.space, SQLPartOperator.custom("BY NAME")]
         case .unionAllByName:
             return [
-                SwifQLPartOperator.union,
-                SwifQLPartOperator.space,
-                SwifQLPartOperator.all,
-                SwifQLPartOperator.space,
-                SwifQLPartOperator.custom("BY NAME")
+                SQLPartOperator.union,
+                SQLPartOperator.space,
+                SQLPartOperator.all,
+                SQLPartOperator.space,
+                SQLPartOperator.custom("BY NAME")
             ]
         case .intersect:
-            return [SwifQLPartOperator.custom("INTERSECT")]
+            return [SQLPartOperator.custom("INTERSECT")]
         case .intersectAll:
-            return [SwifQLPartOperator.custom("INTERSECT"), SwifQLPartOperator.space, SwifQLPartOperator.all]
+            return [SQLPartOperator.custom("INTERSECT"), SQLPartOperator.space, SQLPartOperator.all]
         case .except:
-            return [SwifQLPartOperator.custom("EXCEPT")]
+            return [SQLPartOperator.custom("EXCEPT")]
         case .exceptAll:
-            return [SwifQLPartOperator.custom("EXCEPT"), SwifQLPartOperator.space, SwifQLPartOperator.all]
+            return [SQLPartOperator.custom("EXCEPT"), SQLPartOperator.space, SQLPartOperator.all]
         }
     }
 }
 
-struct _SwifQLSetOperationBuilder: SwifQLable {
-    let parts: [SwifQLPart]
+struct _SQLSetOperationBuilder: SQLable {
+    let parts: [SQLPart]
 
     init(
-        _ lhs: SwifQLable,
-        _ rhs: SwifQLable,
-        kind: _SwifQLSetOperationKind
+        _ lhs: SQLable,
+        _ rhs: SQLable,
+        kind: _SQLSetOperationKind
     ) {
-        let children: [SwifQLPart] =
-            _SwifQLStructuralComposition.nestedStatementValueParts(for: lhs)
-            + [SwifQLPartOperator.space]
+        let children: [SQLPart] =
+            _SQLStructuralComposition.nestedStatementValueParts(for: lhs)
+            + [SQLPartOperator.space]
             + kind.operatorParts
-            + [SwifQLPartOperator.space]
-            + _SwifQLStructuralComposition.nestedStatementValueParts(for: rhs)
+            + [SQLPartOperator.space]
+            + _SQLStructuralComposition.nestedStatementValueParts(for: rhs)
 
-        parts = [SwifQLStructuralFramePart(region: .setResult, children: children)]
+        parts = [SQLStructuralFramePart(region: .setResult, children: children)]
     }
 }

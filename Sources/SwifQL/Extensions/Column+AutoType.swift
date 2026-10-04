@@ -9,10 +9,10 @@ import Foundation
 
 extension Column {
     struct AutoType {
-        let type: SwifQL.`Type`
+        let type: Type
         let isOptional: Bool
         
-        init (_ type: SwifQL.`Type`, _ isOptional: Bool) {
+        init (_ type: Type, _ isOptional: Bool) {
             self.type = type
             self.isOptional = isOptional
         }
@@ -136,8 +136,8 @@ extension Column {
         case is AnyOptionalEnum.Type:
             guard let t = Value.self as? AnyOptionalEnum.Type else { fallthrough }
             return .init(.custom(t.name), true)
-        case is AnySwifQLEnum.Type:
-            guard let t = Value.self as? AnySwifQLEnum.Type else { fallthrough }
+        case is AnySQLEnum.Type:
+            guard let t = Value.self as? AnySQLEnum.Type else { fallthrough }
             return .init(.custom(t.name), false)
         
         case is Optional<[Encodable]>.Type: isOptional = true; fallthrough
@@ -153,7 +153,7 @@ extension Column {
 fileprivate protocol AnyOptionalEnum {
     static var name: String { get }
 }
-extension Optional: AnyOptionalEnum where Wrapped: AnySwifQLEnum {
+extension Optional: AnyOptionalEnum where Wrapped: AnySQLEnum {
     fileprivate static var name: String { return Wrapped.name }
 }
 extension Optional {

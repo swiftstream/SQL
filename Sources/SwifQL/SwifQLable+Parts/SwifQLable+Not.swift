@@ -1,6 +1,6 @@
 //
-//  SwifQLable+Not.swift
-//  SwifQLCore
+//  SQLable+Not.swift
+//  SQLCore
 //
 //  Created by Mihael Isaev on 16/11/2018.
 //
@@ -9,19 +9,19 @@ import Foundation
 
 //MARK: NOT
 
-extension SwifQLable {
-    public var not: SwifQLable {
+extension SQLable {
+    public var not: SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .not)
-        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
-    public func not(_ part: SwifQLable) -> SwifQLable {
+    public func not(_ part: SQLable) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .not)
         parts.append(o: .space)
         parts.append(contentsOf: part.parts)
-        return _SwifQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
+        return _SQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
 }

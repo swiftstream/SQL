@@ -28,8 +28,8 @@ extension Fn.Name {
 }
 
 extension Fn {
-    public static func subStr(_ queryPart: SwifQLable, _ to: Int) -> SwifQLable {
-        var parts: [SwifQLPart] = queryPart.parts
+    public static func subStr(_ queryPart: SQLable, _ to: Int) -> SQLable {
+        var parts: [SQLPart] = queryPart.parts
         parts.append(o: .comma)
         parts.append(o: .space)
         parts.append(safe: to)
@@ -37,18 +37,18 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "subStr(_:_:)")
-    public static func substr(_ queryPart: SwifQLable, _ to: Int) -> SwifQLable {
+    public static func substr(_ queryPart: SQLable, _ to: Int) -> SQLable {
         subStr(queryPart, to)
     }
     
     /// `SELECT COALESCE (NULL, 2 , 1);` will return 2
-    public static func coalesce(_ queryPart: SwifQLable...) -> SwifQLable {
+    public static func coalesce(_ queryPart: SQLable...) -> SQLable {
         coalesce(queryPart)
     }
     
     /// `SELECT COALESCE (NULL, 2 , 1);` will return 2
-    public static func coalesce(_ queryParts: [SwifQLable]) -> SwifQLable {
-        var parts: [SwifQLPart] = []
+    public static func coalesce(_ queryParts: [SQLable]) -> SQLable {
+        var parts: [SQLPart] = []
         for (i, q) in queryParts.enumerated() {
             if i > 0 {
                 parts.append(o: .comma)
@@ -59,20 +59,20 @@ extension Fn {
     }
 
     /// Returns the count of all rows in the current aggregate input.
-    public static func count() -> SwifQLable {
+    public static func count() -> SQLable {
         build(.count, body: [])
     }
 
     /// Returns DuckDB's grouping bitfield for one or more grouping expressions.
     public static func groupingId(
-        _ expression: SwifQLable,
-        _ expressions: SwifQLable...
-    ) -> SwifQLable {
+        _ expression: SQLable,
+        _ expressions: SQLable...
+    ) -> SQLable {
         groupingId([expression] + expressions)
     }
 
-    public static func groupingId(_ expressions: [SwifQLable]) -> SwifQLable {
-        var parts: [SwifQLPart] = []
+    public static func groupingId(_ expressions: [SQLable]) -> SQLable {
+        var parts: [SQLPart] = []
         for (index, expression) in expressions.enumerated() {
             if index > 0 {
                 parts.append(o: .comma, .space)
@@ -82,59 +82,59 @@ extension Fn {
         return build(.groupingId, body: parts)
     }
     
-    public static func octetLength(_ string: SwifQLable) -> SwifQLable {
+    public static func octetLength(_ string: SQLable) -> SQLable {
         build(.octetLength, body: string.parts)
     }
 
     @available(*, deprecated, renamed: "octetLength(_:)")
-    public static func octet_length(_ string: SwifQLable) -> SwifQLable {
+    public static func octet_length(_ string: SQLable) -> SQLable {
         octetLength(string)
     }
     
-    public static func cast(_ queryPart: SwifQLable, _ to: Type) -> SwifQLable {
+    public static func cast(_ queryPart: SQLable, _ to: Type) -> SQLable {
         cast(nil, queryPart, to)
     }
     
-    public static func cast(_ from: Type?, _ queryPart: SwifQLable, _ to: Type) -> SwifQLable {
-        var parts: [SwifQLPart] = []
+    public static func cast(_ from: Type?, _ queryPart: SQLable, _ to: Type) -> SQLable {
+        var parts: [SQLPart] = []
         if let from {
-            parts.append(SwifQLPartType(from))
+            parts.append(SQLPartType(from))
             parts.append(o: .space)
         }
         parts.append(contentsOf: queryPart.parts)
         parts.append(o: .space)
         parts.append(o: .as)
         parts.append(o: .space)
-        parts.append(SwifQLPartType(to))
+        parts.append(SQLPartType(to))
         return build(.cast, body: parts)
     }
 
-    public static func nextVal(_ sequence: SwifQLable) -> SwifQLable {
+    public static func nextVal(_ sequence: SQLable) -> SQLable {
         build(.nextVal, body: sequence.parts)
     }
 
-    public static func currVal(_ sequence: SwifQLable) -> SwifQLable {
+    public static func currVal(_ sequence: SQLable) -> SQLable {
         build(.currVal, body: sequence.parts)
     }
     
-    public static func ifNull(_ value1: SwifQLable, _ value2: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = value1.parts
+    public static func ifNull(_ value1: SQLable, _ value2: SQLable) -> SQLable {
+        var parts: [SQLPart] = value1.parts
         parts.append(o: .comma)
         parts.append(o: .space)
         parts.append(contentsOf: value2.parts)
         return build(.ifNull, body: parts)
     }
     
-    public static func isNull(_ value1: SwifQLable, _ value2: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = value1.parts
+    public static func isNull(_ value1: SQLable, _ value2: SQLable) -> SQLable {
+        var parts: [SQLPart] = value1.parts
         parts.append(o: .comma)
         parts.append(o: .space)
         parts.append(contentsOf: value2.parts)
         return build(.isNull, body: parts)
     }
     
-    public static func nvl(_ value1: SwifQLable, _ value2: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = value1.parts
+    public static func nvl(_ value1: SQLable, _ value2: SQLable) -> SQLable {
+        var parts: [SQLPart] = value1.parts
         parts.append(o: .comma)
         parts.append(o: .space)
         parts.append(contentsOf: value2.parts)

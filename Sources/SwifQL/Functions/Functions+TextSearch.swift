@@ -32,8 +32,8 @@ extension Fn {
     /// 'ate':9 'cat':3 'fat':2,11 'mat':7 'rat':12 'sat':4
     /// ```
     /// [Learn more →](https://www.postgresql.org/docs/9.1/textsearch-controls.html)
-    public static func toTSVector(_ config: SwifQLable, _ text: SwifQLable? = nil) -> SwifQLable {
-        var parts: [SwifQLPart] = config.parts
+    public static func toTSVector(_ config: SQLable, _ text: SQLable? = nil) -> SQLable {
+        var parts: [SQLPart] = config.parts
         if let text = text {
             parts.append(o: .comma)
             parts.append(o: .space)
@@ -43,7 +43,7 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "toTSVector(_:_:)")
-    public static func to_tsvector(_ config: SwifQLable, _ text: SwifQLable? = nil) -> SwifQLable {
+    public static func to_tsvector(_ config: SQLable, _ text: SQLable? = nil) -> SQLable {
         toTSVector(config, text)
     }
     
@@ -59,8 +59,8 @@ extension Fn {
     /// 'fat' & 'rat'
     /// ```
     /// [Learn more →](https://www.postgresql.org/docs/9.1/textsearch-controls.html)
-    public static func toTSQuery(_ config: SwifQLable, _ text: SwifQLable? = nil) -> SwifQLable {
-        var parts: [SwifQLPart] = config.parts
+    public static func toTSQuery(_ config: SQLable, _ text: SQLable? = nil) -> SQLable {
+        var parts: [SQLPart] = config.parts
         if let text = text {
             parts.append(o: .comma)
             parts.append(o: .space)
@@ -70,7 +70,7 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "toTSQuery(_:_:)")
-    public static func to_tsquery(_ config: SwifQLable, _ text: SwifQLable? = nil) -> SwifQLable {
+    public static func to_tsquery(_ config: SQLable, _ text: SQLable? = nil) -> SQLable {
         toTSQuery(config, text)
     }
     
@@ -85,8 +85,8 @@ extension Fn {
     /// 'fat' & 'rat'
     /// ```
     /// [Learn more →](https://www.postgresql.org/docs/9.1/textsearch-controls.html)
-    public static func plainToTSQuery(_ config: SwifQLable, _ text: SwifQLable? = nil) -> SwifQLable {
-        var parts: [SwifQLPart] = config.parts
+    public static func plainToTSQuery(_ config: SQLable, _ text: SQLable? = nil) -> SQLable {
+        var parts: [SQLPart] = config.parts
         if let text = text {
             parts.append(o: .comma)
             parts.append(o: .space)
@@ -96,7 +96,7 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "plainToTSQuery(_:_:)")
-    public static func plainto_tsquery(_ config: SwifQLable, _ text: SwifQLable? = nil) -> SwifQLable {
+    public static func plainto_tsquery(_ config: SQLable, _ text: SQLable? = nil) -> SQLable {
         plainToTSQuery(config, text)
     }
     
@@ -115,8 +115,8 @@ extension Fn {
     /// ts_rank_cd("rats", to_tsquery('The Fat Rats'))
     /// ```
     /// [Learn more →](https://www.postgresql.org/docs/9.6/textsearch-controls.html#TEXTSEARCH-RANKING)
-    public static func tsRankCD(_ vector: SwifQLable, _ query: SwifQLable) -> SwifQLable {
-        var parts: [SwifQLPart] = vector.parts
+    public static func tsRankCD(_ vector: SQLable, _ query: SQLable) -> SQLable {
+        var parts: [SQLPart] = vector.parts
         parts.append(o: .comma)
         parts.append(o: .space)
         parts.append(contentsOf: query.parts)
@@ -124,7 +124,7 @@ extension Fn {
     }
 
     @available(*, deprecated, renamed: "tsRankCD(_:_:)")
-    public static func ts_rank_cd(_ vector: SwifQLable, _ query: SwifQLable) -> SwifQLable {
+    public static func ts_rank_cd(_ vector: SQLable, _ query: SQLable) -> SQLable {
         tsRankCD(vector, query)
     }
 }

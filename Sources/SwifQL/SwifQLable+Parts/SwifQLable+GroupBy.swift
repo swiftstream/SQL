@@ -1,5 +1,5 @@
 //
-//  SwifQLable+GroupBy.swift
+//  SQLable+GroupBy.swift
 //  SwifQL
 //
 //  Created by Mihael Isaev on 14/02/2019.
@@ -9,16 +9,16 @@ import Foundation
 
 //MARK: GROUP BY
 
-extension SwifQLable {
-    public func groupBy(_ fields: SwifQLable...) -> SwifQLable {
+extension SQLable {
+    public func groupBy(_ fields: SQLable...) -> SQLable {
         groupBy(fields)
     }
-    public func groupBy(_ fields: [SwifQLable]) -> SwifQLable {
-        let clause = SwifQLGroupByPart(
+    public func groupBy(_ fields: [SQLable]) -> SQLable {
+        let clause = SQLGroupByPart(
             owner: structuralOwner(for: .groupBy),
             fields: fields.map(\.parts)
         )
-        let fragment = SwifQLableParts(parts: [SwifQLPartOperator.space, clause])
+        let fragment = SQLableParts(parts: [SQLPartOperator.space, clause])
         return structurallyAppending(fragment)
     }
 }

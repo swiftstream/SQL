@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct SwifQLSplittedQuery {
+public struct SQLSplittedQuery {
     public var query: String
     public var values: [Encodable]
     

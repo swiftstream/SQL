@@ -5,7 +5,7 @@
 
 import Foundation
 
-public struct SwifQLPartCatalog: SwifQLPart {
+public struct SQLPartCatalog: SQLPart {
     public let name: String
 
     public init (_ name: String) {
