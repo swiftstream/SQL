@@ -1,4 +1,83 @@
-# Migrating to SwifQL 2
+# Migrating from SwifQL to SQL
+
+The package/product/module identity has changed from `SwifQL` to `SQL`.
+
+Start with the module import:
+
+```swift
+import SwifQL
+// becomes
+import SQL
+```
+
+Then migrate old symbol spellings using the compiler's `deprecated, renamed:` diagnostics.
+
+| Old | New |
+|---|---|
+| product `SwifQL` | product `SQL` |
+| `import SwifQL` | `import SQL` |
+| `SwifQL.select(...)` | `SQL.root.select(...)` |
+| `SwifQL { ... }` | `SQL { ... }` |
+| `SwifQL(query)` | `SQL(query)` |
+| `SwifQLable` | `SQLable` |
+| `SwifQLPart` | `SQLPart` |
+| `SwifQLPrepared` | `SQLPrepared` |
+| `SwifQLRenderContext` | `SQLRenderContext` |
+| `SwifQLSelectBuilder` | `SQLSelectBuilder` |
+| `SwifQLJoinBuilder` | `SQLJoinBuilder` |
+
+## Module compatibility
+
+There is no compatibility product, target, or module named `SwifQL` in the new package identity. `import SwifQL` is intentionally not part of the compatibility contract.
+
+Compatibility is symbol-level inside module `SQL`: after `import SQL`, retained old `SwifQL*` spellings continue to compile where provided, but they are deprecated and renamed to the canonical SQL-prefixed API.
+
+For example:
+
+```swift
+import SQL
+
+let oldSpelling = SwifQL.select(Path.Column("id")) // deprecated -> SQL.root
+let canonical = SQL.root.select(Path.Column("id"))
+```
+
+The two call sites use the same canonical implementation identity; the old spelling is only a migration bridge.
+
+## Package dependency
+
+The local package manifest now exports only product `SQL`. The remote repository has not been renamed or republished by this migration workflow, so do not assume a new GitHub URL is live yet.
+
+When consuming a release that contains this identity migration from the current repository location, select product `SQL`:
+
+```swift
+.package(url: "https://github.com/SwifQL/SwifQL", /* version containing this migration */),
+.target(name: "App", dependencies: [
+    .product(name: "SQL", package: "SwifQL"),
+])
+```
+
+## SQL semantics
+
+This identity migration is not intended to change SQL rendering, bind ordering, dialect behavior, structural composition, or preparation semantics. The same PostgreSQL, MySQL, and DuckDB behavior remains behind the renamed package/module/API surface.
+
+Validated migration candidate:
+
+- Swiftly Apple Swift 6.3.3: 730 tests / 62 suites
+- Xcode Apple Swift 6.3.3: 730 tests / 62 suites
+- Xcode Apple Swift 6.4: 730 tests / 62 suites
+
+## Recommended migration order
+
+1. Update the package product dependency from `SwifQL` to `SQL`.
+2. Replace `import SwifQL` with `import SQL`.
+3. Build the project.
+4. Follow compiler rename diagnostics for remaining `SwifQL*` symbols.
+5. Prefer `SQL { ... }` for declarative construction and `SQL.root` for fluent construction.
+6. Keep any intentionally historical source/examples unchanged only where they document an older release.
+
+---
+
+# Earlier migration: SwifQL 1.x to SwifQL 2.x
 
 The current SwifQL 2 release candidate/current pre-release is `2.0.0-beta.6.1.0`.
 

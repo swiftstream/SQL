@@ -21,6 +21,85 @@
 </p>
 <br>
 
+# SQL
+
+`SQL` is now the canonical package product, Swift module, query root, and protocol namespace for this library.
+
+The local source/package migration is complete:
+
+- package: `SQL`
+- product: `SQL`
+- module: `SQL`
+- production source: `Sources/SQL/`
+- tests: `Tests/SQLTests/`
+
+The remote GitHub repository has **not** been renamed or republished by this migration workflow. Existing repository URLs therefore remain historical/current hosting references until a separate remote publication step is explicitly performed.
+
+For a consuming package that points at the current repository location after a release containing this migration, depend on product `SQL`:
+
+```swift
+.package(url: "https://github.com/SwifQL/SwifQL", /* version containing the SQL identity migration */),
+.target(name: "App", dependencies: [
+    .product(name: "SQL", package: "SwifQL"),
+])
+```
+
+Import the new module:
+
+```swift
+import SQL
+```
+
+Declarative root:
+
+```swift
+let query = SQL {
+    Select { Path.Column("id") }
+    From { Path.Table("users") }
+}
+```
+
+Fluent root:
+
+```swift
+let query = SQL.root
+    .select(Path.Column("id"))
+    .from(Path.Table("users"))
+```
+
+Canonical protocol/preparation names are `SQLable`, `SQLPart`, and `SQLPrepared`.
+
+## Migrating from SwifQL
+
+Start with one mechanical module-import change:
+
+```swift
+import SwifQL
+// becomes
+import SQL
+```
+
+Then follow compiler rename diagnostics for old symbol spellings. Representative mappings:
+
+| Old | New |
+|---|---|
+| `SwifQL.select(...)` | `SQL.root.select(...)` |
+| `SwifQL { ... }` | `SQL { ... }` |
+| `SwifQL(query)` | `SQL(query)` |
+| `SwifQLable` | `SQLable` |
+| `SwifQLPart` | `SQLPart` |
+| `SwifQLPrepared` | `SQLPrepared` |
+
+There is **no compatibility module named `SwifQL`** in the new package identity. Compatibility is symbol-level only: after `import SQL`, retained old `SwifQL*` spellings are deprecated/renamed wrappers or aliases that point at the canonical SQL implementation.
+
+See [MIGRATION.md](MIGRATION.md) for the migration contract and compatibility details.
+
+---
+
+## Historical SwifQL 2 documentation
+
+The material below documents earlier SwifQL 2 releases and remains for historical migration/reference purposes. Examples that use `import SwifQL`, `SwifQL...`, the old product name, or old source paths describe those earlier releases rather than the new canonical SQL module.
+
 SwifQL can be used stand-alone, with frameworks like Vapor and Hummingbird, or with database drivers like SwiftDuckDB and others.
 
 For server-side projects we recommend [Bridges](https://github.com/SwifQL/Bridges), which is built on top of SwifQL and keeps the full flexibility of the query DSL. For iOS and Android we recommend SwiftDuckDB, a driver built on top of SwifQL that brings the same query-building flexibility directly to embedded DuckDB.

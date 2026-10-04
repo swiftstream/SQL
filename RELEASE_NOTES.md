@@ -1,3 +1,36 @@
+# Unreleased — SQL Major Identity Migration
+
+The canonical package product and Swift module have moved from `SwifQL` to `SQL`.
+
+Migration starts with:
+
+```swift
+import SwifQL
+// becomes
+import SQL
+```
+
+Then follow compiler rename diagnostics for remaining old spellings:
+
+- `SwifQL.select(...)` -> `SQL.root.select(...)`
+- `SwifQL { ... }` -> `SQL { ... }`
+- `SwifQL(query)` -> `SQL(query)`
+- `SwifQLable` -> `SQLable`
+- `SwifQLPart` -> `SQLPart`
+- `SwifQLPrepared` -> `SQLPrepared`
+
+There is no `SwifQL` compatibility module in the new package identity. Compatibility is symbol-level only: retained old `SwifQL*` names are deprecated/renamed declarations inside module `SQL`.
+
+This identity migration is not intended to change SQL rendering, dialect behavior, bind ordering, or preparation semantics. The corrected candidate passed 730 tests in 62 suites on Swiftly 6.3.3, Xcode Swift 6.3.3, and Xcode Swift 6.4.
+
+The remote repository has not been renamed or republished by this migration workflow. Do not assume a new GitHub URL is live until a separate publication step is completed.
+
+See [MIGRATION.md](MIGRATION.md) for the migration table and recommended order.
+
+---
+
+# Historical release notes
+
 # SwifQL 2.0.0-beta.6.1.0 — Declarative Table DDL
 
 This prerelease adds a small SQL-shaped declarative surface for creating and altering tables.

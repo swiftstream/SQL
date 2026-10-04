@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased — SQL identity migration
+
+The package/product/module identity is now `SQL`.
+
+- product `SwifQL` -> `SQL`
+- `import SwifQL` -> `import SQL`
+- canonical roots are `SQL { ... }` and `SQL.root`
+- canonical protocol/preparation names include `SQLable`, `SQLPart`, and `SQLPrepared`
+- old `SwifQL*` symbol spellings remain deprecated/renamed inside module `SQL` where compatibility aliases/bridges are provided
+- there is no compatibility module named `SwifQL` and no `@_exported import SQL` shim
+- the migration is intended to preserve SQL rendering, bind order, dialect behavior, and preparation semantics
+
+The remote repository has not been renamed or republished by this migration workflow, so existing GitHub URLs remain hosting/history references until a separate publication step occurs.
+
 ## 2.0.0-beta.6.1.0
 
 Adds declarative table DDL authoring with `CreateTable`, `AlterTable`, and `AddColumn`. The new grammar keeps historical table/schema/column identifiers explicit, uses intentionally static non-empty DDL builders, and preserves the existing fluent/legacy DDL APIs. See [RELEASE_NOTES.md](RELEASE_NOTES.md) for examples.
