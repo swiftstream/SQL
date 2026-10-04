@@ -1,12 +1,12 @@
 # Public Writing Style
 
-This is the stable owner of maintainer-facing writing style for `README.md`, `MIGRATION.md`, `RELEASE_NOTES.md`, `CHANGELOG.md`, GitHub Releases, website/public documentation, and maintainer posts about SwifQL.
+This is the stable owner of maintainer-facing writing style for `README.md`, `MIGRATION.md`, `RELEASE_NOTES.md`, `CHANGELOG.md`, GitHub Releases, website/public documentation, and maintainer posts about SQL.
 
 It owns **how public material is written**. Architecture owners and live source/tests still own technical truth.
 
 ## Core rule: show it, then explain it
 
-SwifQL public writing is example-first.
+SQL public writing is example-first.
 
 Prefer this order:
 
@@ -94,7 +94,7 @@ README is the first-use document, not a release audit.
 
 At the top:
 
-- explain what SwifQL is and where it can be used;
+- explain what SQL is and where it can be used;
 - point server-side users to the normal server integration path;
 - point mobile users to the normal embedded-driver path when relevant;
 - state supported databases without making one dialect dominate the project identity;
@@ -104,7 +104,7 @@ Do not lead with internal dialect identifiers, closure terminology, compatibilit
 
 Installation examples must point to a version/tag that exists for the release state being documented. A pre-release may be described as a pre-release; do not say it is unavailable when its tag is the intended install target.
 
-README examples should normally start with the SQL idea and then show the SwifQL representation, matching the established project philosophy.
+README examples should normally start with the SQL idea and then show the SQL DSL representation, matching the established project philosophy.
 
 ## MIGRATION.md
 

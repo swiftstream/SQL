@@ -1,6 +1,6 @@
 ---
 name: extending-swifql-dialect
-description: Add or change a built-in SQL dialect inside the SwifQL repository using the research-first compatibility workflow. Use for contributor dialect implementation, not for ordinary downstream prepare calls or app-level query building.
+description: Add or change a built-in SQL dialect inside the canonical SQL repository/module using the research-first compatibility workflow. The skill package keeps its historical routing identifier.
 ---
 
 # Extend a SQL Dialect

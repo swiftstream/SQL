@@ -1,6 +1,6 @@
 # Duck Dialect Architecture
 
-This file is the sole owner of `DUCK-*` rules and verified DuckDB-specific behavior for SwifQL.
+This file is the sole owner of `DUCK-*` rules and verified DuckDB-specific behavior for SQL.
 
 Load it together with `../DIALECT_RENDERING.md` for Duck work. Load `../DSL_DESIGN_AND_UX.md` only when public API/UX design is involved, and `../QUERY_PREPARATION.md` only when preparation/value mechanics change.
 
@@ -70,7 +70,7 @@ Duck identifiers use double quotes.
 
 Embedded double quotes are escaped by doubling them.
 
-This applies to schema/table/alias/column identifiers and any nested STRUCT/UNION member/tag identifier handled by SwifQL.
+This applies to schema/table/alias/column identifiers and any nested STRUCT/UNION member/tag identifier handled by SQL.
 
 Examples:
 
@@ -177,7 +177,7 @@ Do not unify these semantics under a fake common index abstraction that changes 
 
 Duck simplified PIVOT is a verified case where source-qualified column references are rejected by the engine in specific grammar positions.
 
-Users should not have to replace normal SwifQL table/column expressions with Duck-prefixed wrappers merely to satisfy this renderer requirement.
+Users should not have to replace normal SQL table/column expressions with Duck-prefixed wrappers merely to satisfy this renderer requirement.
 
 The approved architecture is dialect-transparent semantic render scopes through the shared parts/preparation pipeline, consistent with `DIALECT-008` and DESIGN-014/015.
 
@@ -235,7 +235,7 @@ Do not claim PostgreSQL-only type semantics as Duck equivalents merely because n
 
 The Duck type surface may reuse exact shared SQL type names where semantics are compatible, but PostgreSQL-specific serial/range/OID/catalog/jsonb/network/geometry helpers are not automatically Duck APIs.
 
-If a future dialect-aware `Type.auto(from:dialect:isPrimary:)` convenience is approved, it must return `nil` when SwifQL cannot infer a semantics-preserving Duck type/default behavior. Reuse one semantic mapping owner rather than duplicating type inference across dialect-specific helpers.
+If a future dialect-aware `Type.auto(from:dialect:isPrimary:)` convenience is approved, it must return `nil` when SQL cannot infer a semantics-preserving Duck type/default behavior. Reuse one semantic mapping owner rather than duplicating type inference across dialect-specific helpers.
 
 In particular, primary-key integer inference must not silently invent PostgreSQL `serial` semantics for Duck.
 
@@ -257,14 +257,14 @@ Do not silently map a Duck function to a differently named PostgreSQL/MySQL func
 
 ### DUCK-015 - Reuse common SQL DSL first
 
-Duck support should reuse existing common SwifQL composition whenever the SQL concept is already expressible.
+Duck support should reuse existing common SQL composition whenever the SQL concept is already expressible.
 
 Examples:
 
-- FROM-first composition reuses `SwifQL.from(...).select(...)`;
-- GROUP BY ALL reuses `.groupBy(SwifQL.all)`;
+- FROM-first composition reuses `SQL.root.from(...).select(...)`;
+- GROUP BY ALL reuses `.groupBy(SQL.root.all)`;
 - normal ORDER BY / LIMIT / OFFSET reuse shared query primitives when grammar matches;
-- generic expressions/functions/aliases remain normal SwifQL expressions.
+- generic expressions/functions/aliases remain normal SQL expressions.
 
 Do not add parallel Duck builders only for visual symmetry.
 
@@ -313,8 +313,8 @@ lowering only and does not claim support for another dialect's lambda syntax.
 The direct generic forms for the modifier-bearing features are:
 
 ```swift
-query.orderBy(SwifQL.all)
-query.orderBy(.desc(SwifQL.all, nulls: .last))
+query.orderBy(SQL.root.all)
+query.orderBy(.desc(SQL.root.all, nulls: .last))
 query.join(.positional, source)
 query.join(.naturalFullOuter, source)
 lhs.union(byName: rhs)
@@ -341,14 +341,14 @@ Do not misclassify the no-IN preparation limitation as a general placeholder or 
 
 ### DUCK-018 - PIVOT UX contract
 
-Do not introduce PIVOT-specific public wrapper types for columns, ON expressions, aggregates, or ordering when existing SwifQL expressions and paths can model the SQL cleanly.
+Do not introduce PIVOT-specific public wrapper types for columns, ON expressions, aggregates, or ordering when existing SQL expressions and paths can model the SQL cleanly.
 
-Ordinary PIVOT source should stay clean and use existing SwifQL expressions, paths, functions, aliases, and ordering concepts.
+Ordinary PIVOT source should stay clean and use existing SQL expressions, paths, functions, aliases, and ordering concepts.
 
 Required clean source direction:
 
 ```swift
-SwifQL.pivot(cities)
+SQL.root.pivot(cities)
     .on(cities.column("year"), in: 2000, 2010)
     .using(Fn.sum(cities.column("population")) => "total")
     .groupBy(cities.column("country"))
@@ -364,11 +364,11 @@ For simplified PIVOT `GROUP BY`, the documented correct source remains a column-
 .groupBy(cities.column("country"))
 ```
 
-DuckDB v1.5.5 accepts column names there and rejects qualified/expression forms. However, after `var query: SwifQLable` existential erasure, the unchanged global `.groupBy(_ fields: SwifQLable...)` surface cannot truthfully become a PIVOT-only compile-time `KeyPathLastPath` constraint without either changing ordinary GROUP BY overload behavior, adding hidden PIVOT routing, or changing the clean call shape. Do not add a global PIVOT-validation overload or wrapper to simulate a static guarantee the erased receiver cannot express.
+DuckDB v1.5.5 accepts column names there and rejects qualified/expression forms. However, after `var query: SQLable` existential erasure, the unchanged global `.groupBy(_ fields: SQLable...)` surface cannot truthfully become a PIVOT-only compile-time `KeyPathLastPath` constraint without either changing ordinary GROUP BY overload behavior, adding hidden PIVOT routing, or changing the clean call shape. Do not add a global PIVOT-validation overload or wrapper to simulate a static guarantee the erased receiver cannot express.
 
 `KeyPathLastPath` remains established public compatibility/extension surface and remains appropriate for APIs whose own static grammar is genuinely column-name-only. For PIVOT GROUP BY, preserve the generic SQL DSL surface, render correct column paths according to the structural owner, document/native-test the valid Duck grammar, and allow DuckDB to reject dialect-invalid arbitrary expressions rather than distorting established global GROUP BY semantics.
 
-For ON and USING expression regions, use bounded structural semantic render scopes rather than PIVOT-specific expression wrappers. The reconciled diagnostic has established that bounded scopes survive `var SwifQLable`, helpers, copied parts, nesting, independent scopes, and ordered binding collection when the semantic owner can attach the scope to a bounded subtree.
+For ON and USING expression regions, use bounded structural semantic render scopes rather than PIVOT-specific expression wrappers. The reconciled diagnostic has established that bounded scopes survive `var SQLable`, helpers, copied parts, nesting, independent scopes, and ordered binding collection when the semantic owner can attach the scope to a bounded subtree.
 
 For simplified PIVOT `GROUP BY` and `ORDER BY`, clause ownership remains separate from grammar validity. The structural frame owns qualification/rendering context; it does not attempt to turn the erased global GROUP BY API into a PIVOT-only compile-time grammar checker.
 
@@ -382,7 +382,7 @@ Do not automatically escalate to semantic statement objects. Do not implement Du
 
 ### DUCK-019 - Native validation is a release gate for grammar-sensitive features
 
-Renderer tests prove SwifQL output, not DuckDB parser/binder/execution acceptance.
+Renderer tests prove SQL output, not DuckDB parser/binder/execution acceptance.
 
 For new grammar-sensitive Duck features, native DuckDB validation is required when the API relies on assumptions that string tests cannot prove.
 
@@ -416,14 +416,14 @@ Keep the detailed Duck feature/negative matrix in this file as future advanced a
 The verified DuckDB v1.5.5 ordinary-DML contract is:
 
 - `INSERT ... VALUES` and `INSERT ... SELECT` are supported with normal SQL-shaped composition and prepared values. A String supplied as a table target is a structural identifier and does not become a value bind.
-- `INSERT ... BY NAME` is supported when the source is a `SELECT`; matching is by source and target column name, including omitted target columns that have defaults. `BY NAME VALUES` is rejected by DuckDB and remains mechanically renderable but unclaimed by SwifQL.
-- `INSERT OR IGNORE` and `INSERT OR REPLACE` are supported as their exact SQL identities. SwifQL does not remap either form by dialect or expose them as a portable conflict policy.
-- The direct INSERT source is `SwifQL.insert.or.ignore.into[table: table]` or `SwifQL.insert.or.replace.into[table: table]`, optionally followed by `.fields(...)`; INSERT BY NAME uses `.by.name`.
+- `INSERT ... BY NAME` is supported when the source is a `SELECT`; matching is by source and target column name, including omitted target columns that have defaults. `BY NAME VALUES` is rejected by DuckDB and remains mechanically renderable but unclaimed by SQL.
+- `INSERT OR IGNORE` and `INSERT OR REPLACE` are supported as their exact SQL identities. SQL does not remap either form by dialect or expose them as a portable conflict policy.
+- The direct INSERT source is `SQL.root.insert.or.ignore.into[table: table]` or `SQL.root.insert.or.replace.into[table: table]`, optionally followed by `.fields(...)`; INSERT BY NAME uses `.by.name`.
 - `ON CONFLICT DO NOTHING` without a target and `ON CONFLICT (<column>) DO NOTHING` with a column target are supported. Column-target `DO UPDATE SET` using the `EXCLUDED` source, with an optional `WHERE`, is supported when expressed through the ordinary SQL-shaped `set(_:)` composition.
 - Historical `ON CONFLICT ON CONSTRAINT ...` remains mechanically renderable for compatibility, but DuckDB v1.5.5 rejects it as unimplemented; it is unclaimed for Duck.
-- `INSERT ... RETURNING` and `DELETE ... RETURNING` support structural columns, `*`, and literal expressions. DuckDB v1.5.5 rejects prepared parameters inside these RETURNING expressions during preparation. SwifQL preserves ordinary binding and does not add runtime validation or rejection for that database limitation.
+- `INSERT ... RETURNING` and `DELETE ... RETURNING` support structural columns, `*`, and literal expressions. DuckDB v1.5.5 rejects prepared parameters inside these RETURNING expressions during preparation. SQL preserves ordinary binding and does not add runtime validation or rejection for that database limitation.
 - Ordinary `UPDATE` `SET`, `FROM`, and scalar-subquery `SET`/`WHERE` forms are supported and remain direct SQL composition. Multi-target `UPDATE` is rejected by DuckDB v1.5.5 and remains mechanically renderable but unclaimed. `UPDATE ... RETURNING` executes in the verified runtime but remains mechanically expressible and unclaimed because the current official Duck UPDATE contract does not document it.
-- `DELETE ... USING` supports table sources, an aliased parenthesized subquery source, and multiple comma-separated sources. In the verified qualified RETURNING boundary, target-qualified columns are accepted while source-qualified columns are rejected because the USING source is not visible to RETURNING; the latter remains unclaimed without SwifQL-side runtime rejection. Columns, `*`, literal expressions, and USING composition otherwise remain direct SQL forms.
+- `DELETE ... USING` supports table sources, an aliased parenthesized subquery source, and multiple comma-separated sources. In the verified qualified RETURNING boundary, target-qualified columns are accepted while source-qualified columns are rejected because the USING source is not visible to RETURNING; the latter remains unclaimed without SQL-side runtime rejection. Columns, `*`, literal expressions, and USING composition otherwise remain direct SQL forms.
 - Basic `TRUNCATE <table>` is supported, including schema-qualified structural table targets.
 
 These are feature-specific support and unclaimed claims for the verified runtime,
@@ -436,8 +436,8 @@ for this section.
 
 DuckDB v1.5.5 native validation establishes the following MERGE contract:
 
-- `SwifQL.merge(into:using:on:)` and the incremental
-  `SwifQL.merge(into:).using(...).on(...)` form are composition-equivalent
+- `SQL.root.merge(into:using:on:)` and the incremental
+  `SQL.root.merge(into:).using(...).on(...)` form are composition-equivalent
   generic SQL builders. Neither form introduces a Duck-only builder, AST, or
   renderer hook.
 - Structural table targets, source tables, aliases, parenthesized source
@@ -445,7 +445,7 @@ DuckDB v1.5.5 native validation establishes the following MERGE contract:
 - Duck's one- and multi-column `USING (<columns>)` shorthand is supported and
   renders structural last-path identifiers. The public `using(columns:)`
   overload is a structural column-name API: a qualified key path is reduced by
-  SwifQL to its last path. Separately, raw qualified source/target expressions
+  SQL to its last path. Separately, raw qualified source/target expressions
   in Duck's `USING (<columns>)` grammar are native-invalid.
 - `WHEN MATCHED`, `WHEN NOT MATCHED`, `WHEN NOT MATCHED BY SOURCE`, and
   `WHEN NOT MATCHED BY TARGET` branches preserve append order and reuse the
@@ -460,7 +460,7 @@ DuckDB v1.5.5 native validation establishes the following MERGE contract:
   parameters.
 - MERGE `RETURNING` exposes the bare Duck `merge_action` identifier, `*`,
   target columns, and expressions. `merge_action()` is a different unsupported
-  function-shaped form and is not synthesized by SwifQL.
+  function-shaped form and is not synthesized by SQL.
 - A complete fail-closed B1-B11 matrix verified runtime identity
   `v1.5.5`, prepare/bind/execute status, parameter counts, every bind,
   results/post-state, branch order, transaction behavior, RETURNING visibility,
@@ -475,7 +475,7 @@ INSERT actions on `NOT MATCHED BY SOURCE` because that branch has no source-row
 visibility, source-qualified MERGE RETURNING expressions, prepared parameters
 inside MERGE RETURNING, and function-shaped `merge_action()`. Explicit
 column/value INSERT under `NOT MATCHED BY SOURCE` is supported when its values
-are target-independent. These boundaries are native engine behavior; SwifQL
+are target-independent. These boundaries are native engine behavior; SQL
 keeps MERGE as direct SQL composition and does not translate it to an upsert
 form.
 
@@ -501,7 +501,7 @@ CREATE TABLE:
 | Primary key, unique, not-null, check, and named check constraints in CREATE | Supported when the emitted constraint syntax is exact; native enforcement was verified for primary key, unique, not-null, unnamed check, and named check. |
 | `Constraint.references` at CREATE time | Supported for the established omitted-referenced-column source shape when the parent table supplies a suitable key. The source shape has no referenced-column-list argument. `ReferentialAction.noAction` and `.restrict` are supported; `.cascade`, `.setNull`, and `.setDefault` remain unclaimed because DuckDB rejects those foreign-key actions. |
 | Direct CTAS composition | Supported for `CREATE TABLE ... AS SELECT ...` using existing structural parts. |
-| Direct OR REPLACE CTAS composition | Supported through `SwifQL.create.or.replace.table[any: table]` and ordinary CTAS composition; no phrase convenience builder is needed. |
+| Direct OR REPLACE CTAS composition | Supported through `SQL.root.create.or.replace.table[any: table]` and ordinary CTAS composition; no phrase convenience builder is needed. |
 | CTAS with a column constraint list | Unclaimed/negative: DuckDB rejects constraints combined with the tested CTAS form. |
 | Inferred generated column | Supported through `GeneratedColumn(name, as: expression)` inside `tableDefinitions(...)`. |
 | Explicit `GENERATED ALWAYS AS ... VIRTUAL` and omitted `VIRTUAL` | Supported through `GeneratedColumn(name, type, generatedAlwaysAs: expression, storage: .virtual)` or omitted storage; omitted `VIRTUAL` follows DuckDB's virtual default. |
@@ -583,10 +583,10 @@ Duck-compatible.
 | START, START WITH, signed nonzero INCREMENT BY, MINVALUE, MAXVALUE, CYCLE, and their NO siblings | Supported as direct value-bearing composition. Sequence metadata is BIGINT-shaped. INCREMENT BY 0 is a native parser error. Positive and negative increments, explicit bounds, no-cycle boundaries, and ascending/descending cycle wrap were verified. |
 | Quoted reserved, Unicode, and embedded-double-quote sequence names | Supported for the tested create/catalog/drop forms through Path.Identifier; the embedded-name nextval string spelling remains DuckDB utility-parser territory. |
 | DROP SEQUENCE default, IF EXISTS, RESTRICT, CASCADE, and create/drop rollback | Supported for the tested exact actions. Dependency-sensitive default expressions are classified separately below. |
-| Prepared placeholders in sequence option positions | Native-invalid at prepare/parse time for START, START WITH, INCREMENT BY, MINVALUE, and MAXVALUE. SwifQL keeps the numeric option methods safe-inline and does not add a dialect-specific runtime rejection. |
+| Prepared placeholders in sequence option positions | Native-invalid at prepare/parse time for START, START WITH, INCREMENT BY, MINVALUE, and MAXVALUE. SQL keeps the numeric option methods safe-inline and does not add a dialect-specific runtime rejection. |
 | Int64 upper-bound literals | The tested literal 9223372036854775806 with MAXVALUE 9223372036854775807 is accepted and returns the exact start value. No broader overflow guarantee is claimed. |
 
-Fn.nextVal and Fn.currVal intentionally accept ordinary SwifQLable children. A
+Fn.nextVal and Fn.currVal intentionally accept ordinary SQLable children. A
 String therefore renders as a normal Duck string literal in .plain and remains
 a normal prepared value in .splitted; prepared invocation with a name,
 including a schema-qualified name string, was native-positive. currval before
@@ -596,7 +596,7 @@ connection advances a sequence, currval in the other connection succeeds and
 observes the latest sequence value; the first connection also observes that
 latest value. Sequence consumption is not rewound by transaction rollback.
 
-The explicit expression source SwifQL.default(Fn.nextVal("order_id_seq")) is
+The explicit expression source SQL.root.default(Fn.nextVal("order_id_seq")) is
 supported in the tested CREATE TABLE and insert flow. A literal sequence name
 in a default is native-positive. A prepared parameter inside DEFAULT
 nextval(?) is rejected by DuckDB's binder, and the tested ALTER TABLE ...
@@ -615,7 +615,7 @@ shortcut is a Duck sequence claim.
 | --- | --- |
 | Scalar zero-parameter, untyped positional, typed, and mixed-typed macros | Supported for the tested direct forms. Duplicate parameter names are rejected natively. |
 | Scalar OR REPLACE, IF NOT EXISTS, TEMP / TEMPORARY, persistent schema-qualified names, quoted names, and transaction create/drop rollback | Supported for the tested exact forms. OR REPLACE combined with IF NOT EXISTS is a native parser error. Temporary macros are isolated from the second connection; schema-qualified temporary macros are native-invalid. |
-| CREATE FUNCTION as a macro alias and DROP FUNCTION | Native-positive for the tested scalar alias form. SwifQL reuses existing .function atoms; no separate function builder is claimed. |
+| CREATE FUNCTION as a macro alias and DROP FUNCTION | Native-positive for the tested scalar alias form. SQL reuses existing .function atoms; no separate function builder is claimed. |
 | DROP MACRO, optional TABLE, IF EXISTS, RESTRICT, and CASCADE | Supported for the tested exact forms, including both table-macro drop spellings where native-positive. |
 | Prepared scalar macro invocation arguments | Native-positive with ordinary prepared values. A prepared value embedded in a macro body is native-invalid; a prepared constant macro body is native-positive. |
 | Macro dependency and transaction behavior | Dropping a base macro can leave a derived macro stored but invalid when invoked; the tested create/drop rollback boundaries restore catalog state. |
@@ -630,23 +630,23 @@ The canonical public source remains direct composition:
 ~~~swift
 let sequence = Path.Identifier(schema: "analytics", name: "order_id_seq")
 
-SwifQL.create.sequence.if.not.exists[any: sequence]
+SQL.root.create.sequence.if.not.exists[any: sequence]
     .start(with: 1)
     .increment(by: 2)
     .minValue(1)
     .maxValue(99)
     .cycle
 
-SwifQL.default(Fn.nextVal("order_id_seq"))
+SQL.root.default(Fn.nextVal("order_id_seq"))
 
 let x = MacroParameter("x")
 let typed = MacroParameter("value", .integer)
 
-SwifQL.create.macro[any: Path.Identifier("twice")]
+SQL.root.create.macro[any: Path.Identifier("twice")]
     .macroParameters(x)
     .as(x * 2)
 
-SwifQL.create.macro[any: Path.Identifier("rows")]
+SQL.root.create.macro[any: Path.Identifier("rows")]
     .macroParameters(typed)
     .as.table
     .select(typed)
@@ -654,7 +654,7 @@ SwifQL.create.macro[any: Path.Identifier("rows")]
 Fn.call(Path.Identifier("twice"), 21)
 ~~~
 
-MacroParameter is value-semantic and bind-free. Its ordinary SwifQLable parts
+MacroParameter is value-semantic and bind-free. Its ordinary SQLable parts
 contain only the immutable structural parameter reference name. The
 macroParameters(...) constructor owns declaration syntax and appends the
 optional exact type spelling. Both roles route the name through the generic
@@ -680,8 +680,8 @@ The canonical public source is:
 ~~~swift
 let analytics = Path.Catalog("analytics")
 
-SwifQL.attach("warehouse.duckdb", as: analytics)
-SwifQL.attach(
+SQL.root.attach("warehouse.duckdb", as: analytics)
+SQL.root.attach(
     "warehouse.duckdb",
     mode: .ifNotExists,
     as: analytics,
@@ -730,7 +730,7 @@ list owns parentheses and comma ordering, and an option renders as `NAME` or
 | `RECOVERY_MODE` | Valid unquoted and prepared values succeed; invalid enum values remain native errors. |
 
 DuckDB also accepts the compatibility token `READ_WRITE` in the validated
-runtime, but SwifQL intentionally exposes no convenience for it. The current
+runtime, but SQL intentionally exposes no convenience for it. The current
 runtime rejects `ACCESS_MODE`; it is not part of the public option domain.
 Remote HTTP/S3 sources and extension-specific database actions remain
 unclaimed. `IF NOT EXISTS` preserves an existing attachment, `OR REPLACE`
@@ -743,7 +743,7 @@ rollback.
 The public source is structural and bind-free:
 
 ~~~swift
-SwifQL.detach(Path.Catalog("analytics"))
+SQL.root.detach(Path.Catalog("analytics"))
 ~~~
 
 DuckDB rejects detaching the current default database. Use another catalog
@@ -755,9 +755,9 @@ after detachment retain DuckDB's native binder errors.
 The exact overloads are:
 
 ~~~swift
-SwifQL.use(Path.Catalog("analytics"))
-SwifQL.use(Path.Schema("reporting"))
-SwifQL.use(Path.Catalog("analytics").schema("reporting"))
+SQL.root.use(Path.Catalog("analytics"))
+SQL.root.use(Path.Schema("reporting"))
+SQL.root.use(Path.Catalog("analytics").schema("reporting"))
 ~~~
 
 All three targets are structural and bind-free. The catalog overload changes
@@ -800,14 +800,14 @@ let events = Path.Table("events")
 let source = Path.Catalog("source")
 let destination = Path.Catalog("destination")
 
-SwifQL.copy(events, to: "events.parquet", options: .format("parquet"))
-SwifQL.copy(events, from: "events.csv", options: .format("csv"), .header)
-SwifQL.copy(
-    query: SwifQL.select(events.column("id")).from(events),
+SQL.root.copy(events, to: "events.parquet", options: .format("parquet"))
+SQL.root.copy(events, from: "events.csv", options: .format("csv"), .header)
+SQL.root.copy(
+    query: SQL.root.select(events.column("id")).from(events),
     to: "events.json",
     options: .format("json")
 )
-SwifQL.copy(fromDatabase: source, to: destination, options: .schema)
+SQL.root.copy(fromDatabase: source, to: destination, options: .schema)
 ~~~
 
 The claimed statement forms are exactly:
@@ -821,7 +821,7 @@ COPY FROM DATABASE <structural catalog> TO <structural catalog> [(SCHEMA)]
 
 Table targets and both database catalogs are structural and bind-free. File
 paths, query children, COPY destinations, and option values remain ordinary
-SwifQLable values and retain normal preparation behavior. Query children are
+SQLable values and retain normal preparation behavior. Query children are
 rendered inside the single parenthesized query source before the destination
 and option values in the normal child order.
 
@@ -875,7 +875,7 @@ is part of the claim. `read_csv` covers the verified `header`, `delim`, and
 
 `TableFunctionOption` is a value-semantic structured option with an open
 `TableFunctionOption.Name` initializer. Its exact grammar is `name = value`,
-with the name structural and the value an ordinary bindable SwifQLable child.
+with the name structural and the value an ordinary bindable SQLable child.
 The option list preserves positional-before-named and named-option ordering.
 This exact table-function grammar is distinct from the deferred generic
 `name := expression` abstraction; no `:=` primitive is introduced here.

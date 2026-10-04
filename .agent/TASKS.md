@@ -2,11 +2,17 @@
 
 This file contains only approved current work. Ideas, unresolved choices, verified debt, and completed history belong in their separate owners.
 
-## Active declarative query authoring design
+## Current: SQL identity migration local closure
 
-The current maintainer-approved SwifQL objective is research/design for the major-version declarative query result-builder surface. Implementation is not authorized merely by this entry; the accepted architecture/UX must be completed first, then externalized into the normal researched/audited implementation-plan workflow.
+The current maintainer-approved objective is to finish the local `SwifQL -> SQL` major identity migration through stable-governance synchronization and one final independent repository/package closure audit. Canonical package/product/module identity is `SQL`; production is `Sources/SQL`, tests are `Tests/SQLTests`, `import SwifQL` is intentionally unsupported, and compatibility is symbol-level through deprecated/renamed declarations inside module `SQL`. Phase A canonical API commit is `1eb1192227f500341243e7dab4690d6d72262b34`; Phase B package/module/path commit is `35afa7457eea8ac561e13319ca012ae4518ccce3`; Phase C public-docs commit is `414b09a455e0058adb14e6f9f215134343880d86`. Remote rename/push/tag/release remain separate and unauthorized.
 
-Current accepted direction includes:
+After CLEAN final local migration closure, the next planned implementation wave is `SQLQuery` with accepted protocol requirement `@SQLBuilder var query: SQL { get }`. This TASKS entry does not by itself authorize SQLQuery implementation.
+
+## Completed declarative query authoring lineage retained for context
+
+The material below is completed historical context. Old SwifQL module/path/API spellings inside this lineage describe the repository state when those artifacts and commits were produced; they are not current package/module guidance.
+
+Historical accepted direction included:
 
 - SQL-first clause-local result builders rather than a parallel query AST or renderer;
 - the existing parts/preparation/binding engine remains primary;
@@ -45,9 +51,9 @@ The DQ-05 Row/VALUES/Default, narrow INSERT, and core-clause slice is implemente
 
 R3 / DESIGN-037 fragment-first correction is technically CLOSED. `D037-FINAL-001` is CLOSED. The global compatibility probe inventoried 822 public declarations and exhaustively smoke-tested all 728 affected declarations; full Swift 6.3.3 and Swift 6.4 package suites passed at 725 tests / 61 suites, ordinary-import downstream tests passed on both, and public API signature delta was zero. Exact production application and final source/diff review were independently accepted; the final source/diff audit 02 was CLEAN with 120/120 source checks and 60/60 red-team checks. The exact final technical candidate was 122 paths = 117 production sources + 5 tests. After an independently CLEAN 70/70 staged-package audit, that exact package was committed as `a50497ab4d78262032cc1b16224eec4fb78f6aae` (`🪚 Make query composition fragment-first`). Post-commit verification confirmed exactly 122 commit paths, no technical residual diff, and the four stable governance files preserved separately. The former 54-path compiler-contract protection snapshot is no longer active; its 49 never-HEAD experiment files and workflow hook are absent from status/worktree and require no cleanup commit. This governance update records the durable DESIGN-037 authority and compile-time testing policy. Push/tag/release remain separate and are not authorized by local commit closure.
 
-The post-authoring major-version naming/repository migration and final conversion-skill/publication waves are owned by `MASTER_PLAN.md`.
+The post-authoring local naming/package migration is now in governance/final-closure state; remote repository publication and conversion-skill publication remain separately owned by `MASTER_PLAN.md`.
 
-## Current capability state
+## Historical published capability state retained for context
 
 Shared Semantic Values are complete and were first published in SwifQL `2.0.0-beta.6.0.0`; `2.0.0-beta.6.0.1` remains the immutable Swift 6.3 tools/CI compatibility hotfix. The current release candidate/current prerelease is `2.0.0-beta.6.1.0`, which adds the accepted Declarative DDL authoring surface. No follow-up SwifQL implementation task is active for either completed capability.
 
@@ -124,4 +130,4 @@ Task 29 stable documentation, migration guidance, release notes, final audit, re
 
 The approved first Duck closure covers ordinary application/analytics/schema SQL including views and the validated catalog/file-function surface. Administration/runtime families such as INSTALL/LOAD, secrets, broad PRAGMA/configuration, checkpoint/vacuum/analyze administration, variables, export/import, SHOW/DESCRIBE/SUMMARIZE convenience, extension-specific SQL universes, and the generic SQL `name := expression` abstraction remain deferred.
 
-Work outside the active A1 capability still requires a new explicit maintainer objective. Do not revive historical `.artifacts` task/correction lineages as active work; reconstruct fresh artifacts from current Git/source/stable authority when needed.
+Work outside the current SQL identity migration closure still requires a new explicit maintainer objective. Do not revive historical `.artifacts` task/correction lineages as active work; reconstruct fresh artifacts from current Git/source/stable authority when needed. After final migration closure, `SQLQuery` is the planned next wave but still requires its own execution contract.

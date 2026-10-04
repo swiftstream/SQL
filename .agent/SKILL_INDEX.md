@@ -4,15 +4,17 @@ Skills are reusable operational procedures, not architecture authority. Architec
 
 Source-owned skill packages live under `.agent/skills/<name>/SKILL.md`. Load at most one skill by default, and only when the task matches its procedure.
 
+The existing skill package directory/name identifiers retain their historical `swifql` spelling during this governance migration for routing continuity. That identifier spelling does **not** imply a `SwifQL` product/module exists. The skill contents target the canonical `SQL` module and API.
+
 ## Public / downstream skills
 
-- `swifql-query-building` — build, translate, review, or prepare SQL in downstream code that consumes SwifQL. Do not use it for changing SwifQL's own builders, functions, dialects, renderer, or core source.
-- `swifql-custom-extensions` — create downstream custom functions, fluent helpers, structural continuations, custom clause ownership, or reusable SwifQL extension libraries. Do not use it for built-in SwifQL source work.
+- `swifql-query-building` — build, translate, review, or prepare SQL in downstream code that consumes the canonical `SQL` module. Do not use it for changing the repository's own builders, functions, dialects, renderer, or core source.
+- `swifql-custom-extensions` — create downstream custom functions, fluent helpers, structural continuations, custom clause ownership, or reusable extension libraries for the canonical `SQL` module. Do not use it for built-in source work.
 
 ## Repository contributor skills
 
-- `adding-swifql-builder` — add or extend a built-in SwifQL builder and its established `QueryParts` boundaries.
-- `adding-swifql-sql-function` — add or change a built-in compositional SQL function helper in SwifQL source.
+- `adding-swifql-builder` — add or extend a built-in SQL builder and its established `QueryParts` boundaries.
+- `adding-swifql-sql-function` — add or change a built-in compositional SQL function helper in `Sources/SQL`.
 - `extending-swifql-dialect` — research, add, or change a built-in SQL dialect using the repository's dialect-compatibility workflow.
 
 The two public skills are intended for downstream distribution through the external `swiftstream/skills` collection. Their placement under `.agent/skills/` is source ownership, not a requirement that downstream harnesses discover or install them from this repository-local path. The three contributor skills are repository-local procedures unless a later audited decision changes that classification.

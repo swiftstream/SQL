@@ -1,16 +1,16 @@
-# SwifQL Governance Entrypoint
+# SQL Governance Entrypoint
 
-SwifQL is a strongly typed, declarative, composable Swift SQL-building library. It builds SQL; database execution belongs to database drivers or wrappers outside this repository.
+SQL is a strongly typed, declarative, composable Swift SQL-building library. It builds SQL; database execution belongs to database drivers or wrappers outside this repository.
 
-PostgreSQL and MySQL are established SQL-building dialects. SwifQL 2.0.0 adds the first implemented and validated DuckDB / `.duck` SQL-surface closure, and `.duck` is part of `SQLDialect.all`; later Duck administration/runtime families remain deferred. SwifQL builds SQL only; database execution belongs to database drivers or wrappers outside this repository.
+PostgreSQL and MySQL are established SQL-building dialects. Historically, SwifQL 2.0.0 added the first implemented and validated DuckDB / `.duck` SQL-surface closure; that capability now lives under the canonical SQL module, and `.duck` is part of `SQLDialect.all`. Later Duck administration/runtime families remain deferred. SQL builds SQL only; database execution belongs to database drivers or wrappers outside this repository.
 
 ## Repository layout
 
 - `AGENTS.md` is the concise repository router.
 - `.agent/` contains durable governance, technical authority, and source-owned Agent Skill packages under `.agent/skills/`.
 - `.artifacts/` contains transient research, plans, evidence, task decomposition, and reports.
-- `Sources/SwifQL/` contains production source.
-- `Tests/SwifQLTests/` contains the test suite.
+- `Sources/SQL/` contains production source.
+- `Tests/SQLTests/` contains the test suite.
 - `Package.swift` defines the Swift package.
 
 ## Authority hierarchy
@@ -25,7 +25,7 @@ When stable documents conflict, follow this order:
 6. `.agent/OPEN_DECISIONS.md` — unresolved choices only.
 7. `.agent/PROJECT_MEMORY.md` and `.agent/SOURCE_MAP.md` — durable current-state and navigation facts.
 8. `.agent/TASKS.md`, `.agent/TODO.md`, `.agent/TECH_DEBT.md`, and `.agent/TASKS_ARCHIVE.md` — active work, future ideas, debt, and compact history.
-9. `.agent/REFERENCE_PROJECTS.md`, `.agent/CONTEXT_LOADING_RULES.md`, `.agent/PUBLIC_CONTENT_IDEAS.md`, and `.agent/SKILL_INDEX.md` — evidence routing, lazy public-content capture, and SwifQL-specific skill policy/routing. Source-owned operational procedures live under `.agent/skills/*/SKILL.md`; they are procedures, not architecture authority.
+9. `.agent/REFERENCE_PROJECTS.md`, `.agent/CONTEXT_LOADING_RULES.md`, `.agent/PUBLIC_CONTENT_IDEAS.md`, and `.agent/SKILL_INDEX.md` — evidence routing, lazy public-content capture, and SQL-specific skill policy/routing. Source-owned operational procedures live under `.agent/skills/*/SKILL.md`; they are procedures, not architecture authority.
 
 `.artifacts/**` is disposable, Git-ignored working memory and never outranks stable repository authority.
 

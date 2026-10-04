@@ -1,17 +1,17 @@
 # Public Content Ideas
 
-Stable low-context workflow owner for preserving high-value user-facing examples, product capabilities, documentation angles, README material, website-documentation ideas, release-story material, and publication/post concepts discovered during SwifQL development.
+Stable low-context workflow owner for preserving high-value user-facing examples, product capabilities, documentation angles, README material, website-documentation ideas, release-story material, and publication/post concepts discovered during SQL development.
 
 This is an **idea bank, not normal implementation context**. The detailed entries live in focused shards under `.agent/public-content-ideas/` so ordinary development does not pay their context cost.
 
 ## Why this exists
 
-During architecture, implementation, native validation, audits, and corrections, the repository regularly discovers examples that explain SwifQL better than a later documentation pass could reconstruct from memory.
+During architecture, implementation, native validation, audits, and corrections, the repository regularly discovers examples that explain SQL better than a later documentation pass could reconstruct from memory.
 
 Without deliberate capture, useful material is easily lost, for example:
 
 - a particularly clean before/after DSL example;
-- a feature whose implementation detail demonstrates an important SwifQL design advantage;
+- a feature whose implementation detail demonstrates an important SQL design advantage;
 - an explanation that makes a complex architecture understandable to users;
 - a surprising compatibility guarantee;
 - a native database behavior that is worth documenting publicly;
@@ -62,10 +62,12 @@ When captured material is promoted into final README/public docs/release notes/c
 
 Current shards:
 
+Shard-internal `SwifQL` spellings may be preserved when they are captured historical/pre-migration examples or publication ideas. They are not current module/API guidance; any promoted current copy must be normalized to the canonical `SQL` identity unless the old spelling is intentionally part of a migration example.
+
 - `public-content-ideas/DIALECT_TRANSPARENT_DSL.md` - dialect-transparent DSL, semantic render scopes, incremental composition, extension architecture, and related developer-experience stories.
-- `public-content-ideas/COMPATIBILITY_EVOLUTION.md` - source-compatible evolution, major-version philosophy, downstream Swift extensions, migration discipline, and the story of modernizing SwifQL without making users rewrite thousands of established queries.
+- `public-content-ideas/COMPATIBILITY_EVOLUTION.md` - source-compatible evolution, major-version philosophy, downstream Swift extensions, migration discipline, and the story of modernizing the library from SwifQL to SQL without making users rewrite thousands of established queries.
 - `public-content-ideas/SHARED_SEMANTIC_VALUES.md` - cross-database civil values, exact dialect boundaries, and future publication material for the shared value layer.
-- `public-content-ideas/DECLARATIVE_QUERY_AUTHORING.md` - future result-builder query DSL examples, SQL-shaped clause ergonomics, the planned `SwifQL -> SQL` identity migration, and raw-SQL conversion-skill material.
+- `public-content-ideas/DECLARATIVE_QUERY_AUTHORING.md` - future result-builder query DSL examples, SQL-shaped clause ergonomics, the completed local `SwifQL -> SQL` identity migration, and raw-SQL conversion-skill material.
 
 Create a new shard only when a topic becomes independently useful enough that adding it to an existing shard would create context noise. Prefer stable topic names over one file per tiny idea.
 
@@ -143,10 +145,10 @@ Capture only material with real future communication value.
 
 Good candidates answer at least one of these:
 
-- "This makes SwifQL noticeably easier/cleaner/safer for users."
+- "This makes SQL noticeably easier/cleaner/safer for users."
 - "This example explains an important capability in a few lines."
 - "This implementation choice is a strong engineering story."
-- "Users upgrading or extending SwifQL will benefit from knowing this."
+- "Users upgrading or extending SQL will benefit from knowing this."
 - "This native validation result meaningfully increases trust."
 
 Do not fill the bank with routine refactors, test counts without a story, trivial syntax, internal task bookkeeping, or generic praise.

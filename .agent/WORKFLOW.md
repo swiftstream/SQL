@@ -1,6 +1,6 @@
 # Development Workflow
 
-Non-trivial SwifQL work follows this ordered flow:
+Non-trivial SQL work follows this ordered flow:
 
 ```text
 DETAILED RESEARCH

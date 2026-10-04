@@ -106,7 +106,7 @@ Traversal order, marker replacement, value collection, and prepared-output mecha
 
 ### DIALECT-006 - Hybrid behavior must be explicit
 
-Every supported dialect needs an explicit representation for `SwifQLHybridOperator` or any future dialect-polymorphic operator mechanism.
+Every supported dialect needs an explicit representation for `SQLHybridOperator` or any future dialect-polymorphic operator mechanism.
 
 Preserve the established public two-argument PostgreSQL/MySQL initializer for downstream source compatibility. The additive three-argument initializer provides an explicit Duck representation. Preparing a legacy two-branch custom hybrid with `.duck` does not silently reuse another dialect representation: if no explicit Duck representation exists, preparation fails deterministically. The shared value may carry an open value-semantic mapping from a public representation key to an operator, and a dialect may select its key through an additive hook; legacy whole-`hybridOperator(_:)` overrides remain authoritative.
 
@@ -115,17 +115,17 @@ A new dialect support claim must not rely on another dialect's syntax as semanti
 Semantic nested SQL types follow the same boundary: `Type.list`, `Type.array`,
 `Type.map`, `Type.struct`, and `Type.union` retain their constructor, children,
 length, and raw member names in a value-semantic representation carried by
-`SwifQLPartType`. The additive `SQLDialect.type(_:)` hook owns the final grammar
+`SQLPartType`. The additive `SQLDialect.type(_:)` hook owns the final grammar
 and identifier policy; its default is the historical textual `Type` spelling,
 so raw `Type(String)` values and existing dialect subclasses remain compatible.
 The historical textual compatibility projection may contain legacy
 preformatted/prequoted spelling, but semantic nested-type rendering must not
 reparse or depend on that projection: constructor identity, child types,
 length, and raw member names remain available independently through
-`TypeStructure` and `SwifQLPartType`.
+`TypeStructure` and `SQLPartType`.
 
 Sampling uses the same semantic boundary. `SampleMethod`, `SampleArgumentRole`,
-and `SampleConstruct` are open value identities; `SwifQLPartSampling` retains
+and `SampleConstruct` are open value identities; `SQLPartSampling` retains
 the construct (`USING SAMPLE` versus `TABLESAMPLE`), ordered arguments and
 roles, and seed/repeatability until `SQLDialect.sampling(_:)` returns ordinary
 parts to the existing recursive renderer. The default hook keeps argument
@@ -135,7 +135,7 @@ reparse arbitrary expressions. Fixture-only dialect examples do not make a
 production support claim.
 
 SQL lambdas follow the same rule. `SQLLambda` exposes one
-`SwifQLPartLambda` carrying ordered structural parameter identities and body
+`SQLPartLambda` carrying ordered structural parameter identities and body
 parts; it does not pre-render `lambda`, `:`, arrows, or other dialect
 punctuation. `SQLDialect.lambda(_:)` returns ordinary parts through the
 recursive renderer, with the default preserving the historical
@@ -146,7 +146,7 @@ without token scanning or body stringification.
 ASOF joins keep materially different SQL condition roles explicit. The
 ordinary join APIs continue to preserve caller-supplied ON and USING exactly;
 an explicit matchCondition API emits MATCH_CONDITION before an optional ON or
-USING clause. SwifQL does not infer temporal predicates or remap Duck ON/USING
+USING clause. SQL does not infer temporal predicates or remap Duck ON/USING
 to another dialect's MATCH_CONDITION grammar.
 
 ### DIALECT-007 - Rendering follows the public design contract
@@ -167,7 +167,7 @@ Render scopes must be attached by the semantic owner that actually needs context
 
 The canonical public Duck factory is `SQLDialect.duck`; the product identity remains DuckDB and the internal dialect id may remain `"duckdb"`.
 
-A scoped part must remain one composable structural unit when it is copied, appended, stored in a `SwifQLable` variable, returned by a helper, conditionally included, nested inside a function/subquery, or assembled later in another method. Rendering semantics must therefore not depend on one uninterrupted fluent call chain or on neighboring clauses remaining adjacent in the original Swift source.
+A scoped part must remain one composable structural unit when it is copied, appended, stored in a `SQLable` variable, returned by a helper, conditionally included, nested inside a function/subquery, or assembled later in another method. Rendering semantics must therefore not depend on one uninterrupted fluent call chain or on neighboring clauses remaining adjacent in the original Swift source.
 
 Preparation should recursively render nested scoped parts with a value-semantic render-context stack while preserving one shared ordered binding/value collection state. Entering a scope produces a derived context for its children; leaving it restores the parent context naturally through value semantics rather than mutable global/query state.
 
@@ -182,11 +182,11 @@ When evolving an existing `SQLDialect` hook, prefer an additive context-aware ov
 Example direction:
 
 ```swift
-open func keyPath(_ keyPath: SwifQLPartKeyPath) -> String
+open func keyPath(_ keyPath: SQLPartKeyPath) -> String
 
 open func keyPath(
-    _ keyPath: SwifQLPartKeyPath,
-    context: SwifQLRenderContext
+    _ keyPath: SQLPartKeyPath,
+    context: SQLRenderContext
 ) -> String {
     keyPath(keyPath)
 }
@@ -214,9 +214,9 @@ This keeps normal context loading bounded while allowing each dialect owner to b
 
 ### DIALECT-012 - Render scopes are extension-friendly without exposing renderer internals
 
-The render-scope abstraction should provide a narrow public, value-semantic extension point when that can be done without exposing mutable preparation state or requiring third-party code to invent an unknown `SwifQLPart` that the core renderer would silently drop.
+The render-scope abstraction should provide a narrow public, value-semantic extension point when that can be done without exposing mutable preparation state or requiring third-party code to invent an unknown `SQLPart` that the core renderer would silently drop.
 
-The current narrow extension point is the public, value-semantic `SwifQLRenderScope(namespace:name:)` plus `SwifQLable.scoped(_:)`. `SwifQLRenderContext` is public and read-only, while the concrete scoped part and recursive renderer remain library-owned. A downstream module can define a semantic scope, wrap a normal `SwifQLable`, and observe that scope through an additive context-aware dialect hook without relying on mutable ambient state.
+The current narrow extension point is the public, value-semantic `SQLRenderScope(namespace:name:)` plus `SQLable.scoped(_:)`. `SQLRenderContext` is public and read-only, while the concrete scoped part and recursive renderer remain library-owned. A downstream module can define a semantic scope, wrap a normal `SQLable`, and observe that scope through an additive context-aware dialect hook without relying on mutable ambient state.
 
 Keep scope identifiers namespaced and value-semantic. Scope identity derived from open owner and kind values must preserve their raw components structurally and injectively; delimiter-concatenated display text must never be the semantic identity. Do not expose mutable preparation state, raw global strings with collision-prone semantics, or unknown-part escape hatches.
 
@@ -241,7 +241,7 @@ A dialect-specific bug or grammar restriction may justify a new shared rendering
 Before introducing a shared hook, scope, owner, part metadata field, binding policy, or renderer branch boundary:
 
 - compare the requirement against every currently supported dialect affected by that path;
-- inspect likely adjacent constructs in those dialects even if SwifQL has not implemented them yet;
+- inspect likely adjacent constructs in those dialects even if SQL has not implemented them yet;
 - sample several major external SQL dialect families when their grammar can expose whether the proposed abstraction is too narrow;
 - separate grammar-role metadata from per-dialect policy;
 - keep product identity out of shared semantic names unless the value actually represents database identity;
@@ -273,7 +273,7 @@ This is a documented extension boundary, not current technical debt and not perm
 
 ### DIALECT-015 - Generic terminal structural identifiers
 
-Generic terminal names for structural SQL objects use the value-semantic `Path.Identifier` shape and the `SwifQLPartIdentifier` part. The path supports unqualified, schema-qualified, and catalog-plus-schema-qualified forms. Qualifiers continue to render through the established catalog and schema hooks; only the terminal object name uses the additive `SQLDialect.identifier(_:)` hook.
+Generic terminal names for structural SQL objects use the value-semantic `Path.Identifier` shape and the `SQLPartIdentifier` part. The path supports unqualified, schema-qualified, and catalog-plus-schema-qualified forms. Qualifiers continue to render through the established catalog and schema hooks; only the terminal object name uses the additive `SQLDialect.identifier(_:)` hook.
 
 The base `SQLDialect.identifier(_:)` implementation returns the supplied name unchanged so legacy downstream subclasses that do not override the new hook remain source-compatible. PostgreSQL and Duck double-quote and double embedded double quotes for this category. MySQL backtick-quotes and doubles embedded backticks. Existing catalog, schema, table, column, alias hooks, and their old output are separate compatibility contracts and must not be reinterpreted through this hook.
 
@@ -285,6 +285,6 @@ When a semantic hook can consume, inline, or otherwise hide unsafe values from t
 
 The established old hook remains authoritative for ordinary `prepare(_:)`. The base observation-aware overload must invoke that old virtual hook exactly once and preserve its returned parts/output, but the provenance result is incomplete unless the implementation can account for the unsafe occurrences hidden behind that semantic boundary. This keeps old external subclasses source/behavior compatible while preventing a false-complete trace.
 
-A built-in or downstream dialect may opt into complete provenance by overriding the additive observation-aware hook and returning `SwifQLObservedParts.complete(...)`. Any unsafe value consumed by that hook rather than returned for ordinary recursive binding must be represented in order with the public stateless `SwifQLUnsafeValueObservation.notBound(_:)` marker. Unsafe values left in returned parts continue through the one shared renderer/collector and receive their normal bound indices there.
+A built-in or downstream dialect may opt into complete provenance by overriding the additive observation-aware hook and returning `SQLObservedParts.complete(...)`. Any unsafe value consumed by that hook rather than returned for ordinary recursive binding must be represented in order with the public stateless `SQLUnsafeValueObservation.notBound(_:)` marker. Unsafe values left in returned parts continue through the one shared renderer/collector and receive their normal bound indices there.
 
 Observation-aware hooks must not receive mutable renderer internals, mutate the collector directly, replay caller graphs, or create a second rendering pass. Complete provenance is a claim about the exact selected render, not about an independently reconstructed semantic graph.

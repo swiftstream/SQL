@@ -20,7 +20,7 @@ Do not create placeholder architecture chunks merely for symmetry. Dialect-speci
 ## Task routing
 
 - New public SQL/DSL API, naming, UX, portability boundary, convenience behavior, or dialect-specific-vs-generic API choice: `DSL_DESIGN_AND_UX.md` primary; load the mechanism owner as supporting context.
-- New `SwifQLable`, `SwifQLPart`, or composition primitive with an already-decided public contract: `DSL_COMPOSITION.md` primary; `DSL_DESIGN_AND_UX.md` supporting when public API shape is involved; `QUERY_PREPARATION.md` supporting only when dispatch changes.
+- New `SQLable`, `SQLPart`, or composition primitive with an already-decided public contract: `DSL_COMPOSITION.md` primary; `DSL_DESIGN_AND_UX.md` supporting when public API shape is involved; `QUERY_PREPARATION.md` supporting only when dispatch changes.
 - New concrete part requiring preparation dispatch: `QUERY_PREPARATION.md` primary; `DSL_COMPOSITION.md` supporting.
 - Dialect or new-database rendering: load `DIALECT_RENDERING.md` plus exactly the relevant dialect owner (`dialects/DUCK.md`, `dialects/POSTGRES.md`, or `dialects/MYSQL.md`). Treat that pair as the dialect architecture bundle. Add `DSL_DESIGN_AND_UX.md` only for API/UX/support-contract decisions and `QUERY_PREPARATION.md` only when dispatch/value mechanics change, with `TESTING_RULES.md` as policy. Cross-dialect audits may deliberately load multiple dialect owners.
 - Formatter, bind-marker traversal, or value-order behavior: `QUERY_PREPARATION.md` primary; `DIALECT_RENDERING.md` supporting when placeholder syntax changes.

@@ -1,6 +1,6 @@
 # Artifacts Workflow
 
-Stable operational authority for how SwifQL uses transient `.artifacts/**` working memory during research, planning, implementation, correction, audit, native validation, and chat handoff.
+Stable operational authority for how SQL uses transient `.artifacts/**` working memory during research, planning, implementation, correction, audit, native validation, and chat handoff.
 
 This file defines the **workflow around artifacts**. It does not make artifact contents authoritative over `AGENTS.md` or `.agent/**`.
 

@@ -1,6 +1,6 @@
 # MySQL Dialect Architecture
 
-This file is the sole owner of `MYSQL-*` rules and MySQL-specific SwifQL behavior.
+This file is the sole owner of `MYSQL-*` rules and MySQL-specific SQL behavior.
 
 Status: **compact seed owner**. It records only verified current repository facts and stable compatibility constraints. A dedicated future MySQL documentation mega-task should expand this file from source/tests/current official MySQL documentation without changing established behavior casually.
 
@@ -48,7 +48,7 @@ CAST('2026-09-04 12:34:56.123456' AS DATETIME(6))
 
 The current MySQL dialect renders optional schema/table qualification and the final path component.
 
-Unlike PostgreSQL/Duck JSON traversal, the current implementation does not walk all nested `SwifQLPartKeyPath.paths` with `->`/`->>` semantics.
+Unlike PostgreSQL/Duck JSON traversal, the current implementation does not walk all nested `SQLPartKeyPath.paths` with `->`/`->>` semantics.
 
 This is a verified current implementation fact and must not be silently changed during unrelated work.
 
@@ -80,7 +80,7 @@ Do not change this behavior during unrelated Duck/Swift 6 work.
 
 ### MYSQL-006 - Array behavior is historical compatibility surface
 
-The current MySQL dialect wraps SwifQL array output with single quotes.
+The current MySQL dialect wraps SQL array output with single quotes.
 
 This is a verified historical implementation fact, not a claim that MySQL has PostgreSQL/Duck-style native array semantics.
 

@@ -1,10 +1,10 @@
 # Master Plan
 
-This file owns the durable SwifQL development roadmap. Detailed research/plans/tasks/evidence belong in disposable `.artifacts/**`, but they must never contradict this roadmap or the stable owners routed by `ARCH_INDEX.md`.
+This file owns the durable SQL development roadmap. Detailed research/plans/tasks/evidence belong in disposable `.artifacts/**`, but they must never contradict this roadmap or the stable owners routed by `ARCH_INDEX.md`.
 
 ## North star
 
-SwifQL is SQL DSL first: users should think in SQL and write that SQL idea naturally, safely, and compositionally in Swift.
+SQL is SQL DSL first: users should think in SQL and write that SQL idea naturally, safely, and compositionally in Swift.
 
 The first two design gates for every relevant change are:
 
@@ -31,7 +31,7 @@ If a new abstraction creates special cases in unrelated established code, treat 
 
 ## Compatibility constitution
 
-PostgreSQL/MySQL are established compatibility contracts. Assume users own thousands of queries plus private `extension SwifQLable`, custom operators/helpers, public-protocol conformances, path abstractions, and `SQLDialect` subclasses.
+PostgreSQL/MySQL are established compatibility contracts. Assume users own thousands of queries plus private `extension SQLable`, custom operators/helpers, public-protocol conformances, path abstractions, and `SQLDialect` subclasses.
 
 Unless a separately approved bug fix proves one old contract wrong, preserve existing source, composition, overload behavior, public protocol meaning, `parts` expectations, generated PostgreSQL/MySQL SQL, bind order, dialect-hook dispatch, and representative downstream extension compilation.
 
@@ -41,7 +41,7 @@ A major release is not permission for avoidable breakage. See DESIGN-010, DESIGN
 
 The existing parts/preparation pipeline remains primary.
 
-Approved additive primitives are value-semantic render scopes/context, a library-owned scoped nested part, recursive context-aware preparation, additive forwarding dialect hooks, and `SwifQLable.scoped(_:)`.
+Approved additive primitives are value-semantic render scopes/context, a library-owned scoped nested part, recursive context-aware preparation, additive forwarding dialect hooks, and `SQLable.scoped(_:)`.
 
 Attach scopes only at the semantic construct that truly owns the grammar context. Do not globally rewrite ordinary predicate/arithmetic/operator part shape for one dialect.
 
@@ -63,27 +63,27 @@ AddColumn
 AlterTable
 ```
 
-The new DDL values remain ordinary `SwifQLable` / `SwifQLPart` composition over the existing preparation pipeline. No parallel AST/renderer or migration runtime exists in SwifQL.
+The new DDL values remain ordinary `SQLable` / `SQLPart` composition over the existing preparation pipeline. No parallel AST/renderer or migration runtime exists in SQL.
 
 Historical-schema-safe authoring uses explicit string table/schema/column identifiers; current model metadata and key paths must not rewrite old migration declarations. The DDL result builders are intentionally static/non-empty and reject direct runtime branching/loops.
 
-`CreateTable` snapshots child parts at initialization. `AlterTable` models exactly one SQL ALTER TABLE statement; the first `AddColumn` surface is intentionally String + SwifQL.Type only.
+`CreateTable` snapshots child parts at initialization. `AlterTable` models exactly one SQL ALTER TABLE statement; the first `AddColumn` surface is intentionally String + `Type` only.
 
-This accepted checkpoint unblocks consumers such as SwiftDuckDB to build their own migration-plan/execution layer around SwifQL DDL values. SwiftDuckDB migration version/history/transaction semantics remain outside SwifQL.
+This accepted checkpoint unblocks consumers such as SwiftDuckDB to build their own migration-plan/execution layer around SQL DDL values. SwiftDuckDB migration version/history/transaction semantics remain outside SQL.
 
-The broader declarative query result-builder authoring slice remains separate and does not reopen the accepted DDL contracts. This query-authoring wave is now the current design/research priority. Its final major-version UX must remain direct SQL in Swift, reuse the existing parts/preparation/binding engine, preserve existing raw/fluent composition wherever cleanly possible, and prefer clause-local result builders such as `Select { ... }`, `From { ... }`, `Where { ... }`, `GroupBy { ... }`, `Having { ... }`, `OrderBy { ... }`, nested query/set-operation builders, and other SQL-shaped forms that are accepted through design review. Exact Swift -> SQL examples are mandatory during design.
+The broader declarative query result-builder authoring slice is implemented and closed without reopening the accepted DDL contracts. Its accepted major-version UX is direct SQL in Swift over the existing parts/preparation/binding engine, with clause-local builders such as `Select { ... }`, `From { ... }`, `Where { ... }`, `GroupBy { ... }`, `Having { ... }`, `OrderBy { ... }`, nested query/set-operation builders, and fragment-first composition under DESIGN-037. The local naming/package migration is the current closure wave; `SQLQuery` follows only after that closure.
 
 ## Major-version roadmap after declarative query authoring
 
 The durable sequence after the declarative query-authoring capability is accepted is:
 
-1. **Reusable query components (`SQLQuery`):** add a SwiftUI-style protocol/value pattern for reusable parameterized query structs built from the same result-builder DSL. A conforming value should expose its query declaratively, prepare directly through the ordinary SQL preparation pipeline, and itself be usable compositionally as a nested/subquery source wherever an ordinary SQL query is accepted. Do not create a parallel query engine or execution abstraction.
-2. **Major naming/package/repository migration:** move the primary public identity from `SwifQL` to `SQL`, including the root query namespace/result-builder spelling `SQL { ... }`, `SwifQLable -> SQLable`, and the corresponding reviewed renames of other public/internal `SwifQL...` symbols where the old project name is no longer appropriate. The repository/public package destination is planned as `github.com/swiftstream/SQL`. This is an intentional major-version migration wave, not an incidental search/replace.
-3. **Compatibility and migration closure:** inventory every source-breaking rename or behavior correction before implementation, record literal `was -> became` migration guidance, assess compatibility bridges/deprecations where they materially reduce user pain, update migration/release/public-content material, and provide coding-agent/LLM migration guidance. Do not let a breaking change exist only in an implementation diff or transient artifact.
-4. **SQL conversion skill:** provide a maintained downstream skill that can transform raw SQL into the final result-builder representation and into the final raw/fluent SQL DSL representation. The final published skill should target the post-migration `SQL` API; during its design it should also preserve enough legacy knowledge to help migrate existing SwifQL call sites. Avoid publishing a skill against a namespace that is immediately renamed and then having to rewrite its canonical examples.
-5. **Documentation/publication consolidation:** promote accepted declarative-query examples, reusable-query examples, migration examples, compatibility notes, and major-version stories into README/public docs/release notes as appropriate, using the public-content capture workflow rather than trying to reconstruct them after release.
+1. **Major naming/package identity migration — local closure:** the primary local package/product/module identity is now `SQL`; production source is `Sources/SQL`, tests are `Tests/SQLTests`, `import SwifQL` is not supported, and compatibility is symbol-level through deprecated/renamed declarations inside module `SQL`. The technical/package commit is `35afa7457eea8ac561e13319ca012ae4518ccce3` and the public-docs commit is `414b09a455e0058adb14e6f9f215134343880d86`. Stable governance synchronization is the final local closure step. The remote repository/public destination `github.com/swiftstream/SQL` remains planned only; no remote rename/publication is implied by local closure.
+2. **Reusable query components (`SQLQuery`) — next implementation wave after local migration closure:** add a SwiftUI-style protocol/value pattern for reusable parameterized query structs built from the same result-builder DSL. The accepted target requirement is `@SQLBuilder var query: SQL { get }`. A conforming value should expose its query declaratively, prepare directly through the ordinary SQL preparation pipeline, and itself be usable compositionally as a nested/subquery source wherever an ordinary SQL query is accepted. Do not create a parallel query engine or execution abstraction.
+3. **Compatibility/publication closure:** keep explicit `was -> became` guidance and deprecated symbol bridges accurate, then handle any remote repository rename, release/tag/publication, and ecosystem package updates as separately authorized work. Local source/package/docs/governance closure does not authorize remote mutation.
+4. **SQL conversion skill:** provide a maintained downstream skill that can transform raw SQL into the final result-builder representation and into the final raw/fluent SQL DSL representation. The published skill targets the canonical `SQL` API while retaining enough historical knowledge to migrate existing SwifQL call sites.
+5. **Documentation/publication consolidation:** continue promoting accepted declarative-query examples, reusable-query examples, migration examples, compatibility notes, and major-version stories into README/public docs/release notes as appropriate, using the public-content capture workflow rather than trying to reconstruct them after release.
 
-The `SQLQuery` capability is conceptually the immediate follow-up to result-builder query authoring because it packages that grammar into reusable parameterized values. Its final public spelling should be `SQLQuery`; if implementation sequencing makes the `SwifQL -> SQL` namespace migration happen first or in the same wave, do that rather than publishing a temporary public `SwifQLQuery` name that would immediately be renamed.
+The `SQLQuery` capability is the immediate next implementation wave after the local `SwifQL -> SQL` identity migration closes. Its final public spelling is `SQLQuery`; the accepted protocol shape requires `@SQLBuilder var query: SQL { get }`, so conformers can write clauses directly in the requirement body without an extra nested `SQL { ... }` wrapper. Do not publish or introduce `SwifQLQuery`.
 
 The target developer experience must preserve the following shape in detail:
 
@@ -93,7 +93,7 @@ struct UsersQuery: SQLQuery {
     let email: String?
     let roles: [Role]?
 
-    var query: SQL {
+    @SQLBuilder var query: SQL {
         Select {
             User.$id
             User.$email.as("emailAddress")
@@ -199,9 +199,9 @@ For this major-version line, every accepted source-breaking public change must b
 
 Canonical public spelling is `.duck`. Ordinary Duck query source remains SQL-shaped and dialect-transparent; Duck-only support does not automatically justify a `Duck...` public wrapper. Dialect-transparent rendering may adapt syntax/qualification/casing for the same exact SQL construct, but it must not become a portability facade that swaps differently named SQL constructs such as `decode` and `from_base64`. The first Duck closure has passed its support/compatibility/native-validation gates and `.duck` is now included in `SQLDialect.all`; future changes to that built-in collection still require explicit test-classification and compatibility review.
 
-A target PIVOT call should remain conceptually clean, e.g. `SwifQL.pivot(cities).on(cities.column("year"), in: 2000, 2010)...`, with dialect-specific qualification handled behind the DSL rather than exposed as wrapper objects.
+A target PIVOT call should remain conceptually clean, e.g. `SQL.root.pivot(cities).on(cities.column("year"), in: 2000, 2010)...`, with dialect-specific qualification handled behind the DSL rather than exposed as wrapper objects.
 
-For simplified PIVOT, native DuckDB v1.5.5 evidence already proves qualified ON/USING/GROUP BY/ORDER BY forms fail, explicit bound IN values work, bound LIMIT works with explicit IN, and no-IN dynamic PIVOT cannot be prepared as one C statement. The correct GROUP BY source remains a column path, but after `SwifQLable` existential erasure do not distort the established generic GROUP BY API with a fake PIVOT-only compile-time `KeyPathLastPath` restriction; preserve `KeyPathLastPath` as public compatibility surface for APIs that can truthfully own such static grammar constraints.
+For simplified PIVOT, native DuckDB v1.5.5 evidence already proves qualified ON/USING/GROUP BY/ORDER BY forms fail, explicit bound IN values work, bound LIMIT works with explicit IN, and no-IN dynamic PIVOT cannot be prepared as one C statement. The correct GROUP BY source remains a column path, but after `SQLable` existential erasure do not distort the established generic GROUP BY API with a fake PIVOT-only compile-time `KeyPathLastPath` restriction; preserve `KeyPathLastPath` as public compatibility surface for APIs that can truthfully own such static grammar constraints.
 
 The approved first `.duck` closure covers ordinary application/analytics/schema SQL, including views, and leaves administration/runtime families such as INSTALL/LOAD, secrets, broad PRAGMA/configuration, checkpoint/vacuum/analyze administration, variables, export/import, SHOW/DESCRIBE/SUMMARIZE convenience, and extension-specific universes for later typed waves. The generic SQL `name := expression` abstraction is also deferred; current closure work must not invent it indirectly.
 
@@ -209,7 +209,7 @@ The approved first `.duck` closure covers ordinary application/analytics/schema 
 
 The first Duck closure is implemented, native-/compatibility-validated, independently audited, and committed. Gate A bounded semantic render scopes and Gate B structural clause ownership are now production architecture rather than planning-only evidence. The structural SQL-region/set-result frame model, owner-sensitive GROUP BY/ORDER BY parts, PIVOT/UNPIVOT/MERGE support, first-closure DML/DDL/catalog/file-function surface, and `.duck` membership in `SQLDialect.all` are current source truth.
 
-The package now uses SwiftPM tools 6.3 with Swift 6 language mode. Release CI validates this line with Apple Swift 6.3.3 while intentionally preserving non-Sendable query/bind graphs where their semantics are not truthfully Sendable. Consumer actor boundaries normalize on caller isolation and move only consumer-owned checked-Sendable snapshots across actors; this is guidance for consumers, not a new parallel SwifQL preparation architecture.
+The package now uses SwiftPM tools 6.3 with Swift 6 language mode. Release CI validates this line with Apple Swift 6.3.3 while intentionally preserving non-Sendable query/bind graphs where their semantics are not truthfully Sendable. Consumer actor boundaries normalize on caller isolation and move only consumer-owned checked-Sendable snapshots across actors; this is guidance for consumers, not a new parallel SQL preparation architecture.
 
 Future Duck administration/runtime waves and the deferred generic SQL `name := expression` abstraction remain separate work. Any new shared rendering/preparation/composition primitive still requires the normal architecture/research/audit gates; completed first-closure evidence is not blanket permission to widen Duck claims or redesign established PostgreSQL/MySQL behavior.
 

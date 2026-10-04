@@ -1,6 +1,6 @@
 # External Evidence and Reference Projects
 
-SwifQL currently has no package dependencies in `Package.swift`. Do not invent dependency or reference-project entries for the package.
+SQL currently has no package dependencies in `Package.swift`. Do not invent dependency or reference-project entries for the package.
 
 External repositories may be supplied transiently for research, comparison, API inspection, or style extraction. Stable documentation must not preserve machine-local checkout paths, sibling-layout assumptions, branch or commit provenance, sampled evidence inventories, or instructions to follow another project merely as provenance. Concrete provenance belongs in `.artifacts/**`.
 

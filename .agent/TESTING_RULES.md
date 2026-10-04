@@ -1,10 +1,10 @@
 # Testing and Validation Rules
 
-This file defines SwifQL testing policy. Architecture-specific assertions remain governed by the owning architecture document routed through `.agent/ARCH_INDEX.md`; this file does not define architecture IDs or duplicate detailed preparation or dialect contracts.
+This file defines SQL testing policy. Architecture-specific assertions remain governed by the owning architecture document routed through `.agent/ARCH_INDEX.md`; this file does not define architecture IDs or duplicate detailed preparation or dialect contracts.
 
 ## Swift Testing framework
 
-- Swift Testing is the normal and required test framework for the SwifQL test target.
+- Swift Testing is the normal and required test framework for the SQL test target.
 - New tests import `Testing` and use a human-readable behavior name with `@Test("...")`.
 - Use `#expect(...)` for normal assertions.
 - Use `Issue.record(...)` for an explicit unexpected or impossible branch when a direct expectation or throwing-test flow is not cleaner.
@@ -60,7 +60,7 @@ Classify every SQL-rendering test before writing expectations:
 - The same capability across multiple dialects with different rendering uses explicit expectations for every affected implemented dialect.
 - An intentionally dialect-specific capability uses explicit expectations only for dialects where that capability is intentionally supported or rendered.
 
-Omission of an implemented dialect must be deliberate, not accidental. Adding a new dialect requires auditing both every `check(..., all:)` case and every explicit-dialect case. Rendered SQL is regression evidence for SwifQL rendering; it does not prove server-side semantic support of a feature.
+Omission of an implemented dialect must be deliberate, not accidental. Adding a new dialect requires auditing both every `check(..., all:)` case and every explicit-dialect case. Rendered SQL is regression evidence for SQL rendering; it does not prove server-side semantic support of a feature.
 
 ## Bindings and deterministic output
 
@@ -99,7 +99,7 @@ When binding behavior changes, validate the bind placeholder query, values order
 
 DESIGN-037 keeps SQL composition fragment-first. Do not create compile-negative tests merely to enforce whole-statement SQL validity, clause ordering, statement completeness, or the standalone placement of a renderable SQL fragment; those concerns belong to the target database/parser/driver.
 
-The normal SwifQL test target is the default durable home for compile-positive API and exact rendering/binding regressions. A separate normal-import downstream fixture is required when repository-local tests cannot observe the same cross-module overload or result-builder boundary.
+The normal SQL test target is the default durable home for compile-positive API and exact rendering/binding regressions. A separate normal-import downstream fixture is required when repository-local tests cannot observe the same cross-module overload or result-builder boundary.
 
 A dedicated compile-negative harness is exceptional, not a default layer. Add one only after a concrete Swift/API invariant has been independently confirmed, cannot be represented as an ordinary positive/runtime regression, and cannot be protected adequately by a normal-import external fixture. Exact compiler diagnostic wording is never the contract, and compiler/toolchain/module infrastructure failure must never be accepted as an expected semantic rejection.
 
@@ -107,9 +107,9 @@ The current DESIGN-037 re-adjudication found no justified compile-negative contr
 
 ## Downstream compatibility fixtures
 
-Repository-local tests cannot see private extension code used by real consumers. Substantial changes to core composition, public protocols, operators, path types, `SwifQLable.parts`, or dialect hooks therefore require a temporary external consumer fixture when compatibility risk is material.
+Repository-local tests cannot see private extension code used by real consumers. Substantial changes to core composition, public protocols, operators, path types, `SQLable.parts`, or dialect hooks therefore require a temporary external consumer fixture when compatibility risk is material.
 
-The fixture should import SwifQL normally and exercise representative patterns such as `extension SwifQLable` fluent helpers, custom Swift operators that compose `parts`, public helper-protocol conformances such as `KeyPathLastPath`, a custom `SQLDialect` subclass overriding established hooks, and incremental PostgreSQL/MySQL query construction.
+The fixture should import SQL normally and exercise representative patterns such as `extension SQLable` fluent helpers, custom Swift operators that compose `parts`, public helper-protocol conformances such as `KeyPathLastPath`, a custom `SQLDialect` subclass overriding established hooks, and incremental PostgreSQL/MySQL query construction.
 
 If a new internal design breaks representative downstream extension code, treat the design as blocked unless the old public contract itself is explicitly and independently approved for change. The fixture protects established users; it is not an excuse to preserve a bad new API.
 
@@ -120,14 +120,14 @@ When semantic render scopes or another contextual-rendering mechanism is introdu
 Cover, as applicable:
 
 - the same valid query written as one fluent chain;
-- incremental `SwifQLable` variable reassignment with conditional clause inclusion;
+- incremental `SQLable` variable reassignment with conditional clause inclusion;
 - scoped expressions/fragments returned from helper functions and combined later;
 - nested functions/subqueries while an outer render scope remains active for the relevant descendants;
 - nested scopes with correct parent restoration;
 - placeholder/value ordering identical to the equivalent unscoped composition rules;
 - unaffected PostgreSQL/MySQL output remaining byte-for-byte stable.
 
-If render scopes expose a public downstream extension surface, add a temporary external consumer compile fixture that imports SwifQL normally and proves the intended extension pattern without `@testable import`. If custom `SQLDialect` subclassing is part of that claimed extension contract, the fixture must prove construction/subclassing from another module rather than relying only on in-module tests.
+If render scopes expose a public downstream extension surface, add a temporary external consumer compile fixture that imports SQL normally and proves the intended extension pattern without `@testable import`. If custom `SQLDialect` subclassing is part of that claimed extension contract, the fixture must prove construction/subclassing from another module rather than relying only on in-module tests.
 
 ## Cross-dialect shared-primitive validation
 

@@ -1,6 +1,6 @@
 # DSL Design and UX
 
-This document is the sole owner of SwifQL's durable public-API design and developer-experience principles. It explains how SwifQL should feel to use, how new SQL surfaces should be modeled, and how to decide whether an API belongs in the generic DSL, a dialect-specific surface, a semantic convenience layer, or an explicit raw escape hatch.
+This document is the sole owner of SQL's durable public-API design and developer-experience principles. It explains how SQL should feel to use, how new SQL surfaces should be modeled, and how to decide whether an API belongs in the generic DSL, a dialect-specific surface, a semantic convenience layer, or an explicit raw escape hatch.
 
 Detailed part composition lives in `DSL_COMPOSITION.md`. Dialect rendering mechanics live in `DIALECT_RENDERING.md`. Preparation mechanics live in `QUERY_PREPARATION.md`. Builder state/materialization lives in `BUILDERS_AND_QUERY_PARTS.md`.
 
@@ -15,13 +15,13 @@ If a proposal violates either gate, reject or redesign it before implementation 
 
 ## DESIGN-001 — SQL-first mental model
 
-SwifQL is type-safe Swift for writing SQL. It is not an ORM, database abstraction language, or semantic query language that hides SQL behind unrelated concepts.
+SQL is type-safe Swift for writing SQL. It is not an ORM, database abstraction language, or semantic query language that hides SQL behind unrelated concepts.
 
 The primary user mental model is:
 
-> I already know the SQL dialect. SwifQL lets me write that SQL safely and compositionally in Swift.
+> I already know the SQL dialect. SQL lets me write that SQL safely and compositionally in Swift.
 
-A database programmer should be able to read a SwifQL query and predict the generated SQL without learning hidden translation rules.
+A database programmer should be able to read an SQL DSL query and predict the generated SQL without learning hidden translation rules.
 
 ## DESIGN-002 — Public API mirrors SQL vocabulary
 
@@ -34,8 +34,8 @@ When SQL grammar is only a sequence of independently meaningful keywords or modi
 Preferred direction for pure keyword composition:
 
 ```swift
-SwifQL.create.or.replace.table
-SwifQL.insert.or.ignore.into
+SQL.root.create.or.replace.table
+SQL.root.insert.or.ignore.into
 ```
 
 Do not add phrase-collapsing APIs such as `orReplace` or `insertOrIgnoreInto` merely to concatenate a fixed sequence of SQL keywords. Otherwise the DSL becomes a fluent wrapper whose API surface grows as the Cartesian product of keyword combinations instead of remaining direct SQL composition.
@@ -110,8 +110,8 @@ Dialect-specific support does **not** automatically justify a database-prefixed 
 
 Examples of preferred direction:
 
-- `SwifQL.pivot(...)`, not a database-prefixed PIVOT entry point;
-- `SwifQL.merge(...)`, not a database-prefixed MERGE entry point;
+- `SQL.root.pivot(...)`, not a database-prefixed PIVOT entry point;
+- `SQL.root.merge(...)`, not a database-prefixed MERGE entry point;
 - `Path.Catalog(...)` when the concept being modeled is a catalog rather than the database product itself;
 - clean `Fn.*` / `Type.*` symbols whose exact support is documented/tested per dialect.
 
@@ -132,7 +132,7 @@ Its name must make that semantic/convenience role obvious.
 Existing examples include:
 
 - `Type.auto(...)`
-- `OrderByItem.random` / `SwifQLHybridOperator.random`.
+- `OrderByItem.random` / `SQLHybridOperator.random`.
 
 A semantic convenience may render dialect-specific syntax only when it names a genuinely semantic intent rather than collapsing distinct exact SQL constructs. Each dialect branch must be explicit and tested. Legacy conveniences do not authorize creating new hidden translations in SQL-named APIs.
 
@@ -146,7 +146,7 @@ Raw/custom APIs are escape hatches, not the implementation strategy for ordinary
 
 ## DESIGN-004 — Transparency over magical portability
 
-SwifQL does not promise that every API is portable to every database.
+SQL does not promise that every API is portable to every database.
 
 Prefer a truthful SQL API with an explicit dialect support boundary over a generic-looking API that approximates another database's feature. A dialect-specific support boundary does not by itself require a database-prefixed Swift name; DESIGN-014 governs the user-facing shape.
 
@@ -164,13 +164,13 @@ Mechanical rendering by the historical non-validating preparation pipeline is no
 
 ## DESIGN-005 — Composability before new abstraction
 
-Before adding a new builder or fluent API, verify whether existing `SwifQLable` composition already expresses the exact SQL naturally.
+Before adding a new builder or fluent API, verify whether existing `SQLable` composition already expresses the exact SQL naturally.
 
 Prefer reusing the existing DSL when the resulting Swift remains clear and faithful to SQL.
 
 Examples discovered during DuckDB design:
 
-- FROM-first SQL is already naturally representable as `SwifQL.from(...).select(...)`; a separate FROM-first builder would duplicate the DSL.
+- FROM-first SQL is already naturally representable as `SQL.root.from(...).select(...)`; a separate FROM-first builder would duplicate the DSL.
 - `GROUP BY ALL` is naturally representable through existing composition when `ALL` is already an exact SQL part.
 
 Create a new API only when it adds one of these real benefits:
@@ -207,7 +207,7 @@ Useful patterns:
 - focused `SQLDialect` subclass overrides for true dialect hooks;
 - exact SQL function names through `Fn.Name` and direct typed-part composition;
 - historical specialized APIs such as `PostgresArray` are compatibility evidence only, not naming precedent for new dialect surfaces;
-- semantic source organization under `Dialect/`, `Functions/`, `Builders/`, `Parts/`, `Path/`, and `SwifQLable+Parts/` rather than a separate mini-framework per database;
+- semantic source organization under `Dialect/`, `Functions/`, `Builders/`, `Parts/`, `Path/`, and `SQLable+Parts/` rather than a separate mini-framework per database;
 - focused exact-SQL tests plus realistic composed queries.
 
 Copy the architecture/style, not PostgreSQL semantics or historical quirks. Current official documentation for the target database is authoritative for target-dialect SQL.
@@ -227,11 +227,11 @@ Good uses of types include:
 
 Avoid type systems that replace familiar SQL vocabulary with a second conceptual language.
 
-A user who knows SQL should not need to learn an unrelated SwifQL ontology before being productive.
+A user who knows SQL should not need to learn an unrelated SQL DSL ontology before being productive.
 
 ## DESIGN-009 — Values and identifiers remain explicit
 
-SwifQL distinguishes SQL structure from dynamic data.
+SQL distinguishes SQL structure from dynamic data.
 
 - Dynamic values should use the normal value/binding pipeline when SQL grammar permits.
 - Identifiers use identifier-aware typed parts and dialect quoting.
@@ -277,7 +277,7 @@ See `TESTING_RULES.md` for the detailed testing policy.
 
 ## DESIGN-012 — Swift naming is SQL-shaped camelCase, SQL spelling stays exact
 
-SwifQL is an SQL DSL. Its public Swift names should remain visually and lexically close to the SQL a database engineer already knows while still following Swift camelCase syntax.
+SQL is an SQL DSL. Its public Swift names should remain visually and lexically close to the SQL a database engineer already knows while still following Swift camelCase syntax.
 
 Canonical Swift naming therefore **preserves SQL vocabulary while exposing the useful internal components of that vocabulary**. CamelCase may split a glued database token into recognizable SQL-derived pieces. True abbreviations use one consistent position-aware casing rule, while ordinary shortened fragments remain ordinary camelCase components. The API must not translate an SQL fragment into a different English word.
 
@@ -342,7 +342,7 @@ When a new or existing public name is reviewed, use this decision order:
 3. identify clear internal boundaries inside glued SQL tokens, including approved compound splits such as `recordSet`, `TSVector`, `TimestampTZ`, `subStr`, and `strPos`;
 4. classify each component as a true abbreviation, an ordinary shortened fragment, or a compound lexical piece; apply position-aware abbreviation casing, the explicit `Id` exception, and ordinary camelCase to non-abbreviations;
 5. never replace an SQL-derived fragment with a different English synonym;
-6. compare neighboring SwifQL APIs for project consistency;
+6. compare neighboring SQL APIs for project consistency;
 7. confirm that a database engineer can still recognize the exact SQL construct from the Swift name;
 8. only then decide compatibility handling from release history.
 
@@ -368,7 +368,7 @@ Before implementing a new public API, answer these questions in order:
 10. What realistic query proves the API composes naturally?
 11. Could the implementation change existing PostgreSQL/MySQL output or source compatibility?
 12. Is the target-dialect behavior established by current official documentation rather than similarity or memory?
-13. Could a downstream user reasonably need to add their own value, helper, dialect behavior, or protocol conformance here without changing SwifQL itself, and does the proposed public shape preserve that extension path?
+13. Could a downstream user reasonably need to add their own value, helper, dialect behavior, or protocol conformance here without changing SQL itself, and does the proposed public shape preserve that extension path?
 
 If these questions do not have clear answers, research/plan the API further before implementation.
 
@@ -378,7 +378,7 @@ Dialect support should normally be visible at preparation/execution time, not th
 
 Rules:
 
-- when the user is expressing an SQL concept, prefer the clean SQL-shaped SwifQL API regardless of which supported dialect will render it;
+- when the user is expressing an SQL concept, prefer the clean SQL-shaped API regardless of which supported dialect will render it;
 - use the selected `SQLDialect`, structured parts, dialect hooks, or other reviewed contextual rendering mechanisms to adapt syntax/qualification where the SQL concept is the same but the dialect grammar differs;
 - do not make users replace normal table/column/function/order expressions with database-prefixed wrappers merely to satisfy a renderer limitation;
 - database-specific implementation types may exist when needed, but ordinary call sites should not have to name them when type inference or a clean generic entry point can hide them;
@@ -394,9 +394,9 @@ Public query APIs must remain correct when users compose queries incrementally r
 Equivalent query structure must preserve equivalent semantics when assembled through any reasonable combination of:
 
 - a single fluent chain;
-- `var query: SwifQLable` reassignment;
+- `var query: SQLable` reassignment;
 - `if` / `guard` controlled clause inclusion;
-- helper methods returning `SwifQLable` fragments or expressions;
+- helper methods returning `SQLable` fragments or expressions;
 - fragments created in different methods/files and combined later;
 - nested expressions, functions, subqueries, and builders.
 
@@ -408,7 +408,7 @@ For the current Duck PIVOT/UNPIVOT/MERGE design wave, bounded semantic render sc
 
 Focused semantic statement representation remains only a future architecture escalation boundary for genuinely different evidence, not a fallback that an implementation task may choose automatically.
 
-This does not make invalid SQL valid. If a caller conditionally omits a required parent construct but still appends a clause that only makes sense inside that construct, the resulting query may correctly be invalid. Likewise, SwifQL is not required to distort an established global SQL API merely to make every dialect-specific invalid form unrepresentable at Swift compile time after semantic ownership has been erased. If a stricter dialect grammar cannot be expressed truthfully without changing ordinary overload behavior, adding hidden routing, or exposing renderer accommodation in user source, preserve the direct SQL DSL and let target-dialect validation reject invalid SQL. The invariant is that equivalent valid composition shapes render identically, not that SwifQL guesses or proves all grammar.
+This does not make invalid SQL valid. If a caller conditionally omits a required parent construct but still appends a clause that only makes sense inside that construct, the resulting query may correctly be invalid. Likewise, SQL is not required to distort an established global SQL API merely to make every dialect-specific invalid form unrepresentable at Swift compile time after semantic ownership has been erased. If a stricter dialect grammar cannot be expressed truthfully without changing ordinary overload behavior, adding hidden routing, or exposing renderer accommodation in user source, preserve the direct SQL DSL and let target-dialect validation reject invalid SQL. The invariant is that equivalent valid composition shapes render identically, not that SQL guesses or proves all grammar.
 
 ## DESIGN-016 - Preserve established public extension contracts deliberately
 
@@ -422,7 +422,7 @@ New internal architecture should expose a small public extension point when that
 
 ## DESIGN-017 - Existing users do not pay for internal evolution
 
-SwifQL is an established library whose users may own hundreds or thousands of queries and private extension code. Repository-visible call sites are only a fraction of the real compatibility surface.
+SQL is an established library whose users may own hundreds or thousands of queries and private extension code. Repository-visible call sites are only a fraction of the real compatibility surface.
 
 Therefore:
 
@@ -434,15 +434,15 @@ Therefore:
 - a major release is not a waiver for avoidable breakage. Use a breaking change only when the old public contract itself must change for a demonstrated correctness/design reason and no clean source-compatible path exists;
 - when a breaking change is genuinely unavoidable, document the exact reason, migration path, and downstream-extension impact before implementation.
 
-The standard is not merely "our test suite still passes." The standard is that a normal user updating SwifQL should not inherit a debugging project because the library changed its internals.
+The standard is not merely "our test suite still passes." The standard is that a normal user updating the library should not inherit a debugging project because the library changed its internals.
 
 An explicitly approved major-version structural composition migration may change the observable `parts` tree when that is required to preserve SQL-region ownership through existential/copy/nested composition. In that case ordinary SQL-shaped query call sites should remain source-compatible, while downstream code that assumes flattened statement/clause parts or manually appends continuation parts receives a documented migration to the public structural composition API.
 
 ## DESIGN-018 - Downstream extensibility is a first-class API requirement
 
-SwifQL is intentionally extendable from application code and downstream packages. A user should not need to fork SwifQL or submit a pull request merely to add a legitimate private SQL/dialect/semantic value that the core library does not need to know exhaustively.
+SQL is intentionally extendable from application code and downstream packages. A user should not need to fork SQL or submit a pull request merely to add a legitimate private SQL/dialect/semantic value that the core library does not need to know exhaustively.
 
-When a public semantic category is open in principle, do not model it as a closed Swift `enum` merely because SwifQL currently knows only a few values. Prefer an extensible public value-semantic type with a public initializer and stable public identity representation, with library-known values exposed as static conveniences. A namespaced string-backed identity is an appropriate pattern when arbitrary downstream names are meaningful and the core can carry unknown values opaquely.
+When a public semantic category is open in principle, do not model it as a closed Swift `enum` merely because SQL currently knows only a few values. Prefer an extensible public value-semantic type with a public initializer and stable public identity representation, with library-known values exposed as static conveniences. A namespaced string-backed identity is an appropriate pattern when arbitrary downstream names are meaningful and the core can carry unknown values opaquely.
 
 Illustrative shape:
 
@@ -470,13 +470,13 @@ extension SemanticRole {
 }
 ```
 
-Use a closed `enum` only when the modeled SQL grammar/domain is genuinely exhaustive and an unknown downstream value would be invalid or unsafe rather than merely unknown to SwifQL.
+Use a closed `enum` only when the modeled SQL grammar/domain is genuinely exhaustive and an unknown downstream value would be invalid or unsafe rather than merely unknown to SQL.
 
 For optional semantic ownership, prefer absence (`nil`) for the ordinary/no-owner case instead of reserving a magic open-domain identity such as `"none"`, unless evidence shows that an explicit ordinary owner is materially required.
 
 The same extensibility rule applies to visibility. When a type, initializer, protocol hook, value wrapper, or structural helper is a plausible safe downstream extension point, prefer making that boundary public from the start instead of keeping it internal solely to minimize API surface. Public extensibility must remain value-semantic and must not expose mutable renderer/preparation internals or weaken safety invariants.
 
-Review downstream extensibility proactively. Existing users may maintain private `SwifQLable` helpers, custom parts/operators, path abstractions, protocol conformances, and `SQLDialect` subclasses that will never appear in this repository. Preserving their ability to extend SwifQL is part of the product design, not an accidental implementation detail.
+Review downstream extensibility proactively. Existing users may maintain private `SQLable` helpers, custom parts/operators, path abstractions, protocol conformances, and `SQLDialect` subclasses that will never appear in this repository. Preserving their ability to extend SQL is part of the product design, not an accidental implementation detail.
 
 ## DESIGN-019 - Cross-dialect architecture before dialect-triggered internals
 
@@ -505,9 +505,9 @@ A proposal fails this gate if supporting a foreseeable equivalent PostgreSQL/MyS
 
 ## DESIGN-020 - Declarative query authoring preserves SQL boolean grammar
 
-The future additive result-builder query-authoring surface has an accepted UX direction. This section defines durable public design semantics only; it does **not** claim that the result-builder query API is implemented yet.
+The additive result-builder query-authoring surface is implemented. This section defines its durable public design semantics.
 
-The builder remains a SQL-shaped authoring layer over the existing SwifQL composition/preparation model. It must not introduce a second predicate AST, hidden ORM-style semantics, or an alternate binding/rendering pipeline. The final major-version public root spelling is planned as `SQL { ... }`; current source/package identity remains `SwifQL` until the dedicated naming migration wave, so this section may describe final target source that is not yet compilable on the current branch.
+The builder remains a SQL-shaped authoring layer over the existing SQL composition/preparation model. It must not introduce a second predicate AST, hidden ORM-style semantics, or an alternate binding/rendering pipeline. The canonical package/module/root spelling is `SQL`, including `SQL { ... }` for declarative construction and `SQL.root` for fluent construction.
 
 The target query shape uses the established model/property-wrapper path surface rather than invented plain model-member pseudo-columns. For example:
 
@@ -568,7 +568,7 @@ WHERE "User"."isActive" = TRUE
   AND "User"."age" >= 18
 ```
 
-This matches the established SwifQL query-builder behavior where multiple stored WHERE predicates are emitted as the first `WHERE` predicate followed by `AND` predicates.
+This matches the established SQL query-builder behavior where multiple stored WHERE predicates are emitted as the first `WHERE` predicate followed by `AND` predicates.
 
 ### And and Or are explicit grouped boolean composition
 
@@ -876,7 +876,7 @@ The corresponding empty-collection behavior for future declarative `NotIn` remai
 
 ### Existing predicate operators remain first-class
 
-The declarative builder does not replace the established `SwifQLPredicate`, `&&`, or `||` APIs. Compact explicit boolean expressions remain valid:
+The declarative builder does not replace the established `SQLPredicate`, `&&`, or `||` APIs. Compact explicit boolean expressions remain valid:
 
 ```swift
 Where {
@@ -910,7 +910,7 @@ Use `And { ... }` / `Or { ... }` when explicit grouped structure, dynamic childr
 
 The eventual implementation must preserve these invariants:
 
-- reuse the existing `SwifQLable` / parts / preparation / binding pipeline rather than creating a parallel query or predicate renderer;
+- reuse the existing `SQLable` / parts / preparation / binding pipeline rather than creating a parallel query or predicate renderer;
 - preserve exact predicate source order and bound-value order;
 - make `Where`, `And`, and `Or` semantics independent of incidental result-builder implementation details;
 - support runtime omission without inserting synthetic SQL truth values;
@@ -1306,7 +1306,7 @@ FROM
     "Organization"
 ```
 
-The direct nested-statement form must be implemented by extending/reusing the existing `SwifQLStructuralFramePart` statement/set-result boundary model and root-frame-aware structural continuation contract. Clause children that belong to the open nested statement continue that statement frame; a new FROM item begins a new item boundary. The implementation must use typed/structural result-builder composition and must not rediscover statement ownership from previously rendered tokens, textual SQL, or ambient mutable "current subquery" state.
+The direct nested-statement form must be implemented by extending/reusing the existing `SQLStructuralFramePart` statement/set-result boundary model and root-frame-aware structural continuation contract. Clause children that belong to the open nested statement continue that statement frame; a new FROM item begins a new item boundary. The implementation must use typed/structural result-builder composition and must not rediscover statement ownership from previously rendered tokens, textual SQL, or ambient mutable "current subquery" state.
 
 An explicit nested root remains fully supported:
 
@@ -2144,7 +2144,7 @@ The focused downstream Swift compiler matrix resolved the original `QUERY-RB-015
 - qualification/backticks can force the imported declaration but are rejected as DSL spelling smell;
 - `All(...)` and `Some(...)` are individually clean, but mixing them with a uniquely renamed ANY would make one SQL quantifier family inconsistent.
 
-Therefore bare UpperCamel `Any` is not a candidate for the final public API. Subsequent compiler work also rejects bare `Any.sql(...)`. DESIGN-026 owns the maintainer-selected exception: exact-uppercase `ANY` for this one fundamental Swift collision, while non-conflicting `All` and `Some` retain normal SwifQL UpperCamel casing.
+Therefore bare UpperCamel `Any` is not a candidate for the final public API. Subsequent compiler work also rejects bare `Any.sql(...)`. DESIGN-026 owns the maintainer-selected exception: exact-uppercase `ANY` for this one fundamental Swift collision, while non-conflicting `All` and `Some` retain normal SQL UpperCamel casing.
 
 ### Next expression-design frontier
 
@@ -2214,7 +2214,7 @@ string_agg(
 
 with `separator` as the first bound value. If later aggregate arguments or ordering expressions contain bound values, the ordinary one-pass preparation traversal preserves their left-to-right structural order after that value.
 
-This is aggregate-body grammar, not query-level `ORDER BY` ownership. Reuse the existing ordering-item vocabulary where truthful, but do not route aggregate ordering through the statement/root-frame `SwifQLOrderByPart` owner merely because both spell SQL `ORDER BY`.
+This is aggregate-body grammar, not query-level `ORDER BY` ownership. Reuse the existing ordering-item vocabulary where truthful, but do not route aggregate ordering through the statement/root-frame `SQLOrderByPart` owner merely because both spell SQL `ORDER BY`.
 
 ### Aggregate DISTINCT owns the regular argument list
 
@@ -2315,10 +2315,10 @@ Existing raw/fluent composition remains available for callers who explicitly nee
 
 `count(*)` is an aggregate-star grammar form, not a synthetic zero-value argument and not `count(1)`.
 
-Current SwifQL can spell the exact star argument through the established star composition surface:
+Current SQL can spell the exact star argument through the established star composition surface:
 
 ```swift
-Fn.count(SwifQL.asterisk)
+Fn.count(SQL.root.asterisk)
 ```
 
 ```sql
@@ -2424,7 +2424,7 @@ The DSL preserves the literal SQL construct and lets the selected database's rea
 
 The eventual aggregate builder must:
 
-- lower into ordinary `SwifQLable` / `SwifQLPart` composition and the existing one-pass preparation/binding pipeline;
+- lower into ordinary `SQLable` / `SQLPart` composition and the existing one-pass preparation/binding pipeline;
 - represent regular arguments, plain DISTINCT ownership, aggregate-local ordering, and star grammar structurally enough that punctuation/ownership never depends on previous-token scanning;
 - preserve source-order binding through regular/direct arguments, aggregate-local ordering expressions, FILTER predicates, and later expression continuations;
 - keep query-level SELECT DISTINCT / DISTINCT ON ownership separate from aggregate DISTINCT;
@@ -2695,9 +2695,9 @@ lhs <@ rhs
 
 No replacement declarative wrapper is required merely for naming symmetry.
 
-### SQL collection && and || do not steal SwifQL's established boolean operators
+### SQL collection && and || do not steal SQL's established boolean operators
 
-PostgreSQL ARRAY and Duck LIST support literal collection overlap `&&` and concatenation `||`. SwifQL already assigns the same Swift tokens to boolean AND/OR over `SwifQLable`, so changing those overloads would silently break established source semantics.
+PostgreSQL ARRAY and Duck LIST support literal collection overlap `&&` and concatenation `||`. SQL already assigns the same Swift tokens to boolean AND/OR over `SQLable`, so changing those overloads would silently break established source semantics.
 
 The existing `.overlaps` surface also cannot be reused because it represents the distinct SQL keyword `OVERLAPS`.
 
@@ -2758,7 +2758,7 @@ The naming rule is therefore:
 - when an exact SQL keyword collides with a fundamental Swift language construct and neither ordinary UpperCamel spelling nor clean namespace-member lookup is possible, an exact uppercase SQL callable is permitted as an explicit exception;
 - do not propagate that exception to neighboring SQL names that have no Swift conflict.
 
-### Quantified comparisons keep ordinary SwifQL casing except the exceptional ANY collision
+### Quantified comparisons keep ordinary SQL casing except the exceptional ANY collision
 
 The original UpperCamel `Any(...)` and attempted bare `Any.sql(...)` directions are compiler-rejected:
 
@@ -2775,7 +2775,7 @@ value > All(operand)
 value == Some(operand)
 ```
 
-`ANY` is the exceptional exact-SQL uppercase callable forced by Swift's fundamental `Any` collision. `All` and `Some` have no equivalent conflict and therefore stay in the normal public SwifQL UpperCamel callable style. Do not uppercase `ALL` / `SOME` merely for visual family symmetry, and do not lowercase `all` / `some` merely to match the workaround required for ANY.
+`ANY` is the exceptional exact-SQL uppercase callable forced by Swift's fundamental `Any` collision. `All` and `Some` have no equivalent conflict and therefore stay in the normal public SQL UpperCamel callable style. Do not uppercase `ALL` / `SOME` merely for visual family symmetry, and do not lowercase `all` / `some` merely to match the workaround required for ANY.
 
 Final cross-toolchain compiler evidence proves the exact asymmetric family is clean: `ANY(...)` / `ANY { ... }`, `All(...)` / `All { ... }`, and `Some(...)` / `Some { ... }` all compile in one imported module across Swift 6.2.3, Xcode/Swiftly 6.3.3, and Swift 6.4 while ordinary Swift `Any`, existential `any`, and opaque `some` syntax remain unaffected.
 
@@ -2917,7 +2917,7 @@ The following former open decisions are resolved by DESIGN-026:
 - QUERY-RB-016: SQL ARRAY namespace uses compiler-validated grammar-role members on a constrained extension of the real Swift `Array`: `Array.items(...)` / `Array.items { ... }` for `ARRAY[...]`, and `Array.subquery(...)` / `Array.subquery { ... }` for `ARRAY(subquery)`;
 - QUERY-RB-017: no new misleading alias for collection `&&` / `||`; preserve boolean operators and use exact raw operator composition;
 - QUERY-RB-018: structural lowercase `slice(...)` owns bracket-slice syntax, with Duck-only step capability explicit;
-- QUERY-RB-020: bare UpperCamel `Any` and bare `Any.sql(...)` are compiler-rejected; compiler-validated public spelling is exceptional uppercase `ANY(...)` / `ANY { ... }`, while non-conflicting `All(...)` / `All { ... }` and `Some(...)` / `Some { ... }` retain normal SwifQL casing.
+- QUERY-RB-020: bare UpperCamel `Any` and bare `Any.sql(...)` are compiler-rejected; compiler-validated public spelling is exceptional uppercase `ANY(...)` / `ANY { ... }`, while non-conflicting `All(...)` / `All { ... }` and `Some(...)` / `Some { ... }` retain normal SQL casing.
 
 QUERY-RB-019 remains an implementation/extensibility decision for the eventual generic custom-aggregate builder entry point. It does not block the accepted Expression Frontier 01 semantics or the start of Expression Frontier 02.
 
@@ -2925,7 +2925,7 @@ QUERY-RB-019 remains an implementation/extensibility decision for the eventual g
 
 Expression Frontier 02 keeps exact database grammar visible instead of creating one portable JSON/path/range abstraction. The accepted architecture deliberately separates constructs that happen to operate on related values but own different SQL grammar.
 
-Production implementation remains a later planned/audited wave. All accepted constructs must lower into ordinary `SwifQLable` / `SwifQLPart` composition and the existing preparation/binding pipeline. No second expression AST, parser, or renderer is authorized.
+Production implementation remains a later planned/audited wave. All accepted constructs must lower into ordinary `SQLable` / `SQLPart` composition and the existing preparation/binding pipeline. No second expression AST, parser, or renderer is authorized.
 
 ### JSON is three grammar families, not one API
 
@@ -3054,7 +3054,7 @@ EmptyArrayOnError()
 EmptyObjectOnError()
 ```
 
-These exact call sites compile cleanly in an imported public module across Xcode Swift 6.2.3, Xcode/Swiftly Swift 6.3.3, and Xcode Swift 6.4. `Passing(..., as: ...)` requires no escaped declaration label. Mixed builder bodies, including runtime `if`, compile cleanly. Real SwifQL source has no public declaration collision with this vocabulary.
+These exact call sites compile cleanly in an imported public module across Xcode Swift 6.2.3, Xcode/Swiftly Swift 6.3.3, and Xcode Swift 6.4. `Passing(..., as: ...)` requires no escaped declaration label. Mixed builder bodies, including runtime `if`, compile cleanly. Real SQL source has no public declaration collision with this vocabulary.
 
 The nodes mirror SQL token order rather than wrapping behavior inside reversed mini-languages such as `OnEmpty(.default(...))`. Owner-specific builders must admit only grammar-valid subsets during implementation planning; shared names such as `ErrorOnError()` may appear in multiple owners where SQL genuinely reuses that exact behavior.
 
@@ -3102,7 +3102,7 @@ The helper owns parentheses unconditionally. That makes composition independent 
 
 Binding remains ordinary left-to-right preparation. No precedence table, renderer branch, token-history scan, or new expression AST is required.
 
-Use existing typed Swift/SwifQL operators when their meaning is already truthful. For example, ordinary comparison operators and established containment compatibility remain preferred over `.op(.custom(...))`.
+Use existing typed Swift/SQL operators when their meaning is already truthful. For example, ordinary comparison operators and established containment compatibility remain preferred over `.op(.custom(...))`.
 
 The existing verbose form:
 
@@ -3591,10 +3591,10 @@ Typed result-builder states are authoring-time composition machinery only.
 
 They must finalize into the existing:
 
-- `SwifQLable`
-- `SwifQLPart`
-- `SwifQLStructuralFramePart`
-- `_SwifQLStructuralComposition`
+- `SQLable`
+- `SQLPart`
+- `SQLStructuralFramePart`
+- `_SQLStructuralComposition`
 - preparation/binding pipeline
 
 They do not become a second query AST or renderer.
@@ -3800,22 +3800,22 @@ UnionByName { ... }
 UnionAllByName { ... }
 ```
 
-`SetUnion` emits the exact SQL `UNION` operator. This one name differs from the SQL keyword because the released public `Union` class already occupies that Swift declaration name. Keep the direct trailing-closure rule for every operation; do not replace the primary branch body with labeled closure forms. A separately assembled right operand uses ordinary `SwifQL` / `SwifQLable` composition rather than a second public query-wrapper concept:
+`SetUnion` emits the exact SQL `UNION` operator. This one name differs from the SQL keyword because the released public `Union` class already occupies that Swift declaration name. Keep the direct trailing-closure rule for every operation; do not replace the primary branch body with labeled closure forms. A separately assembled right operand uses ordinary `SQL` / `SQLable` composition rather than a second public query-wrapper concept:
 
 ```swift
-let rhs = SwifQL {
+let rhs = SQL {
     Select { ArchivedUser.$id }
     From { ArchivedUser.table }
 }
 
-SwifQL {
+SQL {
     Select { User.$id }
     From { User.table }
     SetUnion(rhs)
 }
 ```
 
-This is intentional under DESIGN-001 and DESIGN-015. The declarative type-state layer owns whether a set-operation continuation may attach to the current left query result and how the resulting set expression is grouped. It does not certify that an arbitrary right-hand `SwifQLable` is a database-valid complete query. A caller may supply a fragment or otherwise invalid SQL as the operand; target-dialect/database validation may reject the rendered result. Extracting an inline right operand into a variable, helper, or separate file must not require switching from `SwifQL` to a second public “complete query” abstraction.
+This is intentional under DESIGN-001 and DESIGN-015. The declarative type-state layer owns whether a set-operation continuation may attach to the current left query result and how the resulting set expression is grouped. It does not certify that an arbitrary right-hand `SQLable` is a database-valid complete query. A caller may supply a fragment or otherwise invalid SQL as the operand; target-dialect/database validation may reject the rendered result. Extracting an inline right operand into a variable, helper, or separate file must not require switching from ordinary `SQL` composition to a second public “complete query” abstraction.
 
 ### Existing Union compatibility remains intact
 
@@ -3838,22 +3838,22 @@ SetUnion {
 }
 ```
 
-The continuation request keeps its distinct `SetUnion` name/type, but its right operand may be an ordinary `SwifQLable`. `SwifQL { ... }` is the canonical way to assemble a separate right operand:
+The continuation request keeps its distinct `SetUnion` name/type, but its right operand may be an ordinary `SQLable`. `SQL { ... }` is the canonical way to assemble a separate right operand:
 
 ```swift
-let rhs = SwifQL {
+let rhs = SQL {
     Select { ArchivedUser.$id }
     From { ArchivedUser.table }
 }
 
-SwifQL {
+SQL {
     Select { User.$id }
     From { User.table }
     SetUnion(rhs)
 }
 ```
 
-The exact public overloads and their result-builder selection must still pass a fresh imported-module feasibility gate before implementation. That gate must validate the `Union` name collision boundary, released constructor coexistence, all eight operation transitions, optional continuation behavior, and left-side ownership negatives. It does not require arbitrary or erased `SwifQLable` operands to fail at compile time. Accepting such operands is a deliberate SQL-first/composition tradeoff: SwifQL preserves the requested structure, while the caller and target database remain responsible for whether the resulting SQL is meaningful and valid.
+The exact public overloads and their result-builder selection must still pass a fresh imported-module feasibility gate before implementation. That gate must validate the `Union` name collision boundary, released constructor coexistence, all eight operation transitions, optional continuation behavior, and left-side ownership negatives. It does not require arbitrary or erased `SQLable` operands to fail at compile time. Accepting such operands is a deliberate SQL-first/composition tradeoff: SQL preserves the requested structure, while the caller and target database remain responsible for whether the resulting SQL is meaningful and valid.
 
 ### Set continuation applies only to a complete open query result
 
@@ -3862,7 +3862,7 @@ A declarative set-operation continuation requires one complete open query result
 Valid:
 
 ```swift
-SwifQL {
+SQL {
     Select { User.$id }
     From { User.table }
 
@@ -3879,7 +3879,7 @@ Invalid continuation ownership includes:
 - two adjacent base results without a set operator;
 - continuation into a finalized/closed nested result.
 
-These are left-side ownership errors: the builder must know which open query result receives the continuation. Right-operand SQL validity is deliberately outside that guarantee. The design does not require compile-time rejection of an empty or otherwise nonsensical right operand when ordinary `SwifQLable` composition can represent it; such input may render SQL rejected by the target database. Left-side continuation ownership remains encoded structurally through the DESIGN-028 typed-current principle rather than through runtime token inspection.
+These are left-side ownership errors: the builder must know which open query result receives the continuation. Right-operand SQL validity is deliberately outside that guarantee. The design does not require compile-time rejection of an empty or otherwise nonsensical right operand when ordinary `SQLable` composition can represent it; such input may render SQL rejected by the target database. Left-side continuation ownership remains encoded structurally through the DESIGN-028 typed-current principle rather than through runtime token inspection.
 
 ### Chaining is deterministic left fold
 
@@ -3888,7 +3888,7 @@ Source-order continuation means the next set operation applies to the complete r
 For:
 
 ```swift
-SwifQL {
+SQL {
     QueryA
 
     SetUnion {
@@ -3939,7 +3939,7 @@ Rationale:
 If the user wants the right side to be a nested set result, they express that structure directly:
 
 ```swift
-SwifQL {
+SQL {
     QueryA
 
     SetUnion {
@@ -3968,7 +3968,7 @@ This is structural ownership, not hidden precedence inference.
 
 ### Every binary operand is structurally parenthesized
 
-Each supplied set-operation operand lowers through the existing statement/set-result frame model as its own parenthesized operand. Valid SQL use expects that operand to represent a query result, but SwifQL does not add a separate public completeness proof for the right-hand value.
+Each supplied set-operation operand lowers through the existing statement/set-result frame model as its own parenthesized operand. Valid SQL use expects that operand to represent a query result, but SQL does not add a separate public completeness proof for the right-hand value.
 
 This preserves branch-local ownership of:
 
@@ -3987,7 +3987,7 @@ No new precedence table, token scan, or set-result AST is required.
 A dynamic branch may own the continuation itself:
 
 ```swift
-SwifQL {
+SQL {
     QueryA
 
     if includeArchive {
@@ -4004,9 +4004,9 @@ The optional request must remain statically owned through a dedicated continuati
 
 This differs from placing the owner inside a finalized branch and attempting to continue it from outside, which remains invalid under DESIGN-028.
 
-### Right operand uses ordinary SwifQL composition
+### Right operand uses ordinary SQL composition
 
-The `SetUnion` request may carry its right operand as ordinary `SwifQLable` / parts composition. No second public “complete query” carrier is required.
+The `SetUnion` request may carry its right operand as ordinary `SQLable` / parts composition. No second public “complete query” carrier is required.
 
 This value erasure is acceptable because the right operand is payload, not the current continuation owner. The left/current result state and set-operation kind remain statically typed through ownership-sensitive attachment, which is the DESIGN-028 guarantee that matters here. No runtime owner lookup or continuation validation is introduced, and no right-operand provenance type leaks into the public developer experience.
 
@@ -4018,7 +4018,7 @@ Do not map them to name-alignment rewrites in PostgreSQL/MySQL or synthesize NUL
 
 ### Compiler evidence boundary
 
-The public nominal `Union` type prevents a separate same-spelled top-level continuation factory: Swift 6.3.3 reports `invalid redeclaration of 'Union'`. A closure initializer on that class has static type `Union`, just like the released constructors. This is insufficient evidence for distinct typed attachment, so use a separate `SetUnion` request type. Its right operand may use ordinary `SwifQLable` composition. Validate the exact overloads, all eight operator transitions, existing constructor compatibility, optional branches, and left-side ownership negatives through fresh external `import SwifQL` clients before implementation. The 2026-09-29 evidence that `SetUnion(SwifQLable)` accepts arbitrary or erased fragments remains factually useful, but that permissiveness is no longer classified as an API defect: this correction deliberately preserves direct SwifQL composition and leaves right-operand SQL validity to the caller and target database.
+The public nominal `Union` type prevents a separate same-spelled top-level continuation factory: Swift 6.3.3 reports `invalid redeclaration of 'Union'`. A closure initializer on that class has static type `Union`, just like the released constructors. This is insufficient evidence for distinct typed attachment, so use a separate `SetUnion` request type. Its right operand may use ordinary `SQLable` composition. Validate the exact overloads, all eight operator transitions, existing constructor compatibility, optional branches, and left-side ownership negatives through fresh external `import SQL` clients before implementation. The 2026-09-29 evidence that `SetUnion(SQLable)` accepts arbitrary or erased fragments remains factually useful, but that permissiveness is no longer classified as an API defect: this correction deliberately preserves direct SQL composition and leaves right-operand SQL validity to the caller and target database.
 
 ### SELECT / Set-Result Frontier 04 closure
 
@@ -4321,10 +4321,10 @@ If the caller deliberately erases that value:
 
 ```swift
 let concrete: With = ...
-let erased: SwifQLable = concrete
+let erased: SQLable = concrete
 ```
 
-the erased value follows ordinary `SwifQLable` composition and does not retain a WITH-prefix ownership proof.
+the erased value follows ordinary `SQLable` composition and does not retain a WITH-prefix ownership proof.
 
 The builder must not inspect runtime type, rendered SQL, or stored parts to recover that proof. This follows DESIGN-028's general rule that deliberate type erasure may lose ownership-sensitive continuation state.
 
@@ -4429,7 +4429,7 @@ These guarantees are local to the declarative initializer call. Once constructio
 
 Semantically, each WITH item contributes one body payload inside `AS (...)`.
 
-The declarative initializer requires a body expression/payload to be present, but SwifQL does not introduce a second public “complete query” wrapper to certify that arbitrary body SQL is database-valid. Preassembled/helper query-producing `SwifQLable` composition should remain practical.
+The declarative initializer requires a body expression/payload to be present, but SQL does not introduce a second public “complete query” wrapper to certify that arbitrary body SQL is database-valid. Preassembled/helper query-producing `SQLable` composition should remain practical.
 
 This naturally composes with DESIGN-030:
 
@@ -4449,7 +4449,7 @@ Ownership-sensitive continuations inside a declaratively built body may remain t
 
 The released legacy initializer remains broader and may contain a historical `SwifQLable` payload that was not produced by the declarative item builder. Accepting that concrete `With` as a prefix item does not retroactively certify its body.
 
-Dialect support for data-modifying WITH bodies remains exact: shared Swift identity does not imply every body kind is valid on every target database. SwifQL does not promise parser, dialect, projection, or database-validity proof for arbitrary body payloads.
+Dialect support for data-modifying WITH bodies remains exact: shared Swift identity does not imply every body kind is valid on every target database. SQL does not promise parser, dialect, projection, or database-validity proof for arbitrary body payloads.
 
 ### Optional WITH items preserve prefix ownership
 
@@ -4539,7 +4539,7 @@ The probe did not distinguish legacy from declarative `With` after construction.
 
 A later DQ-06 Plan 03 requirement, R39, attempted to require declarative `With` to compile in prefix position while an otherwise concrete legacy `With` statically rejected there. That requirement is superseded: it was a planning restriction, not an independent SQL semantic, and it is impossible to satisfy from the shared static type without adding a second static carrier or runtime provenance.
 
-No new compiler probe is required to establish this stable architecture correction. Production implementation remains gated by fresh imported-module evidence against the current live `SQLBuilder`, including concrete-`With` versus erased-`SwifQLable` intake, initializer coexistence, ordinary/recursive/optional transitions, primary finalization, helper/preassembled body composition, exact lowering/bind order, and the structural negatives above. That future gate must not reintroduce R39 or a public completeness wrapper.
+No new compiler probe is required to establish this stable architecture correction. Production implementation remains gated by fresh imported-module evidence against the current live `SQLBuilder`, including concrete-`With` versus erased-`SQLable` intake, initializer coexistence, ordinary/recursive/optional transitions, primary finalization, helper/preassembled body composition, exact lowering/bind order, and the structural negatives above. That future gate must not reintroduce R39 or a public completeness wrapper.
 
 ### Statement Tail Frontier 05 closure
 
@@ -4669,7 +4669,7 @@ Focused compiler evidence proves a constrained extension:
 
 ```swift
 extension Column where Value == Never {
-    public static func definition(_ name: String, _ type: SwifQL.Type) -> ...
+    public static func definition(_ name: String, _ type: Type) -> ...
 }
 ```
 
@@ -5132,7 +5132,7 @@ extension Fn {
     public static func aggregate(
         _ fn: Name,
         @AggregateArgumentBuilder _ body: () -> AggregateArguments
-    ) -> SwifQLable
+    ) -> SQLable
 }
 ```
 
@@ -5154,7 +5154,7 @@ extension Fn.Name {
 extension Fn {
     static func weightedSum(
         @AggregateArgumentBuilder _ body: () -> AggregateArguments
-    ) -> SwifQLable {
+    ) -> SQLable {
         aggregate(.weightedSum, body)
     }
 }
@@ -5234,7 +5234,7 @@ Fn.aggregate(.custom("zero_agg")) {
 }
 
 Fn.aggregate(.custom("my_count")) {
-    SwifQL.asterisk
+    SQL.root.asterisk
 }
 ```
 
@@ -5272,7 +5272,7 @@ This documented legacy same-type exception does not weaken the typed ownership o
 
 ### Aggregate result is an ordinary expression
 
-`Fn.aggregate` returns ordinary `SwifQLable` expression composition.
+`Fn.aggregate` returns ordinary `SQLable` expression composition.
 
 Existing/future postfix owners continue normally:
 
@@ -5321,25 +5321,25 @@ All declarative-query architecture decisions tracked in `OPEN_DECISIONS.md` are 
 
 Production implementation remains unauthorized. The next phase is a frozen implementation plan covering the complete accepted declarative-query architecture, followed by an independent Sol plan audit before any production source mutation.
 
-## DESIGN-037 - SwifQL preserves fragment-first composition; the database owns whole-statement validity
+## DESIGN-037 - SQL preserves fragment-first composition; the database owns whole-statement validity
 
-This decision restores and makes explicit the original SwifQL composition philosophy. It supersedes any conflicting requirement elsewhere in this document that makes `SwifQL { ... }` prove whole-statement SQL grammar, clause ordering, or statement completeness at Swift compile time.
+This decision restores and makes explicit the original fragment-first composition philosophy established under SwifQL and now carried by SQL. It supersedes any conflicting requirement elsewhere in this document that makes `SQL { ... }` prove whole-statement SQL grammar, clause ordering, or statement completeness at Swift compile time.
 
-`SwifQL { ... }` is a SQL composition root, not a complete-statement validator. Its result may be a complete executable statement or any meaningful SQL fragment. A fragment does not need to be independently executable by a database.
+`SQL { ... }` is a SQL composition root, not a complete-statement validator. Its result may be a complete executable statement or any meaningful SQL fragment. A fragment does not need to be independently executable by a database.
 
 Canonical composition:
 
 ```swift
-let activeUsers = SwifQL {
+let activeUsers = SQL {
     Where { User.$isActive == true }
 }
 
-let paging = SwifQL {
+let paging = SQL {
     Limit(20)
     Offset(40)
 }
 
-let query = SwifQL {
+let query = SQL {
     Select {
         User.$id
         User.$email
@@ -5359,11 +5359,11 @@ A specialized builder owns only the mechanics needed to render its own body trut
 For example:
 
 ```swift
-let fields: [SwifQLable] = [User.$id, User.$email]
-let predicates: [SwifQLable] = [User.$isActive == true, User.$age >= 18]
+let fields: [SQLable] = [User.$id, User.$email]
+let predicates: [SQLable] = [User.$isActive == true, User.$age >= 18]
 let sorting: [OrderByItem] = [.desc(User.$createdAt)]
 
-SwifQL {
+SQL {
     Select { for field in fields { field } }
     From { User.table }
     Where { for predicate in predicates { predicate } }
@@ -5371,14 +5371,14 @@ SwifQL {
 }
 ```
 
-Local type distinctions may remain when they are necessary for deterministic rendering, safety, or unambiguous ownership inside that construct. They must not exist merely to reject a larger SQL composition because SwifQL predicts that a database would reject its placement or ordering.
+Local type distinctions may remain when they are necessary for deterministic rendering, safety, or unambiguous ownership inside that construct. They must not exist merely to reject a larger SQL composition because SQL predicts that a database would reject its placement or ordering.
 
 ### Whole-statement clause order is intentionally representable
 
-This is valid SwifQL source:
+This is valid SQL source:
 
 ```swift
-SwifQL {
+SQL {
     Select { User.$id }
     Limit(10)
     Where { User.$isActive == true }
@@ -5395,13 +5395,13 @@ WHERE "User"."isActive" = TRUE
 
 even if the selected database later rejects it. Reusable fragments may likewise be assembled in any order. Database/parser/driver validation owns whole-statement SQL validity.
 
-This freedom must not require prior erasure to `SwifQLable`; direct declarative composition follows the same fragment-first principle.
+This freedom must not require prior erasure to `SQLable`; direct declarative composition follows the same fragment-first principle.
 
 ### Compiler contracts protect Swift/API invariants, not SQL validity
 
 Compile-negative tests are appropriate only for real Swift/API contracts or local construct invariants required for deterministic rendering, safety, or unambiguous ownership. They must not freeze:
 
-- a clause being the first child of `SwifQL { ... }`;
+- a clause being the first child of `SQL { ... }`;
 - a partial query fragment that is not independently executable;
 - whole-statement clause ordering or completeness;
 - cross-dialect SQL validity that can truthfully be represented and rendered.

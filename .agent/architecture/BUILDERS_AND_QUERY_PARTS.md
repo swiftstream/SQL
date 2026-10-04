@@ -4,9 +4,9 @@ This file is the sole owner of `BUILD-*` rules.
 
 ## Verified current model
 
-Builders are ergonomic state and composition helpers that return normal `SwifQLable` output. `QueryParts` currently stores `joins`, `wheres`, `groupBy`, `havings`, `orderBy`, `offset`, and `limit`. Its `buildQuery()` materializes those shared clauses in the current order: joins, where clauses, grouping, having clauses, ordering, limit, then offset. `appended(to:)` adds the materialized parts to an existing `SwifQLable`.
+Builders are ergonomic state and composition helpers that return normal `SQLable` output. `QueryParts` currently stores `joins`, `wheres`, `groupBy`, `havings`, `orderBy`, `offset`, and `limit`. Its `buildQuery()` materializes those shared clauses in the current order: joins, where clauses, grouping, having clauses, ordering, limit, then offset. `appended(to:)` adds the materialized parts to an existing `SQLable`.
 
-`SwifQLSelectBuilder` stores select and from state itself, keeps shared clause state in `queryParts`, and uses `queryParts.appended(to:)` when building. The result re-enters the normal `SwifQLable` preparation path. Not every future builder field is automatically a `QueryParts` concern.
+`SQLSelectBuilder` stores select and from state itself, keeps shared clause state in `queryParts`, and uses `queryParts.appended(to:)` when building. The result re-enters the normal `SQLable` preparation path. Not every future builder field is automatically a `QueryParts` concern.
 
 Dialect-specific statement builders follow the same model: feature-specific state stays in its dedicated builder type, while shared clause state remains owned by `QueryParts` and final output re-enters normal preparation.
 
@@ -22,7 +22,7 @@ Builders are composition and state helpers, not SQL renderers.
 
 ### BUILD-003 — Normal preparation
 
-Builder output re-enters normal `SwifQLable` preparation.
+Builder output re-enters normal `SQLable` preparation.
 
 ### BUILD-004 — Reuse without duplication
 
@@ -30,7 +30,7 @@ New builder state reuses `QueryParts` when it is one of the shared clause concer
 
 ### BUILD-005 — Builders use the shared structural continuation contract
 
-Under the evidence-proven major-version SQL-region frame architecture, `QueryParts`, `SwifQLSelectBuilder`, UNION/set-result materialization, and other continuation-style builders must use the same generic root-frame-aware structural composition primitive as ordinary fluent APIs. Builders must not maintain a parallel ownership map, hidden current-statement mode, or dialect-specific routing state.
+Under the evidence-proven major-version SQL-region frame architecture, `QueryParts`, `SQLSelectBuilder`, UNION/set-result materialization, and other continuation-style builders must use the same generic root-frame-aware structural composition primitive as ordinary fluent APIs. Builders must not maintain a parallel ownership map, hidden current-statement mode, or dialect-specific routing state.
 
 Final ORDER BY on a set result belongs to the set-result root rather than the rightmost operand. CTE bodies and nested statement inputs remain opaque nested SQL-region frames. Builder materialization must preserve that structure while producing byte-for-byte historical PostgreSQL/MySQL SQL and binding order on neutral/no-owner paths.
 

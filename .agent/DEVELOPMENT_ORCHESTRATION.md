@@ -1,6 +1,6 @@
 # Development Orchestration
 
-Model-independent authority for coordinating SwifQL repository work with LLMs or other implementation executors.
+Model-independent authority for coordinating SQL repository work with LLMs or other implementation executors.
 
 This file owns **roles, delegation, review, and gates**. Detailed `.artifacts/**` structure and task/report mechanics are owned by `ARTIFACTS_WORKFLOW.md`.
 

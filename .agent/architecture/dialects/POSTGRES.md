@@ -1,6 +1,6 @@
 # PostgreSQL Dialect Architecture
 
-This file is the sole owner of `POSTGRES-*` rules and PostgreSQL-specific SwifQL behavior.
+This file is the sole owner of `POSTGRES-*` rules and PostgreSQL-specific SQL behavior.
 
 Status: **compact seed owner**. It records only verified current repository facts and stable compatibility constraints. A dedicated future PostgreSQL documentation mega-task should expand this file from source/tests/current official PostgreSQL documentation without changing established behavior casually.
 
@@ -54,7 +54,7 @@ Additional path segments use PostgreSQL JSON operators:
 
 JSON path fields are rendered as string literals.
 
-Do not assume Duck/MySQL JSON semantics merely because SwifQL uses the same path value type.
+Do not assume Duck/MySQL JSON semantics merely because SQL uses the same path value type.
 
 ### POSTGRES-004 - Bind markers
 
