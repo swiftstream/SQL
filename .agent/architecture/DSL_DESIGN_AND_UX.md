@@ -2606,7 +2606,7 @@ ARRAY(
 )
 ```
 
-An already-formed `SQL` / future `SQLQuery` value uses:
+An already-formed `SQL` / `SQLQuery` value uses:
 
 ```swift
 Array.subquery(orderIds)

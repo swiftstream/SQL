@@ -2,11 +2,11 @@
 
 This file contains only approved current work. Ideas, unresolved choices, verified debt, and completed history belong in their separate owners.
 
-## Current: SQL identity migration local closure
+## Current: local SQLQuery capability closed
 
-The current maintainer-approved objective is to finish the local `SwifQL -> SQL` major identity migration through stable-governance synchronization and one final independent repository/package closure audit. Canonical package/product/module identity is `SQL`; production is `Sources/SQL`, tests are `Tests/SQLTests`, `import SwifQL` is intentionally unsupported, and compatibility is symbol-level through deprecated/renamed declarations inside module `SQL`. Phase A canonical API commit is `1eb1192227f500341243e7dab4690d6d72262b34`; Phase B package/module/path commit is `35afa7457eea8ac561e13319ca012ae4518ccce3`; Phase C public-docs commit is `414b09a455e0058adb14e6f9f215134343880d86`. Remote rename/push/tag/release remain separate and unauthorized.
+The local `SwifQL -> SQL` identity migration is closed, and reusable `SQLQuery` components are implemented, validated, independently audited, and committed as `616c45775cada4481da3fe2b704b921f675ac264` (`✨ Add reusable SQLQuery components`). The public requirement is `@SQLBuilder var query: SQL { get }`; conformers may write a plain `var query: SQL { ... }` witness, and the default `parts` implementation forwards to `query.parts` so direct preparation and nested composition reuse the existing SQLable pipeline.
 
-After CLEAN final local migration closure, the next planned implementation wave is `SQLQuery` with accepted protocol requirement `@SQLBuilder var query: SQL { get }`. This TASKS entry does not by itself authorize SQLQuery implementation.
+No additional production implementation objective is automatically authorized by this closure. Remote repository rename/publication, push/tag/release, the SQL conversion skill, documentation/publication consolidation, and later roadmap work each require a separate maintainer objective and their own execution gates.
 
 ## Completed declarative query authoring lineage retained for context
 
@@ -130,4 +130,4 @@ Task 29 stable documentation, migration guidance, release notes, final audit, re
 
 The approved first Duck closure covers ordinary application/analytics/schema SQL including views and the validated catalog/file-function surface. Administration/runtime families such as INSTALL/LOAD, secrets, broad PRAGMA/configuration, checkpoint/vacuum/analyze administration, variables, export/import, SHOW/DESCRIBE/SUMMARIZE convenience, extension-specific SQL universes, and the generic SQL `name := expression` abstraction remain deferred.
 
-Work outside the current SQL identity migration closure still requires a new explicit maintainer objective. Do not revive historical `.artifacts` task/correction lineages as active work; reconstruct fresh artifacts from current Git/source/stable authority when needed. After final migration closure, `SQLQuery` is the planned next wave but still requires its own execution contract.
+Work beyond the closed local identity-migration and SQLQuery capabilities requires a new explicit maintainer objective. Do not revive historical `.artifacts` task/correction lineages as active work; reconstruct fresh artifacts from current Git/source/stable authority when needed. The completed SQLQuery lineage does not authorize remote publication, conversion-skill implementation, unrelated query refactors, or later roadmap work.

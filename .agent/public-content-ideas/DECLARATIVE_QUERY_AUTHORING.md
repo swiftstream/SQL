@@ -189,12 +189,12 @@ The canonical public skill should target the final `SQL` namespace rather than b
 
 ## Reusable parameterized queries with SQLQuery
 
-Status: roadmap-approved, not implemented
+Status: validated
 Good for: README | website docs | release notes | article | short post
 
 ### Why users should care
 
-Result-builder query syntax should compose naturally into reusable Swift values, similar to how SwiftUI packages view structure into reusable `View` types. A query type keeps its own parameters and exposes one declarative SQL body, while remaining directly preparable and nestable as a subquery.
+Result-builder query syntax now composes naturally into reusable Swift values, similar to how SwiftUI packages view structure into reusable `View` types. A query type keeps its own parameters and exposes one declarative SQL body, while remaining directly preparable and nestable through the ordinary SQLable composition pipeline.
 
 ### Candidate example / visual
 
@@ -261,7 +261,7 @@ WHERE "User"."isActive" = TRUE
   )
 ```
 
-The same query value should compose without manual `.query` unwrapping:
+The same query value composes without manual `.query` unwrapping:
 
 ```swift
 From {
@@ -283,11 +283,19 @@ FROM (
 ) AS "activeUsers"
 ```
 
-The same principle should extend to JOIN, EXISTS, IN-subquery, and other grammar positions that accept a nested query.
+The same principle is regression-tested through FROM/alias, JOIN, scalar SELECT projection, EXISTS, IN-subquery, and direct root composition.
+
+### Evidence / provenance
+
+- implementation commit `616c45775cada4481da3fe2b704b921f675ac264` (`✨ Add reusable SQLQuery components`);
+- `Sources/SQL/SQLQuery.swift` and `Tests/SQLTests/SQLQueryTests.swift`;
+- focused SQLQuery suite: 7 tests / 1 suite PASS;
+- full validation: 737 tests / 63 suites PASS on Swiftly 6.3.3, Xcode 26.6 Swift 6.3.3, and Xcode 27 Swift 6.4;
+- independent source/API/diff audit: CLEAN, 55/55 PASS.
 
 ### Publication caveat
 
-`SQLQuery` is roadmap-approved follow-up work after declarative query result builders and is not implemented/shipped. The canonical target is a SwiftUI-style result-builder-attributed `query` protocol requirement so conforming types can write the SQL clauses directly in `var query: SQL { ... }` without an explicit nested `SQL { ... }` wrapper. Reusable parameterized query values, direct preparation, and subquery composition are required product semantics.
+`SQLQuery` is implemented and validated in the local canonical `SQL` source tree, but this capture does not claim that a remote repository rename, tag, release, package publication, or public documentation rollout has occurred. The committed public requirement is `@SQLBuilder var query: SQL { get }`; ordinary conformers may write `var query: SQL { ... }` without repeating the builder attribute or adding an explicit nested `SQL { ... }` wrapper.
 
 ## Three equivalent alias authoring forms and general declarative As
 

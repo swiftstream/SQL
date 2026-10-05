@@ -71,19 +71,19 @@ Historical-schema-safe authoring uses explicit string table/schema/column identi
 
 This accepted checkpoint unblocks consumers such as SwiftDuckDB to build their own migration-plan/execution layer around SQL DDL values. SwiftDuckDB migration version/history/transaction semantics remain outside SQL.
 
-The broader declarative query result-builder authoring slice is implemented and closed without reopening the accepted DDL contracts. Its accepted major-version UX is direct SQL in Swift over the existing parts/preparation/binding engine, with clause-local builders such as `Select { ... }`, `From { ... }`, `Where { ... }`, `GroupBy { ... }`, `Having { ... }`, `OrderBy { ... }`, nested query/set-operation builders, and fragment-first composition under DESIGN-037. The local naming/package migration is the current closure wave; `SQLQuery` follows only after that closure.
+The broader declarative query result-builder authoring slice is implemented and closed without reopening the accepted DDL contracts. Its accepted major-version UX is direct SQL in Swift over the existing parts/preparation/binding engine, with clause-local builders such as `Select { ... }`, `From { ... }`, `Where { ... }`, `GroupBy { ... }`, `Having { ... }`, `OrderBy { ... }`, nested query/set-operation builders, and fragment-first composition under DESIGN-037. The local naming/package migration is closed, and reusable `SQLQuery` components are now implemented, validated, independently audited, and committed as `616c45775cada4481da3fe2b704b921f675ac264`.
 
 ## Major-version roadmap after declarative query authoring
 
 The durable sequence after the declarative query-authoring capability is accepted is:
 
-1. **Major naming/package identity migration — local closure:** the primary local package/product/module identity is now `SQL`; production source is `Sources/SQL`, tests are `Tests/SQLTests`, `import SwifQL` is not supported, and compatibility is symbol-level through deprecated/renamed declarations inside module `SQL`. The technical/package commit is `35afa7457eea8ac561e13319ca012ae4518ccce3` and the public-docs commit is `414b09a455e0058adb14e6f9f215134343880d86`. Stable governance synchronization is the final local closure step. The remote repository/public destination `github.com/swiftstream/SQL` remains planned only; no remote rename/publication is implied by local closure.
-2. **Reusable query components (`SQLQuery`) — next implementation wave after local migration closure:** add a SwiftUI-style protocol/value pattern for reusable parameterized query structs built from the same result-builder DSL. The accepted target requirement is `@SQLBuilder var query: SQL { get }`. A conforming value should expose its query declaratively, prepare directly through the ordinary SQL preparation pipeline, and itself be usable compositionally as a nested/subquery source wherever an ordinary SQL query is accepted. Do not create a parallel query engine or execution abstraction.
+1. **Major naming/package identity migration — locally closed:** the primary local package/product/module identity is `SQL`; production source is `Sources/SQL`, tests are `Tests/SQLTests`, `import SwifQL` is not supported, and compatibility is symbol-level through deprecated/renamed declarations inside module `SQL`. The technical/package commit is `35afa7457eea8ac561e13319ca012ae4518ccce3`, the public-docs commit is `414b09a455e0058adb14e6f9f215134343880d86`, and the stable-governance closure commit is `8ae839c283cf8212ea96d5e66f42566a7c289fd8`. The remote repository/public destination `github.com/swiftstream/SQL` remains planned only; no remote rename/publication is implied by local closure.
+2. **Reusable query components (`SQLQuery`) — implemented and locally closed:** the public protocol requirement is `@SQLBuilder var query: SQL { get }`, and the default `SQLable.parts` witness forwards directly to `query.parts`. Conforming values may write a plain `var query: SQL { ... }` witness without repeating `@SQLBuilder`, prepare directly through the ordinary SQL preparation pipeline, and compose through existing SQLable paths as nested/subquery values in FROM, JOIN, scalar SELECT, IN, EXISTS, and root SQL contexts. The accepted implementation is commit `616c45775cada4481da3fe2b704b921f675ac264`; it introduces no parallel query engine, renderer, AST, executor, cache, or `SwifQLQuery` compatibility surface.
 3. **Compatibility/publication closure:** keep explicit `was -> became` guidance and deprecated symbol bridges accurate, then handle any remote repository rename, release/tag/publication, and ecosystem package updates as separately authorized work. Local source/package/docs/governance closure does not authorize remote mutation.
 4. **SQL conversion skill:** provide a maintained downstream skill that can transform raw SQL into the final result-builder representation and into the final raw/fluent SQL DSL representation. The published skill targets the canonical `SQL` API while retaining enough historical knowledge to migrate existing SwifQL call sites.
 5. **Documentation/publication consolidation:** continue promoting accepted declarative-query examples, reusable-query examples, migration examples, compatibility notes, and major-version stories into README/public docs/release notes as appropriate, using the public-content capture workflow rather than trying to reconstruct them after release.
 
-The `SQLQuery` capability is the immediate next implementation wave after the local `SwifQL -> SQL` identity migration closes. Its final public spelling is `SQLQuery`; the accepted protocol shape requires `@SQLBuilder var query: SQL { get }`, so conformers can write clauses directly in the requirement body without an extra nested `SQL { ... }` wrapper. Do not publish or introduce `SwifQLQuery`.
+The `SQLQuery` capability is implemented and locally closed in commit `616c45775cada4481da3fe2b704b921f675ac264`. Its final public spelling is `SQLQuery`; the protocol requirement is `@SQLBuilder var query: SQL { get }`, and conforming getters inherit the builder transform so ordinary conformer source can write a plain `var query: SQL { ... }` body without repeating `@SQLBuilder` or adding a nested `SQL { ... }` wrapper. `SwifQLQuery` remains intentionally absent.
 
 The target developer experience must preserve the following shape in detail:
 
@@ -93,7 +93,7 @@ struct UsersQuery: SQLQuery {
     let email: String?
     let roles: [Role]?
 
-    @SQLBuilder var query: SQL {
+    var query: SQL {
         Select {
             User.$id
             User.$email.as("emailAddress")
@@ -123,7 +123,7 @@ struct UsersQuery: SQLQuery {
 }
 ```
 
-This exact SwiftUI-style getter shape is the canonical target. The final `SQLQuery` protocol should expose a result-builder-attributed `query` requirement so conforming getters inherit the SQL builder transform and do not need an explicit nested `SQL { ... }` wrapper. If the concrete `SQL` result type requires an associated type or another generic detail internally, keep that complexity out of ordinary conformer source.
+This exact SwiftUI-style getter shape is the canonical implemented form. `SQLQuery` exposes the result-builder-attributed `query` protocol requirement, while ordinary conformers may omit the attribute on their witness because the builder transform is inherited from the requirement. The public requirement returns concrete `SQL`; no associated type or alternate query representation is introduced.
 
 A query value must then be directly preparable:
 
@@ -175,7 +175,7 @@ FROM (
 ) AS "activeUsers"
 ```
 
-Likewise a reusable `SQLQuery` must be acceptable anywhere the relevant grammar permits a nested query, including JOIN/subquery/EXISTS/IN contexts after those clause-specific APIs are finalized.
+Likewise a reusable `SQLQuery` is accepted anywhere the relevant existing SQLable grammar permits a nested query. The committed regression suite validates direct composition through FROM/alias, JOIN, scalar SELECT projection, IN, EXISTS, and root `SQL { ... }` paths while preserving the ordinary preparation/bind pipeline.
 
 Do not make `SQLQuery` an executor, ORM repository, mutable builder object, or separate AST. It is a reusable SQL-producing value over the same `SQLable`/parts/preparation contract.
 
