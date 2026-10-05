@@ -1,18 +1,24 @@
 # Changelog
 
-## Unreleased — SQL identity migration
+## 2.0.0
 
-The package/product/module identity is now `SQL`.
+SwifQL becomes **SQL** in the stable 2.0 major line.
 
-- product `SwifQL` -> `SQL`
+- canonical repository: `https://github.com/SwiftStream/SQL`
+- package/product/module: `SQL`
 - `import SwifQL` -> `import SQL`
-- canonical roots are `SQL { ... }` and direct `SQL.<fluent>`; the concrete fragment/result carrier is `SQLValue`
+- canonical roots: direct `SQL.<fluent>` and declarative `SQL { ... }`
+- reusable parameterized query values through `SQLQuery`, with `Query` as its shorthand for the concrete result type
+- concrete formed-SQL carrier: `SQLContent`
 - canonical protocol/preparation names include `SQLable`, `SQLPart`, and `SQLPrepared`
-- old `SwifQL*` symbol spellings remain deprecated/renamed inside module `SQL` where compatibility aliases/bridges are provided
-- there is no compatibility module named `SwifQL` and no `@_exported import SQL` shim
-- the migration is intended to preserve SQL rendering, bind order, dialect behavior, and preparation semantics
+- Swift 6.3+ / Swift 6 language mode
+- PostgreSQL, MySQL, and DuckDB preparation support
+- expanded SQL surface including analytics, joins/set operations, PIVOT/UNPIVOT, MERGE, COPY, DML/RETURNING, DDL, sequences, macros, and table/file functions
+- declarative table DDL with `CreateTable`, `AlterTable`, and `AddColumn`
+- shared semantic values: `PureDate`, `PureTime`, `DateTime`, and `Interval`
+- retained old `SwifQL*` symbol spellings are deprecated/renamed inside module `SQL` where compatibility bridges are provided; there is no compatibility module named `SwifQL`
 
-The remote repository has not been renamed or republished by this migration workflow, so existing GitHub URLs remain hosting/history references until a separate publication step occurs.
+See [RELEASE_NOTES.md](RELEASE_NOTES.md) for examples and [MIGRATION.md](MIGRATION.md) for the v1/v2 migration path.
 
 ## 2.0.0-beta.6.1.0
 

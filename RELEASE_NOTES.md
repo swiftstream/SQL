@@ -1,31 +1,267 @@
-# Unreleased — SQL Major Identity Migration
+# SQL 2.0.0
 
-The canonical package product and Swift module have moved from `SwifQL` to `SQL`.
+SwifQL is now **SQL**. The package, product, Swift module, query root, and repository all use the SQL name, and the project now lives at `SwiftStream/SQL`.
 
-Migration starts with:
+Install SQL 2.0.0 with:
+
+```swift
+.package(
+    url: "https://github.com/SwiftStream/SQL",
+    from: "2.0.0"
+)
+```
+
+and:
+
+```swift
+.product(name: "SQL", package: "SQL")
+```
+
+## SwifQL → SQL
+
+The main migration is mechanical.
+
+was
 
 ```swift
 import SwifQL
-// becomes
-import SQL
+
+let query = SwifQL
+    .select(Path.Column("id"))
+    .from(Path.Table("users"))
 ```
 
-Then follow compiler rename diagnostics for remaining old spellings:
+became
 
-- `SwifQL.select(...)` -> `SQL.select(...)`
-- `SwifQL { ... }` -> `SQL { ... }`
-- `SwifQL(query)` -> `SQL(query)`
-- `SwifQLable` -> `SQLable`
-- `SwifQLPart` -> `SQLPart`
-- `SwifQLPrepared` -> `SQLPrepared`
+```swift
+import SQL
 
-There is no `SwifQL` compatibility module in the new package identity. Compatibility is symbol-level only: retained old `SwifQL*` names are deprecated/renamed declarations inside module `SQL`.
+let query = SQL
+    .select(Path.Column("id"))
+    .from(Path.Table("users"))
+```
 
-This identity migration is not intended to change SQL rendering, dialect behavior, bind ordering, or preparation semantics. The corrected candidate uses `SQLValue` as the concrete fragment/result carrier and passed 737 tests in 63 suites on Swiftly 6.3.3, Xcode 26.6 Swift 6.3.3, and Xcode 27 Swift 6.4.
+There is no compatibility module named `SwifQL`. After `import SQL`, retained old `SwifQL*` symbol spellings may still be available as deprecated/renamed bridges where provided.
 
-The remote repository has not been renamed or republished by this migration workflow. Do not assume a new GitHub URL is live until a separate publication step is completed.
+See [MIGRATION.md](MIGRATION.md) for the complete v1/v2 migration checklist.
 
-See [MIGRATION.md](MIGRATION.md) for the migration table and recommended order.
+## Fluent and declarative SQL
+
+The familiar fluent API is now rooted directly at `SQL`:
+
+```swift
+let users = Path.Table("users")
+let email = users.column("email")
+
+let query = SQL
+    .select(users.column("id"), email)
+    .from(users)
+    .where(email == "john@example.com")
+    .limit(10)
+```
+
+The same parts/preparation engine also has SQL-shaped result-builder authoring:
+
+```swift
+let query = SQL {
+    Select {
+        users.column("id")
+        email
+    }
+
+    From {
+        users
+    }
+
+    Where {
+        email == "john@example.com"
+    }
+
+    Limit(10)
+}
+```
+
+Declarative fragments remain ordinary composable SQL values rather than a second query engine or ORM.
+
+## Reusable `SQLQuery` values
+
+Complex conditional SQL can live behind a small reusable value:
+
+```swift
+struct UserQuery: SQLQuery {
+    let active: Bool
+    let email: String?
+    let roles: [String]?
+
+    var query: Query {
+        Select {
+            Path.Column("id")
+            Path.Column("email")
+        }
+
+        From {
+            Path.Table("users")
+        }
+
+        Where {
+            Path.Column("active") == active
+
+            if let email {
+                Path.Column("email") == email
+            }
+
+            if let roles {
+                Or {
+                    for role in roles {
+                        Path.Column("role") == role
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+The call site stays small:
+
+```swift
+let users = UserQuery(
+    active: true,
+    email: email,
+    roles: roles
+)
+
+let prepared = users.prepare(.psql)
+```
+
+`SQLQuery` is itself `SQLable`, so callers can compose `UserQuery(...)` directly without unwrapping `.query`. The protocol-local `Query` shorthand resolves to `SQLContent`; most application code never needs to spell the concrete carrier.
+
+## Swift 6
+
+SQL 2.0.0 requires Swift 6.3 or newer and uses Swift 6 language mode.
+
+The query and bind graph is not made artificially `Sendable` with unchecked conformances. If an actor boundary needs query data, prepare/build on the originating isolation and send an application-owned Sendable snapshot instead.
+
+## PostgreSQL, MySQL, and DuckDB
+
+The current preparation model supports:
+
+```swift
+query.prepare(.psql)
+query.prepare(.mysql)
+query.prepare(.duck)
+```
+
+SQL 2 substantially expands the available SQL surface while keeping dialect-aware rendering behind the same composable API. The release includes the accepted DuckDB surface together with the established PostgreSQL and MySQL support.
+
+Representative additions across the 2.0 development line include analytics, JSON/nested values, joins and set operations, PIVOT/UNPIVOT, MERGE, COPY, DML/RETURNING, DDL, sequences, macros, table/file functions, and more.
+
+## Declarative table DDL
+
+Create and alter tables with SQL-shaped builders:
+
+```swift
+let createUsers = CreateTable("users") {
+    NewColumn("id", .uuid).primaryKey()
+    NewColumn("email", .text).unique().notNull()
+}
+
+createUsers.prepare(.psql).plain
+```
+
+will give:
+
+```sql
+CREATE TABLE "users" ("id" uuid PRIMARY KEY, "email" text UNIQUE NOT NULL)
+```
+
+```swift
+let alterUsers = AlterTable("users") {
+    AddColumn("display_name", .text)
+}
+```
+
+Table/schema/column identifiers are explicit so historical migration declarations do not silently change when current model metadata changes. SQL builds these statements; migration history, transactions, and execution remain outside this library.
+
+## Shared semantic values
+
+SQL includes `PureDate`, `PureTime`, `DateTime`, and structural `Interval` for database-facing civil and interval semantics.
+
+```swift
+let date = PureDate(year: 2026, month: 9, day: 4)!
+let time = PureTime(hour: 12, minute: 34, second: 56, nanosecond: 123_456_789)!
+let dateTime = DateTime(
+    year: 2026,
+    month: 9,
+    day: 4,
+    hour: 12,
+    minute: 34,
+    second: 56,
+    nanosecond: 123_456_789
+)!
+let interval = Interval(months: 2, days: -3, microseconds: 4)
+
+SQL.select(date, time, dateTime, interval).prepare(.psql).plain
+```
+
+will give:
+
+```sql
+SELECT DATE '2026-09-04', TIME '12:34:56.123456789', TIMESTAMP '2026-09-04 12:34:56.123456789', INTERVAL '2 months -3 days 4 microseconds'
+```
+
+## Breaking changes worth checking
+
+### Package/module/root rename
+
+was
+
+```swift
+import SwifQL
+SwifQL.select(...)
+```
+
+became
+
+```swift
+import SQL
+SQL.select(...)
+```
+
+### Structural `parts` extensions
+
+Advanced extensions that manually concatenated `SQLable.parts` should use the structural composition helpers instead of flattening statement/subquery ownership.
+
+### Predefined `Fn.Name` values are immutable
+
+was
+
+```swift
+Fn.Name.coalesce = .custom("my_coalesce")
+```
+
+became
+
+```swift
+let name = Fn.Name.custom("my_coalesce")
+let fn = Fn.build(name)
+```
+
+Normal function calls such as `Fn.coalesce(...)` remain unchanged.
+
+## Validation
+
+The final `SQLContent` / `SQLQuery.Query` candidate passed the full package suite on all three release lanes:
+
+```text
+Swiftly / Apple Swift 6.3.3: 737 tests / 63 suites
+Xcode 26.6 / Apple Swift 6.3.3: 737 tests / 63 suites
+Xcode 27 / Apple Swift 6.4: 737 tests / 63 suites
+```
+
+Focused `SQLQuery` and identity suites passed 7/7 and 5/5. Fresh normal-import clients also passed on all three toolchains with `var query: Query`, explicit `SQLContent` typing, 37/37 direct-root representatives, PostgreSQL/MySQL/DuckDB bind checks, and deprecated SwifQL fluent/builder/unary parity.
+
+For migration details see [MIGRATION.md](MIGRATION.md). The README contains the short v1 → v2 path and current installation examples.
 
 ---
 

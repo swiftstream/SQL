@@ -51,7 +51,7 @@ let declarative = SQL {
 }
 ```
 
-`SQLValue` is the concrete fragment/result carrier when an explicit concrete type is required. It is not the fluent root spelling.
+`SQLContent` is the concrete fragment/result carrier when an explicit concrete type is required. It is not the fluent root spelling.
 
 Do not target `SQL.root`.
 
@@ -294,7 +294,7 @@ import SQL
 
 Do not migrate to `SQL.root`.
 
-When an explicit concrete result type is necessary, use `SQLValue` in versions where that is the current carrier.
+When an explicit concrete result type is necessary, use `SQLContent` in versions where that is the current carrier.
 
 Some historical SwifQL-prefixed declarations may remain as deprecated in-module compatibility in particular versions. Consult that version's `MIGRATION.md`, source, and tests for symbol-specific renames.
 
@@ -302,7 +302,7 @@ Do not blindly replace every `SwifQL` prefix: some historical names may map to d
 
 ## 10. Reusable SQLQuery output
 
-When the converted statement belongs in a reusable parameterized query component and the resolved version supports `SQLQuery`, prefer the protocol's actual concrete result contract.
+When the converted statement belongs in a reusable parameterized query component and the resolved version supports the current `SQLQuery` API, prefer its protocol-local `Query` shorthand rather than exposing the concrete carrier unnecessarily.
 
 Current canonical shape:
 
@@ -310,7 +310,7 @@ Current canonical shape:
 struct ActiveUserQuery: SQLQuery {
     let email: String
 
-    var query: SQLValue {
+    var query: Query {
         Select {
             Path.Column("id")
             Path.Column("email")
@@ -339,7 +339,7 @@ Before presenting the conversion, verify:
 - runtime/untrusted values are not interpolated into raw structure;
 - declarative output uses only verified builders;
 - fluent output starts from direct `SQL`, not `SQL.root`;
-- `SQLValue` is used only when concrete typing is needed;
+- `SQLContent` is used only when concrete typing is needed;
 - `.plain` renders the expected statement shape;
 - `.splitted.query` has the expected placeholders;
 - `.splitted.values` preserves the expected bind order;

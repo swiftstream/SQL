@@ -162,7 +162,7 @@ Preferred structure:
 6. a short install snippet when the version/tag matters;
 7. link to migration/full notes when useful.
 
-The title does not need to enumerate every feature. It should read like a maintainer describing the release, not a generated changelog summary.
+The title does not need to enumerate every feature. It should read like a maintainer describing the release, not a generated changelog summary. For a large stable release, a concise title such as `🚀 SQL 2.0.0` is preferable to a generated multi-clause marketing headline. Open with concrete user value and put the install snippet near the top.
 
 ## Reference style from historical SwifQL releases
 
@@ -171,7 +171,8 @@ The maintainer's established release-writing style is visible in releases such a
 - `1.5.0` — `union` / `with` examples followed by the SQL they “will give”;
 - `2.0.0-beta.2.0.0` — explicit `Breaking change`, literal `was` / `became`, then schema/alias usage examples with result comments;
 - `2.0.0-beta.3.0.0` — concise breaking rename plus immediate model/property-wrapper examples;
-- `2.0.0-beta.3.2.0` — problem statement followed by two concrete encoding examples and their JSON output.
+- `2.0.0-beta.3.2.0` — problem statement followed by two concrete encoding examples and their JSON output;
+- `2.0.0-beta.5.0.0` — large-release example with a short summary, install snippet near the top, feature headings, Swift-to-SQL examples, explicit `was` / `became` breaking changes, and a brief validation close.
 
 Use these as tone/shape references, not as technical authority for current APIs.
 

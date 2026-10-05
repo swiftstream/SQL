@@ -1,5 +1,7 @@
 public protocol SQLQuery: SQLable {
-    @SQLBuilder var query: SQLValue { get }
+    typealias Query = SQLContent
+
+    @SQLBuilder var query: Query { get }
 }
 
 public extension SQLQuery {

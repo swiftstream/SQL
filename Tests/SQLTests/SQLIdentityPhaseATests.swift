@@ -21,7 +21,7 @@ private extension SwifQLable {
 struct SQLIdentityPhaseATests {
     @Test("Concrete SQL supports declarative and fluent roots")
     func concreteSQLRoots() {
-        let declarative: SQLValue = SQL {
+        let declarative: SQLContent = SQL {
             Select { Path.Column("id") }
             From { Path.Table("users") }
             Where { Path.Column("active") == true }
@@ -50,7 +50,7 @@ struct SQLIdentityPhaseATests {
         let canonical = SQL.select(Path.Column("id"))
         let legacyFluent = SwifQL.select(Path.Column("id"))
 
-        let canonicalBuilder: SQLValue = SQL {
+        let canonicalBuilder: SQLContent = SQL {
             Select { Path.Column("id") }
         }
         let legacyBuilder = SwifQL {

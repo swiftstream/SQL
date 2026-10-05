@@ -2,11 +2,13 @@
 
 This file contains only approved current work. Ideas, unresolved choices, verified debt, and completed history belong in their separate owners.
 
-## Current: SQL conversion skill local closure
+## Current: final pre-2.0 SQLContent / SQLQuery ergonomics
 
-The source-owned downstream conversion skill `swifql-sql-conversion` is implemented and validated locally. S1 passed PRIMARY validation C01-C12 (12/12), an independent content/API/procedure audit CLEAN 45/45, and was committed as `3518edee9c12a29b6f55c94dc0fdb87ecd1c8ab9` (`📖 Add SQL conversion skill`). The skill targets canonical `SQL`, teaches direct `SQL.<fluent>` and declarative `SQL { ... }`, resolves the consumer's actual package version/source before mapping syntax, forbids invented APIs, limits raw fallback to unsupported static SQL structure, and keeps dynamic/untrusted data on the ordinary value/bind path.
+The package/module/repository migration to `SQL` / `SwiftStream/SQL` is closed, and the previous release-documentation candidate was independently CLEAN. Before committing that candidate, the final public API ergonomics were tightened: the unpublished concrete carrier name `SQLValue` is replaced by `SQLContent`, and `SQLQuery` exposes fixed shorthand `Query = SQLContent` so ordinary conformers write `var query: Query { ... }`. `SQLValue` was never published under the canonical SQL identity and must not become a compatibility alias.
 
-Stable closure records the maintenance rule that every later accepted query-surface wave impact-checks the conversion skill, updating it only when canonical constructs or spellings change and recording `NO_CHANGE` otherwise. External `swiftstream/skills` publication, remote repository rename/publication, push/tag/release, and the next roadmap objective remain separately gated; this local closure authorizes none of them.
+The exact source/test candidate has now passed fresh validation: focused SQLQuery 7/7, focused identity 5/5, 737 tests / 63 suites on each of the three supported toolchain lanes, external normal-import client PASS x3, `Query` alias and explicit `SQLContent` PASS x3, direct-root representatives 37/37 PASS x3, deprecated SwifQL parity PASS x3, and bind parity PASS x3. The active objective is the final independent integrated source/diff audit of the 21-path candidate, then exact candidate commit. Stable `2.0.0` publication remains blocked until that candidate is independently accepted and committed.
+
+After the final candidate commit, resume the already-approved release sequence: normal `master` push, exact-SHA branch CI, immutable annotated `2.0.0` tag, tag CI, fresh exact remote SwiftPM consumer, verified stable GitHub Release via `gh`, then a descendant post-publication governance commit. Compatible development may continue on the 2.x line after publication. Publication of skills in the independent `SwiftStream/skills` project remains outside this repository's release objective.
 
 ## Completed declarative query authoring lineage retained for context
 
@@ -51,7 +53,7 @@ The DQ-05 Row/VALUES/Default, narrow INSERT, and core-clause slice is implemente
 
 R3 / DESIGN-037 fragment-first correction is technically CLOSED. `D037-FINAL-001` is CLOSED. The global compatibility probe inventoried 822 public declarations and exhaustively smoke-tested all 728 affected declarations; full Swift 6.3.3 and Swift 6.4 package suites passed at 725 tests / 61 suites, ordinary-import downstream tests passed on both, and public API signature delta was zero. Exact production application and final source/diff review were independently accepted; the final source/diff audit 02 was CLEAN with 120/120 source checks and 60/60 red-team checks. The exact final technical candidate was 122 paths = 117 production sources + 5 tests. After an independently CLEAN 70/70 staged-package audit, that exact package was committed as `a50497ab4d78262032cc1b16224eec4fb78f6aae` (`🪚 Make query composition fragment-first`). Post-commit verification confirmed exactly 122 commit paths, no technical residual diff, and the four stable governance files preserved separately. The former 54-path compiler-contract protection snapshot is no longer active; its 49 never-HEAD experiment files and workflow hook are absent from status/worktree and require no cleanup commit. This governance update records the durable DESIGN-037 authority and compile-time testing policy. Push/tag/release remain separate and are not authorized by local commit closure.
 
-The post-authoring local naming/package migration is now in governance/final-closure state; remote repository publication and conversion-skill publication remain separately owned by `MASTER_PLAN.md`.
+The post-authoring naming/package/repository migration is closed. Stable 2.0.0 publication is the active remote release task, while publication of the conversion skill remains separately owned outside this repository.
 
 ## Historical published capability state retained for context
 

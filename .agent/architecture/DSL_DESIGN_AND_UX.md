@@ -507,7 +507,7 @@ A proposal fails this gate if supporting a foreseeable equivalent PostgreSQL/MyS
 
 The additive result-builder query-authoring surface is implemented. This section defines its durable public design semantics.
 
-The builder remains a SQL-shaped authoring layer over the existing SQL composition/preparation model. It must not introduce a second predicate AST, hidden ORM-style semantics, or an alternate binding/rendering pipeline. The canonical package/module/root spelling is `SQL`. Declarative construction uses the overloaded `SQL { ... }` function; fluent construction starts from the direct global `SQL` root value, for example `SQL.select(...)` or `SQL.from(...)`. The concrete fragment/result carrier is `SQLValue`. Fluent lookup comes from the existing `SQLable` instance surface; do not duplicate that surface with static forwarding members. The locally committed intermediate `SQL.root` spelling is superseded before publication and has no compatibility obligation.
+The builder remains a SQL-shaped authoring layer over the existing SQL composition/preparation model. It must not introduce a second predicate AST, hidden ORM-style semantics, or an alternate binding/rendering pipeline. The canonical package/module/root spelling is `SQL`. Declarative construction uses the overloaded `SQL { ... }` function; fluent construction starts from the direct global `SQL` root value, for example `SQL.select(...)` or `SQL.from(...)`. The concrete formed-SQL carrier is `SQLContent`: it may represent a complete statement or meaningful composed SQL content, but does not imply raw text, execution, or whole-statement validity. `SQLFragment` is intentionally rejected because complete statements use the same carrier; `SQLExpression` is intentionally rejected because expression already has a narrower SQL-grammar meaning; `SQLValue` is intentionally rejected before publication because it is ambiguous with literal/bind values. `SQLQuery` exposes fixed shorthand `Query = SQLContent` rather than an associated query representation. Fluent lookup comes from the existing `SQLable` instance surface; do not duplicate that surface with static forwarding members. The unpublished intermediate spellings `SQL.root`, concrete-type `SQL`, and `SQLValue` have no compatibility obligation.
 
 The target query shape uses the established model/property-wrapper path surface rather than invented plain model-member pseudo-columns. For example:
 
@@ -2606,7 +2606,7 @@ ARRAY(
 )
 ```
 
-An already-formed `SQLValue` / `SQLQuery` value uses:
+An already-formed `SQLContent` / `SQLQuery` value uses:
 
 ```swift
 Array.subquery(orderIds)

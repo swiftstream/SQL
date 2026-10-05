@@ -11,88 +11,194 @@
         <img src="https://img.shields.io/discord/612561840765141005" alt="Swift.Stream">
     </a>
 </p>
-<p align="center">
-    <a href="https://swiftpackageindex.com/SwifQL/SwifQL">
-        <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FSwifQL%2FSwifQL%2Fbadge%3Ftype%3Dswift-versions">
-    </a>
-    <a href="https://swiftpackageindex.com/SwifQL/SwifQL">
-        <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FSwifQL%2FSwifQL%2Fbadge%3Ftype%3Dplatforms">
-    </a>
-</p>
 <br>
 
 # SQL
 
-`SQL` is now the canonical package product, Swift module, query root, and protocol namespace for this library.
+**SQL (formerly SwifQL)** is a strongly typed, declarative, composable Swift DSL for building SQL. If you were looking for SwifQL, you're in the right place: the project was renamed from **SwifQL** to **SQL** when it moved to the **SwiftStream** organization.
 
-The local source/package migration is complete:
+Canonical repository: `SwiftStream/SQL`. The package, product, Swift module, and public query root are all named `SQL`.
 
-- package: `SQL`
-- product: `SQL`
-- module: `SQL`
-- production source: `Sources/SQL/`
-- tests: `Tests/SQLTests/`
+SQL builds SQL; execution belongs to your database driver or integration layer. PostgreSQL, MySQL, and DuckDB are supported by the current SQL-building surface.
 
-The remote GitHub repository has **not** been renamed or republished by this migration workflow. Existing repository URLs therefore remain historical/current hosting references until a separate remote publication step is explicitly performed.
+## Installation
 
-For a consuming package that points at the current repository location after a release containing this migration, depend on product `SQL`:
+SQL 2.0.0 requires Swift 6.3 or newer.
 
 ```swift
-.package(url: "https://github.com/SwifQL/SwifQL", /* version containing the SQL identity migration */),
-.target(name: "App", dependencies: [
-    .product(name: "SQL", package: "SwifQL"),
-])
+.package(
+    url: "https://github.com/SwiftStream/SQL",
+    from: "2.0.0"
+)
 ```
 
-Import the new module:
+Then depend on product `SQL`:
+
+```swift
+.target(
+    name: "App",
+    dependencies: [
+        .product(name: "SQL", package: "SQL")
+    ]
+)
+```
+
+and import it:
 
 ```swift
 import SQL
 ```
 
-Declarative root:
+## Quick start
+
+Start from the SQL you want to express:
+
+```sql
+SELECT "users"."id", "users"."email"
+FROM "users"
+WHERE "users"."email" = 'john@example.com'
+LIMIT 10
+```
+
+The direct fluent API keeps the familiar SQL-shaped flow:
 
 ```swift
+let users = Path.Table("users")
+let email = users.column("email")
+
+let query = SQL
+    .select(users.column("id"), email)
+    .from(users)
+    .where(email == "john@example.com")
+    .limit(10)
+
+let prepared = query.prepare(.psql)
+```
+
+The same query can be written declaratively with `SQL { ... }`:
+
+```swift
+let users = Path.Table("users")
+let email = users.column("email")
+
 let query = SQL {
-    Select { Path.Column("id") }
-    From { Path.Table("users") }
+    Select {
+        users.column("id")
+        email
+    }
+
+    From {
+        users
+    }
+
+    Where {
+        email == "john@example.com"
+    }
+
+    Limit(10)
 }
 ```
 
-Fluent root:
+Reusable queries can hide conditional SQL behind an ordinary Swift value:
 
 ```swift
-let query = SQL
-    .select(Path.Column("id"))
-    .from(Path.Table("users"))
+struct UserQuery: SQLQuery {
+    let active: Bool
+    let email: String?
+    let roles: [String]?
+
+    var query: Query {
+        Select {
+            Path.Column("id")
+            Path.Column("email")
+            Path.Column("created_at")
+        }
+
+        From {
+            Path.Table("users")
+        }
+
+        Where {
+            Path.Column("active") == active
+
+            if let email {
+                Path.Column("email") == email
+            }
+
+            if let roles {
+                Or {
+                    for role in roles {
+                        Path.Column("role") == role
+                    }
+                }
+            }
+        }
+    }
+}
 ```
 
-Canonical protocol/preparation names are `SQLable`, `SQLPart`, and `SQLPrepared`. The public root/function spelling is `SQL`; when an API requires an explicit concrete fragment/result type, use `SQLValue`.
+The call site only needs the parameters:
 
-## Migrating from SwifQL
+```swift
+let users = UserQuery(
+    active: true,
+    email: email,
+    roles: roles
+)
 
-Start with one mechanical module-import change:
+let prepared = users.prepare(.psql)
+```
+
+Because `SQLQuery` is itself `SQLable`, reusable queries compose directly without unwrapping `.query`:
+
+```swift
+let source = From {
+    UserQuery(
+        active: true,
+        email: nil,
+        roles: ["admin", "moderator"]
+    )
+    .as("activeUsers")
+}
+```
+
+The protocol-local `Query` name keeps the concrete carrier out of the normal authoring path. If advanced code genuinely needs an explicit concrete type—for example a function return type or a heterogeneous layer normalized to one SQL carrier—use `SQLContent`. All forms use the same parts/preparation/binding pipeline.
+
+## Migrating from v1 / SwifQL
+
+For most projects, the first migration is intentionally mechanical.
+
+**v1 / Swift 5:**
+
+```swift
+.package(url: "https://github.com/SwifQL/SwifQL", from: "1.5.0")
+```
 
 ```swift
 import SwifQL
-// becomes
-import SQL
+
+let query = SwifQL
+    .select(...)
+    .from(...)
 ```
 
-Then follow compiler rename diagnostics for old symbol spellings. Representative mappings:
+**v2 / Swift 6.3+:**
 
-| Old | New |
-|---|---|
-| `SwifQL.select(...)` | `SQL.select(...)` |
-| `SwifQL { ... }` | `SQL { ... }` |
-| `SwifQL(query)` | `SQL(query)` |
-| `SwifQLable` | `SQLable` |
-| `SwifQLPart` | `SQLPart` |
-| `SwifQLPrepared` | `SQLPrepared` |
+```swift
+.package(url: "https://github.com/SwiftStream/SQL", from: "2.0.0")
+```
 
-There is **no compatibility module named `SwifQL`** in the new package identity. Compatibility is symbol-level only: after `import SQL`, retained old `SwifQL*` spellings are deprecated/renamed wrappers or aliases that point at the canonical SQL implementation.
+```swift
+import SQL
 
-See [MIGRATION.md](MIGRATION.md) for the migration contract and compatibility details.
+let query = SQL
+    .select(...)
+    .from(...)
+```
+
+The product/module changed from `SwifQL` to `SQL`, and the canonical root changed from `SwifQL.<fluent>` to `SQL.<fluent>`. There is **no compatibility module named `SwifQL`** in v2. After `import SQL`, retained old `SwifQL*` symbol spellings may still compile where a deprecated/renamed bridge is provided, so compiler rename diagnostics can guide the remaining source migration.
+
+For the complete migration checklist and advanced compatibility notes, see [MIGRATION.md](MIGRATION.md).
 
 ---
 
@@ -118,15 +224,13 @@ Please feel free to ask any questions in issues, and also you could find me in t
 
 ### Support SwifQL development by giving a ⭐️
 
-## Which version should I use?
+## Historical version guidance
 
-Still on a Vapor 4 / Swift 5 project? **1.5.0 is the last stable Swift 5 release**, so you can stay on the 1.5.x line until you're ready to migrate.
+For the earlier SwifQL release line, **1.5.0 was the last stable Swift 5 release**. The later SwifQL 2 beta line moved to Swift 6 and eventually became the SQL 2.0.0 release documented above.
 
-Starting a new project? Use **SwifQL 2** 🚀 It runs in Swift 6 language mode and contains the latest query-composition, API, and dialect improvements.
+The last SwifQL-named prerelease was **2.0.0-beta.6.1.0**. These examples are retained so existing projects and old release notes remain understandable; new projects should use the SQL 2.0.0 installation at the top of this README.
 
-The current SwifQL 2 release candidate/current pre-release is **2.0.0-beta.6.1.0**. This release line requires **Swift 6.3 or newer** and is validated in CI with **Swift 6.3.3**. If you're upgrading from 1.5.x or an earlier 2.0 beta, check [MIGRATION.md](MIGRATION.md). For examples of what's new see [RELEASE_NOTES.md](RELEASE_NOTES.md) and [CHANGELOG.md](CHANGELOG.md).
-
-## Installation
+## Historical installation examples
 
 ### Swift 5 / existing Vapor 4 projects
 

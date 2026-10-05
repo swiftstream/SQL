@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct SQLValue: SQLable {
+public struct SQLContent: SQLable {
     public var parts: [SQLPart]
 
     public init() {
@@ -19,28 +19,28 @@ public struct SQLValue: SQLable {
     }
 }
 
-public var SQL: SQLValue {
-    SQLValue()
+public var SQL: SQLContent {
+    SQLContent()
 }
 
-public func SQL(_ query: SQLable) -> SQLValue {
-    SQLValue(query)
+public func SQL(_ query: SQLable) -> SQLContent {
+    SQLContent(query)
 }
 
-public func SQL(@SQLBuilder _ content: () -> SQLBuilder.Root) -> SQLValue {
+public func SQL(@SQLBuilder _ content: () -> SQLBuilder.Root) -> SQLContent {
     content()
 }
 
 @available(*, deprecated, renamed: "SQL")
-public var SwifQL: SQLValue { SQL }
+public var SwifQL: SQLContent { SQL }
 
 @available(*, deprecated, renamed: "SQL")
-public func SwifQL(_ query: SQLable) -> SQLValue {
+public func SwifQL(_ query: SQLable) -> SQLContent {
     SQL(query)
 }
 
 @available(*, deprecated, renamed: "SQL")
-public func SwifQL(@SQLBuilder _ content: () -> SQLBuilder.Root) -> SQLValue {
+public func SwifQL(@SQLBuilder _ content: () -> SQLBuilder.Root) -> SQLContent {
     SQL(content())
 }
 

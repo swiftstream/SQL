@@ -4,7 +4,7 @@ Focused idea bank for future README/docs/release/publication material about the 
 
 ## SQL-shaped result builders without a second query engine
 
-Status: architecture-approved direction, active design
+Status: implemented and validated
 Good for: README | website docs | release notes | article | short post
 
 ### Why users should care
@@ -71,7 +71,7 @@ LIMIT 100
 
 ### Publication caveat
 
-The result-builder query API is design work, not shipped source. Final names/shapes outside already accepted DESIGN-020 predicate semantics remain subject to design review. The final major-version namespace is planned as `SQL`, while current source remains `SwifQL` until the dedicated naming migration wave.
+The result-builder query API is implemented and validated in the canonical `SQL` source tree. The package/product/module and direct query root are `SQL`, declarative construction uses `SQL { ... }`, and the canonical public repository is `https://github.com/SwiftStream/SQL`. Stable `2.0.0` publication is a separate release gate and must not be claimed as published until the immutable tag, CI, remote-consumer, and GitHub Release checks pass.
 
 ## Predicate composition mirrors boolean SQL
 
@@ -142,12 +142,12 @@ These shapes are still being designed. Do not present them as final API until ac
 
 ## Major identity migration: SwifQL to SQL
 
-Status: roadmap-approved, not implemented
+Status: implemented and validated; stable 2.0.0 publication pending
 Good for: migration guide | release notes | README | article | short post
 
 ### Why users should care
 
-The final major-version public identity is planned to become the shorter, direct SQL name:
+The major-version public identity is now the shorter, direct SQL name:
 
 ```swift
 SQL {
@@ -161,13 +161,13 @@ SQL {
 }
 ```
 
-instead of a final public result-builder spelling rooted at `SwifQL { ... }`.
+The canonical package/product/module and fluent/declarative root are `SQL`. The migration includes `SwifQLable -> SQLable`, reviewed corresponding `SwifQL...` renames, and the completed repository move to `https://github.com/SwiftStream/SQL`.
 
-The planned migration includes `SwifQLable -> SQLable`, reviewed corresponding `SwifQL...` renames, and repository/package relocation to `github.com/swiftstream/SQL`.
+There is no compatibility module named `SwifQL`; retained old `SwifQL*` spellings may exist only as deprecated/renamed bridges inside module `SQL` where provided.
 
 ### Publication caveat
 
-Current released/pre-release source is still SwifQL. This is a planned major-version migration and must not be described as current until the dedicated migration wave is implemented, validated, audited, and published.
+The source/API/package/repository migration is current and implemented. Stable `2.0.0` must still not be described as published until its dedicated branch-CI, immutable-tag, tag-CI, remote exact-consumer, and GitHub Release gates pass.
 
 ## Raw SQL conversion skill
 
@@ -178,7 +178,7 @@ Good for: website docs | README | migration guide | agent/LLM workflow post
 
 The source-owned `swifql-sql-conversion` skill now gives downstream coding agents a version-aware procedure for turning raw SQL or legacy SwifQL call sites into the canonical `SQL` DSL without guessing APIs. It can return declarative `SQL { ... }` when the resolved package exposes verified builders, direct `SQL.<fluent>`/core composition when that is the supported representation, and an explicit raw boundary only for unsupported static SQL structure.
 
-Runtime or untrusted data never moves into raw SQL for textual convenience: it stays on the normal value/bind path, and the procedure verifies prepared SQL shape plus bind order. The skill also retains migration guidance for historical SwifQL call sites while targeting `import SQL`, direct `SQL`, and `SQLValue` only where explicit concrete typing is required.
+Runtime or untrusted data never moves into raw SQL for textual convenience: it stays on the normal value/bind path, and the procedure verifies prepared SQL shape plus bind order. The skill also retains migration guidance for historical SwifQL call sites while targeting `import SQL`, direct `SQL`, and `SQLContent` only where explicit concrete typing is required.
 
 ### Evidence / provenance
 
@@ -194,7 +194,7 @@ This status records the validated local source-owned skill in the SQL repository
 
 ## Reusable parameterized queries with SQLQuery
 
-Status: validated
+Status: implemented and freshly validated
 Good for: README | website docs | release notes | article | short post
 
 ### Why users should care
@@ -209,7 +209,7 @@ struct UsersQuery: SQLQuery {
     let email: String?
     let roles: [Role]?
 
-    var query: SQLValue {
+    var query: Query {
         Select {
             User.$id
             User.$email.as("emailAddress")
@@ -296,14 +296,16 @@ The same principle is regression-tested through FROM/alias, JOIN, scalar SELECT 
 - direct-root/type correction commit `1f656ffe22404b2cdb39546ea3dcfdee7be6abc8` (“🛠 Restore direct `SQL` fluent root”);
 - public-doc sync `6fd973e9a3edad075eb50ff4fbb52380bc4ca3ee` and managed-skill sync `4558af69c7a99520ddb79374bae4ff877d726c1a`;
 - `Sources/SQL/SQLQuery.swift` and `Tests/SQLTests/SQLQueryTests.swift`;
-- focused SQLQuery suite: 7 tests / 1 suite PASS;
-- full validation: 737 tests / 63 suites PASS on Swiftly 6.3.3, Xcode 26.6 Swift 6.3.3, and Xcode 27 Swift 6.4;
-- direct-root external client matrix: PASS x3; representative root members: 37/37 PASS;
+- exact final focused validation: SQLQuery 7/7 PASS and SQLIdentityPhaseA 5/5 PASS;
+- exact final full validation: 737 tests / 63 suites PASS on Swiftly 6.3.3, Xcode 26.6 Swift 6.3.3, and Xcode 27 Swift 6.4;
+- exact final downstream normal-import client matrix: PASS x3 with protocol-local `Query`, explicit `SQLContent`, direct composition without `.query`, and dialect/bind checks;
+- direct-root representatives: 37/37 PASS x3;
+- deprecated SwifQL fluent/builder/unary parity and bind parity: PASS x3;
 - direct-root source/API/diff audit: CLEAN, 50/50 PASS.
 
 ### Publication caveat
 
-`SQLQuery` is implemented and validated in the local canonical `SQL` source tree, but this capture does not claim that a remote repository rename, tag, release, package publication, or public documentation rollout has occurred. The committed public requirement is `@SQLBuilder var query: SQLValue { get }`; ordinary conformers may write `var query: SQLValue { ... }` without repeating the builder attribute or adding an explicit nested `SQL { ... }` wrapper. Direct fluent construction starts from the global `SQL` root (`SQL.select(...)`, `SQL.from(...)`, and so on), while `SQLValue` is named only when a concrete fragment/result type is required. The unreleased intermediate `SQL.root` spelling is not compatibility surface.
+`SQLQuery` is implemented and freshly validated in the canonical `SQL` source tree, and the repository rename/move to `https://github.com/SwiftStream/SQL` is complete. Its final pre-publication API defines fixed shorthand `Query = SQLContent` and requires `@SQLBuilder var query: Query { get }`; ordinary conformers write `var query: Query { ... }` without repeating the builder attribute or adding a nested `SQL { ... }` wrapper. This keeps conditional filters, loops, and other SQL construction details inside the reusable query type while call sites simply create and compose `UsersQuery(...)` values without manual `.query` unwrapping. `SQLContent` is named only when explicit concrete formed-SQL typing is genuinely required. The exact candidate passed the three-lane package matrix and downstream client matrix; stable `2.0.0` still remains unpublished until its dedicated branch/tag/remote-consumer/GitHub Release gates pass.
 
 ## Three equivalent alias authoring forms and general declarative As
 

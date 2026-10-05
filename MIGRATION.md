@@ -1,6 +1,6 @@
 # Migrating from SwifQL to SQL
 
-The package/product/module identity has changed from `SwifQL` to `SQL`.
+The project formerly known as `SwifQL` is now `SQL`. The package/product/module identity changed to `SQL`, and the canonical repository moved to `https://github.com/SwiftStream/SQL`.
 
 Start with the module import:
 
@@ -41,20 +41,23 @@ let oldSpelling = SwifQL.select(Path.Column("id")) // deprecated -> SQL
 let canonical = SQL.select(Path.Column("id"))
 ```
 
-The two call sites use the same canonical implementation identity; the old spelling is only a migration bridge. `SQL` is the public root/function spelling, while `SQLValue` is the concrete fragment/result carrier to name only when an explicit concrete type is required.
+The two call sites use the same canonical implementation identity; the old spelling is only a migration bridge. `SQL` is the public root/function spelling. `SQLContent` is the concrete formed-SQL carrier to name only when explicit concrete typing is genuinely required; reusable `SQLQuery` conformers normally use their protocol-local `Query` shorthand instead.
 
 ## Package dependency
 
-The local package manifest now exports only product `SQL`. The remote repository has not been renamed or republished by this migration workflow, so do not assume a new GitHub URL is live yet.
-
-When consuming a release that contains this identity migration from the current repository location, select product `SQL`:
+The canonical repository is now `https://github.com/SwiftStream/SQL`. SQL 2.0.0 requires Swift 6.3 or newer and exports product/module `SQL`.
 
 ```swift
-.package(url: "https://github.com/SwifQL/SwifQL", /* version containing this migration */),
+.package(
+    url: "https://github.com/SwiftStream/SQL",
+    from: "2.0.0"
+),
 .target(name: "App", dependencies: [
-    .product(name: "SQL", package: "SwifQL"),
+    .product(name: "SQL", package: "SQL"),
 ])
 ```
+
+If your package still points at `SwifQL/SwifQL`, update the repository URL together with the product and module rename. The old repository/name remains relevant only when consuming historical SwifQL releases.
 
 ## SQL semantics
 
@@ -68,18 +71,19 @@ Validated migration candidate:
 
 ## Recommended migration order
 
-1. Update the package product dependency from `SwifQL` to `SQL`.
-2. Replace `import SwifQL` with `import SQL`.
-3. Build the project.
-4. Follow compiler rename diagnostics for remaining `SwifQL*` symbols.
-5. Prefer `SQL { ... }` for declarative construction and direct `SQL.<fluent>` for fluent construction.
-6. Keep any intentionally historical source/examples unchanged only where they document an older release.
+1. Move the package dependency to `https://github.com/SwiftStream/SQL` at `2.0.0` or newer and make sure the project uses Swift 6.3+.
+2. Update the package product dependency from `SwifQL` to `SQL`.
+3. Replace `import SwifQL` with `import SQL`.
+4. Replace the main fluent root from `SwifQL.<fluent>` to `SQL.<fluent>`.
+5. Build the project and follow compiler rename diagnostics for remaining `SwifQL*` symbols.
+6. Prefer `SQL { ... }` for declarative construction where it improves readability; direct `SQL.<fluent>` remains canonical fluent construction.
+7. Keep intentionally historical source/examples unchanged only where they document an older release.
 
 ---
 
 # Earlier migration: SwifQL 1.x to SwifQL 2.x
 
-The current SwifQL 2 release candidate/current pre-release is `2.0.0-beta.6.1.0`.
+The final prerelease published under the SwifQL name was `2.0.0-beta.6.1.0`.
 
 ```swift
 .package(
@@ -123,7 +127,7 @@ A SwifQL 1.5 project could stay on a Swift 5 language mode package.
 
 ### Now
 
-The current SwifQL 2 prerelease requires Swift 6.3 or newer and is built with:
+The final SwifQL-named prerelease required Swift 6.3 or newer and was built with:
 
 ```swift
 // swift-tools-version:6.3
@@ -397,7 +401,7 @@ PIVOT "cities" ON "year" IN (2000, 2010) USING sum("population") as "total" GROU
 
 One DuckDB-specific runtime detail worth knowing: dynamic simplified PIVOT without an explicit `IN (...)` can be valid SQL but cannot always be prepared as one C prepared statement because DuckDB discovers the output columns while expanding it. If your execution path requires a prepared statement, prefer an explicit `IN (...)` form when appropriate.
 
-Administration/runtime families such as INSTALL/LOAD, secrets, broad PRAGMA/configuration, CHECKPOINT, VACUUM/ANALYZE administration, variables, EXPORT/IMPORT DATABASE, SHOW/DESCRIBE/SUMMARIZE, extension-specific SQL, and the generic `name := expression` API are not part of the current SwifQL 2 DuckDB support.
+Administration/runtime families such as INSTALL/LOAD, secrets, broad PRAGMA/configuration, CHECKPOINT, VACUUM/ANALYZE administration, variables, EXPORT/IMPORT DATABASE, SHOW/DESCRIBE/SUMMARIZE, extension-specific SQL, and the generic `name := expression` API are not part of the current SQL DuckDB support.
 
 ## Static `raw(_:)` now uses the text you pass
 
@@ -445,8 +449,8 @@ No migration is needed unless your code depended on internal formatter identity 
 
 ## Quick migration checklist
 
-- Move the consuming project to Swift 6.3 or newer when adopting the current SwifQL 2 prerelease.
-- Pin the current pre-release with `exact: "2.0.0-beta.6.1.0"`.
+- For the historical SwifQL 2 prerelease path, move the consuming project to Swift 6.3 or newer.
+- The final SwifQL-named prerelease was pinned with `exact: "2.0.0-beta.6.1.0"`; new migrations should use SQL 2.0.0 from `SwiftStream/SQL` as documented at the top of this file.
 - Check local/package extensions that manually append or pattern-match `SwifQLable.parts`.
 - Use `structurallyAppending(_:)` when a helper means “continue this framed query”.
 - Replace mutations of predefined `Fn.Name` values with `Fn.Name.custom(_:)` / `Fn.build(_:)`.
