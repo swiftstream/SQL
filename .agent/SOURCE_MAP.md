@@ -32,7 +32,7 @@ Historical-schema-safe declarative DDL uses explicit string identifiers. It does
 
 ## Declarative query authoring
 
-- `Sources/SQL/SQLQuery.swift` — public reusable parameterized-query protocol; `@SQLBuilder var query: SQL { get }` plus direct `parts -> query.parts` forwarding into the existing SQLable preparation/composition pipeline.
+- `Sources/SQL/SQLQuery.swift` — public reusable parameterized-query protocol; `@SQLBuilder var query: SQLValue { get }` plus direct `parts -> query.parts` forwarding into the existing SQLable preparation/composition pipeline.
 - `Sources/SQL/DeclarativeQuery/Core/SQLBuilder.swift` — typed root/current states, SELECT/FROM/JOIN and core-clause transitions.
 - `Sources/SQL/DeclarativeQuery/Core/IdentifierListBuilder.swift` — identifier-name intake, including structural column paths.
 - `Sources/SQL/DeclarativeQuery/From/FromBuilder.swift` — FROM sources, source continuations, nested statements, and nested core clauses.
@@ -127,7 +127,7 @@ This is the validated first-closure surface, not a claim that every DuckDB admin
 ## Swift 6 / strict-concurrency-relevant roots
 
 - `Package.swift` — Swift 6 language mode.
-- `Sources/SQL/SQL.swift` — fresh computed global `SQL` root.
+- `Sources/SQL/SQL.swift` — `SQLValue` concrete fragment/result carrier plus fresh computed global `SQL` fluent root and overloaded unary/result-builder `SQL(...)` functions; deprecated `SwifQL` bridges remain in-module compatibility only.
 - `Sources/SQL/Attach.swift` / `Copy.swift` — fresh computed no-value option roots.
 - `Sources/SQL/Dialect/Dialect+Postgres.swift` — instance-local lazy Foundation `DateFormatter`.
 - `Sources/SQL/Functions/Functions*.swift` — immutable canonical predefined `Fn.Name` storage.

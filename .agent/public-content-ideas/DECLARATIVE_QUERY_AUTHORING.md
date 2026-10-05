@@ -181,7 +181,7 @@ A future downstream skill should turn raw SQL into either:
 1. the final declarative result-builder representation; or
 2. the final raw/fluent SQL DSL representation.
 
-It should also retain enough legacy SwifQL knowledge to help coding agents migrate existing call sites during the major namespace transition.
+It should also retain enough legacy SwifQL knowledge to help coding agents migrate existing call sites during the major namespace transition. Once implemented, every later accepted query-surface wave should perform an explicit conversion-skill impact check and update the skill in that wave's docs/skills closure whenever new canonical constructs or spellings are introduced.
 
 ### Publication caveat
 
@@ -204,7 +204,7 @@ struct UsersQuery: SQLQuery {
     let email: String?
     let roles: [Role]?
 
-    var query: SQL {
+    var query: SQLValue {
         Select {
             User.$id
             User.$email.as("emailAddress")
@@ -287,15 +287,18 @@ The same principle is regression-tested through FROM/alias, JOIN, scalar SELECT 
 
 ### Evidence / provenance
 
-- implementation commit `616c45775cada4481da3fe2b704b921f675ac264` (`✨ Add reusable SQLQuery components`);
+- reusable-query implementation commit `616c45775cada4481da3fe2b704b921f675ac264` (`✨ Add reusable SQLQuery components`);
+- direct-root/type correction commit `1f656ffe22404b2cdb39546ea3dcfdee7be6abc8` (“🛠 Restore direct `SQL` fluent root”);
+- public-doc sync `6fd973e9a3edad075eb50ff4fbb52380bc4ca3ee` and managed-skill sync `4558af69c7a99520ddb79374bae4ff877d726c1a`;
 - `Sources/SQL/SQLQuery.swift` and `Tests/SQLTests/SQLQueryTests.swift`;
 - focused SQLQuery suite: 7 tests / 1 suite PASS;
 - full validation: 737 tests / 63 suites PASS on Swiftly 6.3.3, Xcode 26.6 Swift 6.3.3, and Xcode 27 Swift 6.4;
-- independent source/API/diff audit: CLEAN, 55/55 PASS.
+- direct-root external client matrix: PASS x3; representative root members: 37/37 PASS;
+- direct-root source/API/diff audit: CLEAN, 50/50 PASS.
 
 ### Publication caveat
 
-`SQLQuery` is implemented and validated in the local canonical `SQL` source tree, but this capture does not claim that a remote repository rename, tag, release, package publication, or public documentation rollout has occurred. The committed public requirement is `@SQLBuilder var query: SQL { get }`; ordinary conformers may write `var query: SQL { ... }` without repeating the builder attribute or adding an explicit nested `SQL { ... }` wrapper.
+`SQLQuery` is implemented and validated in the local canonical `SQL` source tree, but this capture does not claim that a remote repository rename, tag, release, package publication, or public documentation rollout has occurred. The committed public requirement is `@SQLBuilder var query: SQLValue { get }`; ordinary conformers may write `var query: SQLValue { ... }` without repeating the builder attribute or adding an explicit nested `SQL { ... }` wrapper. Direct fluent construction starts from the global `SQL` root (`SQL.select(...)`, `SQL.from(...)`, and so on), while `SQLValue` is named only when a concrete fragment/result type is required. The unreleased intermediate `SQL.root` spelling is not compatibility surface.
 
 ## Three equivalent alias authoring forms and general declarative As
 

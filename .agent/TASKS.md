@@ -2,11 +2,11 @@
 
 This file contains only approved current work. Ideas, unresolved choices, verified debt, and completed history belong in their separate owners.
 
-## Current: local SQLQuery capability closed
+## Current: direct `SQL` root correction stable-closure gate
 
-The local `SwifQL -> SQL` identity migration is closed, and reusable `SQLQuery` components are implemented, validated, independently audited, and committed as `616c45775cada4481da3fe2b704b921f675ac264` (`✨ Add reusable SQLQuery components`). The public requirement is `@SQLBuilder var query: SQL { get }`; conformers may write a plain `var query: SQL { ... }` witness, and the default `parts` implementation forwards to `query.parts` so direct preparation and nested composition reuse the existing SQLable pipeline.
+The local `SwifQL -> SQL` identity migration and reusable `SQLQuery` capability are now corrected to the final pre-publication root/type architecture. Governance authority was committed as `38be12a111a8cbefd16d277bc344f2958b78a9e0`, source/tests as `1f656ffe22404b2cdb39546ea3dcfdee7be6abc8`, public docs as `6fd973e9a3edad075eb50ff4fbb52380bc4ca3ee`, and managed query-building skills as `4558af69c7a99520ddb79374bae4ff877d726c1a`. The canonical fluent root is direct `SQL.<fluent>`, declarative construction remains `SQL { ... }`, the concrete carrier is `SQLValue`, and `SQLQuery` requires `@SQLBuilder var query: SQLValue { get }` with ordinary conformers writing `var query: SQLValue { ... }`. The exact corrected source passed 737 tests / 63 suites on Swiftly 6.3.3, Xcode 26.6 Swift 6.3.3, and Xcode 27 Swift 6.4; external normal-import clients passed on all three lanes; 37/37 representative root members passed; deprecated in-module `SwifQL` compatibility and SQL/bind parity passed.
 
-No additional production implementation objective is automatically authorized by this closure. Remote repository rename/publication, push/tag/release, the SQL conversion skill, documentation/publication consolidation, and later roadmap work each require a separate maintainer objective and their own execution gates.
+This G3 synchronization is the final stable-closure gate. Once this exact candidate is independently audited and committed, the next local roadmap objective may return to the SQL conversion skill. The conversion skill must teach direct `SQL.<fluent>` / `SQL { ... }` and must be impact-checked after later query-surface waves. Remote repository rename/publication, push/tag/release, and other unrelated roadmap work remain separately gated and are not authorized by this closure.
 
 ## Completed declarative query authoring lineage retained for context
 
