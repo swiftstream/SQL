@@ -10,7 +10,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
         let table = Path.Schema(schemaName).table(T.tableName)
         var parts: [SQLPart] = []
         if combinedAlterActions.count > 0 {
-            var combinedParts = SQL.root.alter.table[any: table].parts
+            var combinedParts = SQL.alter.table[any: table].parts
             combinedParts.append(o: .space)
             combinedAlterActions.enumerated().forEach { i, action in
                 if i > 0 {
@@ -23,7 +23,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
             parts.append(contentsOf: combinedParts)
         }
         standAloneAlterActions.forEach { action in
-            var standAloneParts = SQL.root.alter.table[any: table].parts
+            var standAloneParts = SQL.alter.table[any: table].parts
             standAloneParts.append(o: .space)
             standAloneParts.append(contentsOf: action)
             standAloneParts.append(o: .semicolon)
@@ -35,7 +35,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
             parts.append(contentsOf: actionParts)
         }
         if let newName = renameTableTo {
-            var renameParts = SQL.root.alter.table[any: table].parts
+            var renameParts = SQL.alter.table[any: table].parts
             renameParts.append(o: .space)
             renameParts.append(o: .rename)
             renameParts.append(o: .space)
@@ -181,7 +181,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     /// .dropColumn("qwe", cascade: true) // default `false`
     /// ```
     public func dropColumn(_ name: String, checkIfExists: Bool = false, cascade: Bool = false) -> Self {
-        var parts = SQL.root.parts
+        var parts = SQL.parts
         parts.append(o: .drop)
         parts.append(o: .space)
         parts.append(o: .column)
@@ -220,7 +220,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     
     /// Use for adding/changing the default value for a column.
     public func setDefault(_ name: String, constant v: Any) -> Self {
-        var parts = SQL.root.parts
+        var parts = SQL.parts
         parts.append(o: .alter)
         parts.append(o: .space)
         parts.append(o: .column)
@@ -238,7 +238,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     
     /// Use for adding/changing the default value for a column.
     public func setDefault(_ name: String, expression: SQLable) -> Self {
-        var parts = SQL.root.parts
+        var parts = SQL.parts
         parts.append(o: .alter)
         parts.append(o: .space)
         parts.append(o: .column)
@@ -256,7 +256,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     
     /// Use for adding/changing the default value for a column.
     public func setDefault(_ name: String, sequence: String) -> Self {
-        var parts = SQL.root.parts
+        var parts = SQL.parts
         parts.append(o: .alter)
         parts.append(o: .space)
         parts.append(o: .column)
@@ -281,7 +281,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     
     /// Use for removing the default value for a column.
     public func dropDefault(_ name: String) -> Self {
-        var parts = SQL.root.parts
+        var parts = SQL.parts
         parts.append(o: .alter)
         parts.append(o: .space)
         parts.append(o: .column)
@@ -304,7 +304,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     
     /// Use for removing NOT NULL mark for a column.
     public func setNotNull(_ name: String) -> Self {
-        var parts = SQL.root.parts
+        var parts = SQL.parts
         parts.append(o: .alter)
         parts.append(o: .space)
         parts.append(o: .column)
@@ -329,7 +329,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     
     /// Use for removing NOT NULL mark for a column.
     public func dropNotNull(_ name: String) -> Self {
-        var parts = SQL.root.parts
+        var parts = SQL.parts
         parts.append(o: .alter)
         parts.append(o: .space)
         parts.append(o: .column)
@@ -354,7 +354,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     
     /// For changing the table name or a column name.
     public func renameColumn(_ name: String, to: String) -> Self {
-        var parts = SQL.root.parts
+        var parts = SQL.parts
         parts.append(o: .rename)
         parts.append(o: .space)
         parts.append(o: .column)
@@ -372,7 +372,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     
     /// Use for dropping a table constraint.
     public func dropConstraint(_ name: String) -> Self {
-        var parts = SQL.root.parts
+        var parts = SQL.parts
         parts.append(o: .drop)
         parts.append(o: .space)
         parts.append(o: .constraint)
@@ -387,7 +387,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     /// Use to add UNIQUE mark to one or several columns.
     public func addUnique(to columns: String...) -> Self {
         guard columns.count > 0 else { return self }
-        var parts = SQL.root.parts
+        var parts = SQL.parts
         parts.append(o: .add)
         parts.append(o: .space)
         parts.append(o: .unique)
@@ -410,7 +410,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     /// Use to add PRIMARY KEY mark to one or several columns.
     public func addPrimaryKey(to columns: String...) -> Self {
         guard columns.count > 0 else { return self }
-        var parts = SQL.root.parts
+        var parts = SQL.parts
         parts.append(o: .add)
         parts.append(o: .space)
         parts.append(o: .primary)
@@ -434,7 +434,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     
     /// Drops index by its name.
     public func dropIndex(schema: String? = nil, name: String) -> Self {
-        var parts = SQL.root.parts
+        var parts = SQL.parts
         parts.append(o: .drop)
         parts.append(o: .space)
         parts.append(o: .index)
@@ -458,7 +458,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     /// Creates index for one or several columns.
     public func createIndex(unique: Bool = false, name: String? = nil, items: [IndexItem], type: IndexType? = nil, where condition: SQLable? = nil) -> Self {
         guard items.count > 0 else { return self }
-        var parts = SQL.root.parts
+        var parts = SQL.parts
         parts.append(o: .create)
         if unique {
             parts.append(o: .space)
@@ -505,7 +505,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     /// A check constraint helps in validating the records that are being inserted into a table.
     /// We can do this by combining the ALTER TABLE command with the ADD CHECK statement.
     public func addCheck(constraintName: String? = nil, _ expression: SQLable) -> Self {
-        var parts = SQL.root.parts
+        var parts = SQL.parts
         parts.append(o: .add)
         if let constraintName = constraintName {
             parts.append(o: .space)
@@ -531,7 +531,7 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     
     public func addForeignKey(column: String, constraintName: String? = nil, schema: String? = nil, table: String, columns: [String], onDelete: ReferentialAction? = nil, onUpdate: ReferentialAction? = nil) -> Self {
         guard columns.count > 0 else { return self }
-        var parts = SQL.root.parts
+        var parts = SQL.parts
         parts.append(o: .add)
         if let constraintName = constraintName {
             parts.append(o: .space)

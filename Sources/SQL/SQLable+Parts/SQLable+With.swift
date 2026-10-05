@@ -18,7 +18,7 @@ import Foundation
 /// SELECT, INSERT, UPDATE, or DELETE.
 /// ```
 /// SwifQL
-///     .with(.init(Table("Table1"), SQL.root.select(Table("Table2").*).from(Table("Table2"))))
+///     .with(.init(Table("Table1"), SQL.select(Table("Table2").*).from(Table("Table2"))))
 ///     .select(Table("Table1").*)
 ///     .from(Table("Table1"))
 /// ```

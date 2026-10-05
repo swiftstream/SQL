@@ -7,7 +7,7 @@
 
 public class DropSchemaBuilder<Schema: Schemable>: SQLable {
     public var parts: [SQLPart] {
-        var query = SQL.root.drop.schema
+        var query = SQL.drop.schema
         if shouldCheckIfExists {
             query = query.if.exists
         }

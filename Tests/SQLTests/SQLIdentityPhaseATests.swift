@@ -21,13 +21,13 @@ private extension SwifQLable {
 struct SQLIdentityPhaseATests {
     @Test("Concrete SQL supports declarative and fluent roots")
     func concreteSQLRoots() {
-        let declarative: SQL = SQL {
+        let declarative: SQLValue = SQL {
             Select { Path.Column("id") }
             From { Path.Table("users") }
             Where { Path.Column("active") == true }
         }
 
-        let fluent: SQLable = SQL.root
+        let fluent: SQLable = SQL
             .select(Path.Column("id"))
             .from(Path.Table("users"))
             .where(Path.Column("active") == true)
@@ -47,10 +47,10 @@ struct SQLIdentityPhaseATests {
 
     @Test("Deprecated root wrappers preserve canonical SQL behavior")
     func legacyRootWrappers() {
-        let canonical = SQL.root.select(Path.Column("id"))
+        let canonical = SQL.select(Path.Column("id"))
         let legacyFluent = SwifQL.select(Path.Column("id"))
 
-        let canonicalBuilder: SQL = SQL {
+        let canonicalBuilder: SQLValue = SQL {
             Select { Path.Column("id") }
         }
         let legacyBuilder = SwifQL {

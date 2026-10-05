@@ -48,7 +48,7 @@ public enum SQLBuilder {
         }
     }
 
-    public typealias Root = SQL
+    public typealias Root = SQLValue
 
     public static func buildExpression(_ expression: any SQLable) -> NeutralItem {
         NeutralItem(snapshotting: expression.parts)
@@ -177,8 +177,8 @@ public enum SQLBuilder {
         lowerRoot(component?.fragments ?? [])
     }
 
-    static func lowerRoot(_ fragments: [SQLable]) -> SQL {
-        guard !fragments.isEmpty else { return SQL.root }
+    static func lowerRoot(_ fragments: [SQLable]) -> SQLValue {
+        guard !fragments.isEmpty else { return SQL }
 
         if fragments.count == 1 {
             let only = fragments[0]
@@ -191,7 +191,7 @@ public enum SQLBuilder {
             ]))
         }
 
-        var result: SQLable = SQL.root
+        var result: SQLable = SQL
         for fragment in fragments {
             result = _SQLStructuralComposition.appendStatementContents(
                 from: fragment,

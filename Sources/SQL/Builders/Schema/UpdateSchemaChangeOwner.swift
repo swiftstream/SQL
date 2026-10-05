@@ -7,7 +7,7 @@
 
 public class UpdateSchemaChangeOwner<Schema: Schemable>: SQLable {
     public var parts: [SQLPart] {
-        var query = SQL.root.alter.schema
+        var query = SQL.alter.schema
         query = query[any: Path.Schema(Schema.schemaName)]
         query = query.owner.to
         query = query[any: Path.Schema(newOwner)]

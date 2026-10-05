@@ -14,7 +14,7 @@ extension SQLable {
     ///
     /// Example usage:
     /// ```swift
-    /// SQL.root.select
+    /// SQL.select
     ///     // ...
     ///     .where((\User.$id).in(aUserID, bUserID))
     /// ```
@@ -28,7 +28,7 @@ extension SQLable {
     ///
     /// Example usage:
     /// ```swift
-    /// SQL.root.select
+    /// SQL.select
     ///     // ...
     ///     .where((\User.$id).in(userIDsArray))
     /// ```

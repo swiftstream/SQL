@@ -18,23 +18,23 @@ public struct Constraint {
     var isNotNull = false
     
     public static var primaryKey: Constraint {
-        var constraint = Constraint(SQL.root.primary.key)
+        var constraint = Constraint(SQL.primary.key)
         constraint.isPrimaryKey = true
         return constraint
     }
     
     public static var unique: Constraint {
-        .init(SQL.root.unique)
+        .init(SQL.unique)
     }
     
     public static var notNull: Constraint {
-        var constraint = Constraint(SQL.root.not.null)
+        var constraint = Constraint(SQL.not.null)
         constraint.isNotNull = true
         return constraint
     }
     
     public static func check(name: String? = nil, _ expression: SQLable) -> Constraint {
-        var query: SQLable = SQL.root
+        var query: SQLable = SQL
         if let name = name {
             query = query.constraint[any: Path.Column(name)]
         }
@@ -50,7 +50,7 @@ public struct Constraint {
     }
     
     public static func references(_ schema: String? = nil, _ table: String, onDelete: ReferentialAction? = nil, onUpdate: ReferentialAction? = nil) -> Constraint {
-        var query = SQL.root.references[any: Path.SchemaWithTable(schema: schema, table: table)]
+        var query = SQL.references[any: Path.SchemaWithTable(schema: schema, table: table)]
         if let action = onDelete {
             query = query.on.delete[any: action]
         }

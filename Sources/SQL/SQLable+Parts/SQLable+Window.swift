@@ -40,7 +40,7 @@ extension SQLable {
     
     /// [Learn more →](https://www.postgresqltutorial.com/postgresql-window-function/)
     public func window(_ window: SQLable, asPartitionBy expression: SQLable, orderBy: [OrderByItem]) -> SQLable {
-        var query = SQL.root.partition(by: expression)
+        var query = SQL.partition(by: expression)
         if orderBy.count > 0 {
             query = query.orderBy(orderBy)
         }

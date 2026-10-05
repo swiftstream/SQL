@@ -5,7 +5,7 @@ private struct UsersQuery: SQLQuery {
     let active: Bool
     let email: String?
 
-    var query: SQL {
+    var query: SQLValue {
         Select {
             Path.Column("id")
             Path.Column("email")
@@ -144,8 +144,8 @@ struct SQLQueryTests {
         let queryValue = UsersQuery(active: true, email: "john@example.com")
         let reusableIn = Path.Column("candidate").in(queryValue)
         let directIn = Path.Column("candidate").in(queryValue.query)
-        let reusableExists = SQL.root.exists(queryValue)
-        let directExists = SQL.root.exists(queryValue.query)
+        let reusableExists = SQL.exists(queryValue)
+        let directExists = SQL.exists(queryValue.query)
 
         expectEquivalent(reusableIn, directIn, dialect: .psql)
         expectEquivalent(reusableExists, directExists, dialect: .psql)
@@ -154,8 +154,8 @@ struct SQLQueryTests {
     @Test("direct root composition keeps one ordinary statement root")
     func directRootComposition() {
         let queryValue = UsersQuery(active: true, email: "john@example.com")
-        let reusable: SQL = SQL { queryValue }
-        let direct: SQL = SQL { queryValue.query }
+        let reusable: SQLValue = SQL { queryValue }
+        let direct: SQLValue = SQL { queryValue.query }
         let rootFrames = reusable.parts.compactMap { $0 as? SQLStructuralFramePart }
 
         expectEquivalent(reusable, direct, dialect: .psql)

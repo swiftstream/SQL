@@ -15,10 +15,10 @@ extension SQLable {
     ///
     /// Usage:
     /// ```swift
-    /// SQL.root.select
+    /// SQL.select
     ///     // ...
     ///     .where(\User.$name == username
-    ///         && |\User.$status == "active" || \User.$updatedAt == SQL.root.null|)
+    ///         && |\User.$status == "active" || \User.$updatedAt == SQL.null|)
     /// ```
     public var null: SQLable {
         var parts = self.parts

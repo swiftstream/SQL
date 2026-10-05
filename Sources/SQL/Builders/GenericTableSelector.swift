@@ -689,7 +689,7 @@ public class TableSelector<T: Table>: SQLable {
     // MARK: Building
     
     private func build() -> [SQLPart] {
-        var query: SQLable = SQL.root
+        var query: SQLable = SQL
         if columns.count == 0 {
             if exceptColumns.count > 0 {
                 var cols = T.init().columns.map { $0.name.label }

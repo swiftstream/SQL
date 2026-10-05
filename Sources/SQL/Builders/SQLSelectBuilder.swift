@@ -52,7 +52,7 @@ public class SQLSelectBuilder: QueryBuilderable {
     }
     
     public func build() -> SQLable {
-        var query = SQL.root.select(select)
+        var query = SQL.select(select)
         if froms.count > 0 {
             query = query.from(froms)
         }

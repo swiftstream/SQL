@@ -44,19 +44,19 @@ public class NewColumn: SQLable {
     
     @discardableResult
     public func primaryKey() -> Self {
-        constraints.append(SQL.root.primary.key)
+        constraints.append(SQL.primary.key)
         return self
     }
     
     @discardableResult
     public func unique() -> Self {
-        constraints.append(SQL.root.unique)
+        constraints.append(SQL.unique)
         return self
     }
     
     @discardableResult
     public func notNull() -> Self {
-        constraints.append(SQL.root.not.null)
+        constraints.append(SQL.not.null)
         return self
     }
     

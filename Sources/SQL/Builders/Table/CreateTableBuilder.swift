@@ -7,7 +7,7 @@
 
 public class CreateTableBuilder<T: Table>: SQLable {
     public var parts: [SQLPart] {
-        var query = SQL.root.create.table
+        var query = SQL.create.table
         if shouldCheckIfNotExists {
             query = query.if.not.exists
         }

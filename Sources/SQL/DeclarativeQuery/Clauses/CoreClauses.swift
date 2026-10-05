@@ -11,7 +11,7 @@ public struct WhereClause: SQLable {
 
     public var parts: [SQLPart] {
         guard !predicateParts.isEmpty else { return [] }
-        return SQL.root.`where`(SQLableParts(rawParts: predicateParts)).parts
+        return SQL.`where`(SQLableParts(rawParts: predicateParts)).parts
     }
 }
 
@@ -26,7 +26,7 @@ public struct HavingClause: SQLable {
 
     public var parts: [SQLPart] {
         guard !predicateParts.isEmpty else { return [] }
-        return SQL.root.having(SQLableParts(rawParts: predicateParts)).parts
+        return SQL.having(SQLableParts(rawParts: predicateParts)).parts
     }
 }
 
@@ -41,7 +41,7 @@ public struct QualifyClause: SQLable {
 
     public var parts: [SQLPart] {
         guard !predicateParts.isEmpty else { return [] }
-        return SQL.root.qualify(SQLableParts(rawParts: predicateParts)).parts
+        return SQL.qualify(SQLableParts(rawParts: predicateParts)).parts
     }
 }
 
@@ -57,7 +57,7 @@ public struct GroupByClause: SQLable {
     public var parts: [SQLPart] {
         let expressions = expressionParts.filter { !$0.isEmpty }
         guard !expressions.isEmpty else { return [] }
-        return SQL.root.groupBy(expressions.map { SQLableParts(rawParts: $0) as SQLable }).parts
+        return SQL.groupBy(expressions.map { SQLableParts(rawParts: $0) as SQLable }).parts
     }
 }
 
@@ -78,7 +78,7 @@ public struct OrderByClause: SQLable {
 
     public var parts: [SQLPart] {
         guard !items.isEmpty else { return [] }
-        return SQL.root.orderBy(items).parts
+        return SQL.orderBy(items).parts
     }
 }
 
@@ -93,7 +93,7 @@ public struct LimitClause: SQLable {
 
     public var parts: [SQLPart] {
         guard !countParts.isEmpty else { return [] }
-        return SQL.root.limit(SQLableParts(rawParts: countParts)).parts
+        return SQL.limit(SQLableParts(rawParts: countParts)).parts
     }
 }
 
@@ -108,7 +108,7 @@ public struct OffsetClause: SQLable {
 
     public var parts: [SQLPart] {
         guard !countParts.isEmpty else { return [] }
-        return SQL.root.offset(SQLableParts(rawParts: countParts)).parts
+        return SQL.offset(SQLableParts(rawParts: countParts)).parts
     }
 }
 

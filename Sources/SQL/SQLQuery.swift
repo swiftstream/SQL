@@ -1,5 +1,5 @@
 public protocol SQLQuery: SQLable {
-    @SQLBuilder var query: SQL { get }
+    @SQLBuilder var query: SQLValue { get }
 }
 
 public extension SQLQuery {

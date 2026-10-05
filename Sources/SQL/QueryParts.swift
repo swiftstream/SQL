@@ -33,7 +33,7 @@ public class QueryParts {
     }
     
     public func buildQuery() -> SQLable {
-        var query: SQLable = SQL.root
+        var query: SQLable = SQL
         joins.forEach {
             query = _SQLStructuralComposition.appendStatementContents(
                 from: $0,

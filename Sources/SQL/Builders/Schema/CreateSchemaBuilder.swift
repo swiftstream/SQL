@@ -7,7 +7,7 @@
 
 public class CreateSchemaBuilder<Schema: Schemable>: SQLable {
     public var parts: [SQLPart] {
-        var query = SQL.root.create.schema
+        var query = SQL.create.schema
         if shouldCheckIfNotExists {
             query = query.if.not.exists
         }

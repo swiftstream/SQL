@@ -27,6 +27,6 @@ extension SQLable {
 
 extension String {
     public var raw: SQLable {
-        SQL.root.raw(self)
+        SQL.raw(self)
     }
 }

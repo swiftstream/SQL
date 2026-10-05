@@ -54,7 +54,7 @@ extension SQLable {
     /// Example usage:
     /// ```swift
     /// let name = "John"
-    /// SQL.root.select
+    /// SQL.select
     ///     // ...
     ///     .where((\User.$name).like(name))
     /// ```

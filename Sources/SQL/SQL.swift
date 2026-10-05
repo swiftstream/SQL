@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct SQL: SQLable {
+public struct SQLValue: SQLable {
     public var parts: [SQLPart]
 
     public init() {
@@ -17,25 +17,31 @@ public struct SQL: SQLable {
     public init(_ query: SQLable) {
         self.parts = query.parts
     }
-
-    public init(@SQLBuilder _ content: () -> SQLBuilder.Root) {
-        self.parts = content().parts
-    }
-
-    public static var root: SQL { SQL() }
 }
 
-@available(*, deprecated, renamed: "SQL.root")
-public var SwifQL: SQL { SQL.root }
+public var SQL: SQLValue {
+    SQLValue()
+}
+
+public func SQL(_ query: SQLable) -> SQLValue {
+    SQLValue(query)
+}
+
+public func SQL(@SQLBuilder _ content: () -> SQLBuilder.Root) -> SQLValue {
+    content()
+}
 
 @available(*, deprecated, renamed: "SQL")
-public func SwifQL(_ query: SQLable) -> SQL {
+public var SwifQL: SQLValue { SQL }
+
+@available(*, deprecated, renamed: "SQL")
+public func SwifQL(_ query: SQLable) -> SQLValue {
     SQL(query)
 }
 
 @available(*, deprecated, renamed: "SQL")
-public func SwifQL(@SQLBuilder _ content: () -> SQLBuilder.Root) -> SQL {
-    SQL(content)
+public func SwifQL(@SQLBuilder _ content: () -> SQLBuilder.Root) -> SQLValue {
+    SQL(content())
 }
 
 infix operator ~

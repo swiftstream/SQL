@@ -21,7 +21,7 @@ extension SQLable {
     ///             \User.$groupID => "groupID")
     ///     .from(User.table)
     ///     .groupBy(\User.$groupID)| => u
-    /// let query = SQL.root.select(..., u.users)
+    /// let query = SQL.select(..., u.users)
     ///     .from(...)
     ///     .join(.left, subquery, on: u.groupID == \Group.$id)
     ///     .groupBy(..., u.users)
