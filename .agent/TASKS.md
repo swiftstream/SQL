@@ -2,11 +2,11 @@
 
 This file contains only approved current work. Ideas, unresolved choices, verified debt, and completed history belong in their separate owners.
 
-## Current: direct `SQL` root correction stable-closure gate
+## Current: SQL conversion skill local closure
 
-The local `SwifQL -> SQL` identity migration and reusable `SQLQuery` capability are now corrected to the final pre-publication root/type architecture. Governance authority was committed as `38be12a111a8cbefd16d277bc344f2958b78a9e0`, source/tests as `1f656ffe22404b2cdb39546ea3dcfdee7be6abc8`, public docs as `6fd973e9a3edad075eb50ff4fbb52380bc4ca3ee`, and managed query-building skills as `4558af69c7a99520ddb79374bae4ff877d726c1a`. The canonical fluent root is direct `SQL.<fluent>`, declarative construction remains `SQL { ... }`, the concrete carrier is `SQLValue`, and `SQLQuery` requires `@SQLBuilder var query: SQLValue { get }` with ordinary conformers writing `var query: SQLValue { ... }`. The exact corrected source passed 737 tests / 63 suites on Swiftly 6.3.3, Xcode 26.6 Swift 6.3.3, and Xcode 27 Swift 6.4; external normal-import clients passed on all three lanes; 37/37 representative root members passed; deprecated in-module `SwifQL` compatibility and SQL/bind parity passed.
+The source-owned downstream conversion skill `swifql-sql-conversion` is implemented and validated locally. S1 passed PRIMARY validation C01-C12 (12/12), an independent content/API/procedure audit CLEAN 45/45, and was committed as `3518edee9c12a29b6f55c94dc0fdb87ecd1c8ab9` (`📖 Add SQL conversion skill`). The skill targets canonical `SQL`, teaches direct `SQL.<fluent>` and declarative `SQL { ... }`, resolves the consumer's actual package version/source before mapping syntax, forbids invented APIs, limits raw fallback to unsupported static SQL structure, and keeps dynamic/untrusted data on the ordinary value/bind path.
 
-This G3 synchronization is the final stable-closure gate. Once this exact candidate is independently audited and committed, the next local roadmap objective may return to the SQL conversion skill. The conversion skill must teach direct `SQL.<fluent>` / `SQL { ... }` and must be impact-checked after later query-surface waves. Remote repository rename/publication, push/tag/release, and other unrelated roadmap work remain separately gated and are not authorized by this closure.
+Stable closure records the maintenance rule that every later accepted query-surface wave impact-checks the conversion skill, updating it only when canonical constructs or spellings change and recording `NO_CHANGE` otherwise. External `swiftstream/skills` publication, remote repository rename/publication, push/tag/release, and the next roadmap objective remain separately gated; this local closure authorizes none of them.
 
 ## Completed declarative query authoring lineage retained for context
 

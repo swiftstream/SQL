@@ -171,21 +171,26 @@ Current released/pre-release source is still SwifQL. This is a planned major-ver
 
 ## Raw SQL conversion skill
 
-Status: roadmap-approved, not implemented
+Status: validated
 Good for: website docs | README | migration guide | agent/LLM workflow post
 
 ### Why users should care
 
-A future downstream skill should turn raw SQL into either:
+The source-owned `swifql-sql-conversion` skill now gives downstream coding agents a version-aware procedure for turning raw SQL or legacy SwifQL call sites into the canonical `SQL` DSL without guessing APIs. It can return declarative `SQL { ... }` when the resolved package exposes verified builders, direct `SQL.<fluent>`/core composition when that is the supported representation, and an explicit raw boundary only for unsupported static SQL structure.
 
-1. the final declarative result-builder representation; or
-2. the final raw/fluent SQL DSL representation.
+Runtime or untrusted data never moves into raw SQL for textual convenience: it stays on the normal value/bind path, and the procedure verifies prepared SQL shape plus bind order. The skill also retains migration guidance for historical SwifQL call sites while targeting `import SQL`, direct `SQL`, and `SQLValue` only where explicit concrete typing is required.
 
-It should also retain enough legacy SwifQL knowledge to help coding agents migrate existing call sites during the major namespace transition. Once implemented, every later accepted query-surface wave should perform an explicit conversion-skill impact check and update the skill in that wave's docs/skills closure whenever new canonical constructs or spellings are introduced.
+### Evidence / provenance
+
+- source-owned skill: `.agent/skills/swifql-sql-conversion/SKILL.md`;
+- implementation commit: `3518edee9c12a29b6f55c94dc0fdb87ecd1c8ab9` (`📖 Add SQL conversion skill`);
+- PRIMARY validation: C01-C12, 12/12 PASS;
+- independent content/API/procedure audit: CLEAN 45/45;
+- every later accepted query-surface wave must impact-check the conversion skill and update it only when canonical constructs or spellings change; `NO_CHANGE` is valid otherwise.
 
 ### Publication caveat
 
-The canonical public skill should target the final `SQL` namespace rather than being published against a namespace that is immediately renamed.
+This status records the validated local source-owned skill in the SQL repository. It does not claim publication to `/Users/imike/Development/SwiftStream/skills`, a remote repository rename, tag, release, package publication, or any other external rollout; those remain separate future gates.
 
 ## Reusable parameterized queries with SQLQuery
 
