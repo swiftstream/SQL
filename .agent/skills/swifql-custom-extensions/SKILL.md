@@ -29,7 +29,7 @@ let function = Fn.build(
     body: runtimeValue.parts
 )
 
-let prepared = SQL.root.select(function).prepare(.psql).splitted
+let prepared = SQL.select(function).prepare(.psql).splitted
 ```
 
 For continuation, prefer the structural API directly:

@@ -32,7 +32,7 @@ A representative downstream query follows the same shape as its SQL:
 import SQL
 
 let email = inputEmail
-let query = SQL.root
+let query = SQL
     .select(User.table.*)
     .from(User.table)
     .where(\User.email == email)
@@ -42,6 +42,8 @@ let inspectionSQL = prepared.plain
 let driverSQL = prepared.splitted.query
 let bindValues = prepared.splitted.values
 ```
+
+Use direct `SQL.<fluent>` for fluent construction and `SQL { ... }` for declarative construction. Name `SQLValue` only when an explicit concrete fragment/result type is required; ordinary query examples should normally rely on inference.
 
 The runtime `email` must remain a value/bind input. Do not rewrite it into raw SQL merely to reproduce a desired string.
 
