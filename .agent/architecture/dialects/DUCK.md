@@ -261,8 +261,8 @@ Duck support should reuse existing common SQL composition whenever the SQL conce
 
 Examples:
 
-- FROM-first composition reuses `SQL.root.from(...).select(...)`;
-- GROUP BY ALL reuses `.groupBy(SQL.root.all)`;
+- FROM-first composition reuses `SQL.from(...).select(...)`;
+- GROUP BY ALL reuses `.groupBy(SQL.all)`;
 - normal ORDER BY / LIMIT / OFFSET reuse shared query primitives when grammar matches;
 - generic expressions/functions/aliases remain normal SQL expressions.
 
@@ -313,8 +313,8 @@ lowering only and does not claim support for another dialect's lambda syntax.
 The direct generic forms for the modifier-bearing features are:
 
 ```swift
-query.orderBy(SQL.root.all)
-query.orderBy(.desc(SQL.root.all, nulls: .last))
+query.orderBy(SQL.all)
+query.orderBy(.desc(SQL.all, nulls: .last))
 query.join(.positional, source)
 query.join(.naturalFullOuter, source)
 lhs.union(byName: rhs)
@@ -348,7 +348,7 @@ Ordinary PIVOT source should stay clean and use existing SQL expressions, paths,
 Required clean source direction:
 
 ```swift
-SQL.root.pivot(cities)
+SQL.pivot(cities)
     .on(cities.column("year"), in: 2000, 2010)
     .using(Fn.sum(cities.column("population")) => "total")
     .groupBy(cities.column("country"))
@@ -418,7 +418,7 @@ The verified DuckDB v1.5.5 ordinary-DML contract is:
 - `INSERT ... VALUES` and `INSERT ... SELECT` are supported with normal SQL-shaped composition and prepared values. A String supplied as a table target is a structural identifier and does not become a value bind.
 - `INSERT ... BY NAME` is supported when the source is a `SELECT`; matching is by source and target column name, including omitted target columns that have defaults. `BY NAME VALUES` is rejected by DuckDB and remains mechanically renderable but unclaimed by SQL.
 - `INSERT OR IGNORE` and `INSERT OR REPLACE` are supported as their exact SQL identities. SQL does not remap either form by dialect or expose them as a portable conflict policy.
-- The direct INSERT source is `SQL.root.insert.or.ignore.into[table: table]` or `SQL.root.insert.or.replace.into[table: table]`, optionally followed by `.fields(...)`; INSERT BY NAME uses `.by.name`.
+- The direct INSERT source is `SQL.insert.or.ignore.into[table: table]` or `SQL.insert.or.replace.into[table: table]`, optionally followed by `.fields(...)`; INSERT BY NAME uses `.by.name`.
 - `ON CONFLICT DO NOTHING` without a target and `ON CONFLICT (<column>) DO NOTHING` with a column target are supported. Column-target `DO UPDATE SET` using the `EXCLUDED` source, with an optional `WHERE`, is supported when expressed through the ordinary SQL-shaped `set(_:)` composition.
 - Historical `ON CONFLICT ON CONSTRAINT ...` remains mechanically renderable for compatibility, but DuckDB v1.5.5 rejects it as unimplemented; it is unclaimed for Duck.
 - `INSERT ... RETURNING` and `DELETE ... RETURNING` support structural columns, `*`, and literal expressions. DuckDB v1.5.5 rejects prepared parameters inside these RETURNING expressions during preparation. SQL preserves ordinary binding and does not add runtime validation or rejection for that database limitation.
@@ -436,8 +436,8 @@ for this section.
 
 DuckDB v1.5.5 native validation establishes the following MERGE contract:
 
-- `SQL.root.merge(into:using:on:)` and the incremental
-  `SQL.root.merge(into:).using(...).on(...)` form are composition-equivalent
+- `SQL.merge(into:using:on:)` and the incremental
+  `SQL.merge(into:).using(...).on(...)` form are composition-equivalent
   generic SQL builders. Neither form introduces a Duck-only builder, AST, or
   renderer hook.
 - Structural table targets, source tables, aliases, parenthesized source
@@ -501,7 +501,7 @@ CREATE TABLE:
 | Primary key, unique, not-null, check, and named check constraints in CREATE | Supported when the emitted constraint syntax is exact; native enforcement was verified for primary key, unique, not-null, unnamed check, and named check. |
 | `Constraint.references` at CREATE time | Supported for the established omitted-referenced-column source shape when the parent table supplies a suitable key. The source shape has no referenced-column-list argument. `ReferentialAction.noAction` and `.restrict` are supported; `.cascade`, `.setNull`, and `.setDefault` remain unclaimed because DuckDB rejects those foreign-key actions. |
 | Direct CTAS composition | Supported for `CREATE TABLE ... AS SELECT ...` using existing structural parts. |
-| Direct OR REPLACE CTAS composition | Supported through `SQL.root.create.or.replace.table[any: table]` and ordinary CTAS composition; no phrase convenience builder is needed. |
+| Direct OR REPLACE CTAS composition | Supported through `SQL.create.or.replace.table[any: table]` and ordinary CTAS composition; no phrase convenience builder is needed. |
 | CTAS with a column constraint list | Unclaimed/negative: DuckDB rejects constraints combined with the tested CTAS form. |
 | Inferred generated column | Supported through `GeneratedColumn(name, as: expression)` inside `tableDefinitions(...)`. |
 | Explicit `GENERATED ALWAYS AS ... VIRTUAL` and omitted `VIRTUAL` | Supported through `GeneratedColumn(name, type, generatedAlwaysAs: expression, storage: .virtual)` or omitted storage; omitted `VIRTUAL` follows DuckDB's virtual default. |
@@ -596,7 +596,7 @@ connection advances a sequence, currval in the other connection succeeds and
 observes the latest sequence value; the first connection also observes that
 latest value. Sequence consumption is not rewound by transaction rollback.
 
-The explicit expression source SQL.root.default(Fn.nextVal("order_id_seq")) is
+The explicit expression source SQL.default(Fn.nextVal("order_id_seq")) is
 supported in the tested CREATE TABLE and insert flow. A literal sequence name
 in a default is native-positive. A prepared parameter inside DEFAULT
 nextval(?) is rejected by DuckDB's binder, and the tested ALTER TABLE ...
@@ -630,23 +630,23 @@ The canonical public source remains direct composition:
 ~~~swift
 let sequence = Path.Identifier(schema: "analytics", name: "order_id_seq")
 
-SQL.root.create.sequence.if.not.exists[any: sequence]
+SQL.create.sequence.if.not.exists[any: sequence]
     .start(with: 1)
     .increment(by: 2)
     .minValue(1)
     .maxValue(99)
     .cycle
 
-SQL.root.default(Fn.nextVal("order_id_seq"))
+SQL.default(Fn.nextVal("order_id_seq"))
 
 let x = MacroParameter("x")
 let typed = MacroParameter("value", .integer)
 
-SQL.root.create.macro[any: Path.Identifier("twice")]
+SQL.create.macro[any: Path.Identifier("twice")]
     .macroParameters(x)
     .as(x * 2)
 
-SQL.root.create.macro[any: Path.Identifier("rows")]
+SQL.create.macro[any: Path.Identifier("rows")]
     .macroParameters(typed)
     .as.table
     .select(typed)
@@ -680,8 +680,8 @@ The canonical public source is:
 ~~~swift
 let analytics = Path.Catalog("analytics")
 
-SQL.root.attach("warehouse.duckdb", as: analytics)
-SQL.root.attach(
+SQL.attach("warehouse.duckdb", as: analytics)
+SQL.attach(
     "warehouse.duckdb",
     mode: .ifNotExists,
     as: analytics,
@@ -743,7 +743,7 @@ rollback.
 The public source is structural and bind-free:
 
 ~~~swift
-SQL.root.detach(Path.Catalog("analytics"))
+SQL.detach(Path.Catalog("analytics"))
 ~~~
 
 DuckDB rejects detaching the current default database. Use another catalog
@@ -755,9 +755,9 @@ after detachment retain DuckDB's native binder errors.
 The exact overloads are:
 
 ~~~swift
-SQL.root.use(Path.Catalog("analytics"))
-SQL.root.use(Path.Schema("reporting"))
-SQL.root.use(Path.Catalog("analytics").schema("reporting"))
+SQL.use(Path.Catalog("analytics"))
+SQL.use(Path.Schema("reporting"))
+SQL.use(Path.Catalog("analytics").schema("reporting"))
 ~~~
 
 All three targets are structural and bind-free. The catalog overload changes
@@ -800,14 +800,14 @@ let events = Path.Table("events")
 let source = Path.Catalog("source")
 let destination = Path.Catalog("destination")
 
-SQL.root.copy(events, to: "events.parquet", options: .format("parquet"))
-SQL.root.copy(events, from: "events.csv", options: .format("csv"), .header)
-SQL.root.copy(
-    query: SQL.root.select(events.column("id")).from(events),
+SQL.copy(events, to: "events.parquet", options: .format("parquet"))
+SQL.copy(events, from: "events.csv", options: .format("csv"), .header)
+SQL.copy(
+    query: SQL.select(events.column("id")).from(events),
     to: "events.json",
     options: .format("json")
 )
-SQL.root.copy(fromDatabase: source, to: destination, options: .schema)
+SQL.copy(fromDatabase: source, to: destination, options: .schema)
 ~~~
 
 The claimed statement forms are exactly:

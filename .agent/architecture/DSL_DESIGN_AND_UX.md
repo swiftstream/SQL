@@ -34,8 +34,8 @@ When SQL grammar is only a sequence of independently meaningful keywords or modi
 Preferred direction for pure keyword composition:
 
 ```swift
-SQL.root.create.or.replace.table
-SQL.root.insert.or.ignore.into
+SQL.create.or.replace.table
+SQL.insert.or.ignore.into
 ```
 
 Do not add phrase-collapsing APIs such as `orReplace` or `insertOrIgnoreInto` merely to concatenate a fixed sequence of SQL keywords. Otherwise the DSL becomes a fluent wrapper whose API surface grows as the Cartesian product of keyword combinations instead of remaining direct SQL composition.
@@ -110,8 +110,8 @@ Dialect-specific support does **not** automatically justify a database-prefixed 
 
 Examples of preferred direction:
 
-- `SQL.root.pivot(...)`, not a database-prefixed PIVOT entry point;
-- `SQL.root.merge(...)`, not a database-prefixed MERGE entry point;
+- `SQL.pivot(...)`, not a database-prefixed PIVOT entry point;
+- `SQL.merge(...)`, not a database-prefixed MERGE entry point;
 - `Path.Catalog(...)` when the concept being modeled is a catalog rather than the database product itself;
 - clean `Fn.*` / `Type.*` symbols whose exact support is documented/tested per dialect.
 
@@ -170,7 +170,7 @@ Prefer reusing the existing DSL when the resulting Swift remains clear and faith
 
 Examples discovered during DuckDB design:
 
-- FROM-first SQL is already naturally representable as `SQL.root.from(...).select(...)`; a separate FROM-first builder would duplicate the DSL.
+- FROM-first SQL is already naturally representable as `SQL.from(...).select(...)`; a separate FROM-first builder would duplicate the DSL.
 - `GROUP BY ALL` is naturally representable through existing composition when `ALL` is already an exact SQL part.
 
 Create a new API only when it adds one of these real benefits:
@@ -507,7 +507,7 @@ A proposal fails this gate if supporting a foreseeable equivalent PostgreSQL/MyS
 
 The additive result-builder query-authoring surface is implemented. This section defines its durable public design semantics.
 
-The builder remains a SQL-shaped authoring layer over the existing SQL composition/preparation model. It must not introduce a second predicate AST, hidden ORM-style semantics, or an alternate binding/rendering pipeline. The canonical package/module/root spelling is `SQL`, including `SQL { ... }` for declarative construction and `SQL.root` for fluent construction.
+The builder remains a SQL-shaped authoring layer over the existing SQL composition/preparation model. It must not introduce a second predicate AST, hidden ORM-style semantics, or an alternate binding/rendering pipeline. The canonical package/module/root spelling is `SQL`. Declarative construction uses the overloaded `SQL { ... }` function; fluent construction starts from the direct global `SQL` root value, for example `SQL.select(...)` or `SQL.from(...)`. The concrete fragment/result carrier is `SQLValue`. Fluent lookup comes from the existing `SQLable` instance surface; do not duplicate that surface with static forwarding members. The locally committed intermediate `SQL.root` spelling is superseded before publication and has no compatibility obligation.
 
 The target query shape uses the established model/property-wrapper path surface rather than invented plain model-member pseudo-columns. For example:
 
@@ -2318,7 +2318,7 @@ Existing raw/fluent composition remains available for callers who explicitly nee
 Current SQL can spell the exact star argument through the established star composition surface:
 
 ```swift
-Fn.count(SQL.root.asterisk)
+Fn.count(SQL.asterisk)
 ```
 
 ```sql
@@ -2606,7 +2606,7 @@ ARRAY(
 )
 ```
 
-An already-formed `SQL` / `SQLQuery` value uses:
+An already-formed `SQLValue` / `SQLQuery` value uses:
 
 ```swift
 Array.subquery(orderIds)
@@ -5234,7 +5234,7 @@ Fn.aggregate(.custom("zero_agg")) {
 }
 
 Fn.aggregate(.custom("my_count")) {
-    SQL.root.asterisk
+    SQL.asterisk
 }
 ```
 
