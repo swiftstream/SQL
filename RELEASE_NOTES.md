@@ -12,7 +12,7 @@ import SQL
 
 Then follow compiler rename diagnostics for remaining old spellings:
 
-- `SwifQL.select(...)` -> `SQL.root.select(...)`
+- `SwifQL.select(...)` -> `SQL.select(...)`
 - `SwifQL { ... }` -> `SQL { ... }`
 - `SwifQL(query)` -> `SQL(query)`
 - `SwifQLable` -> `SQLable`
@@ -21,7 +21,7 @@ Then follow compiler rename diagnostics for remaining old spellings:
 
 There is no `SwifQL` compatibility module in the new package identity. Compatibility is symbol-level only: retained old `SwifQL*` names are deprecated/renamed declarations inside module `SQL`.
 
-This identity migration is not intended to change SQL rendering, dialect behavior, bind ordering, or preparation semantics. The corrected candidate passed 730 tests in 62 suites on Swiftly 6.3.3, Xcode Swift 6.3.3, and Xcode Swift 6.4.
+This identity migration is not intended to change SQL rendering, dialect behavior, bind ordering, or preparation semantics. The corrected candidate uses `SQLValue` as the concrete fragment/result carrier and passed 737 tests in 63 suites on Swiftly 6.3.3, Xcode 26.6 Swift 6.3.3, and Xcode 27 Swift 6.4.
 
 The remote repository has not been renamed or republished by this migration workflow. Do not assume a new GitHub URL is live until a separate publication step is completed.
 

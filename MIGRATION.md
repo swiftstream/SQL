@@ -16,7 +16,7 @@ Then migrate old symbol spellings using the compiler's `deprecated, renamed:` di
 |---|---|
 | product `SwifQL` | product `SQL` |
 | `import SwifQL` | `import SQL` |
-| `SwifQL.select(...)` | `SQL.root.select(...)` |
+| `SwifQL.select(...)` | `SQL.select(...)` |
 | `SwifQL { ... }` | `SQL { ... }` |
 | `SwifQL(query)` | `SQL(query)` |
 | `SwifQLable` | `SQLable` |
@@ -37,11 +37,11 @@ For example:
 ```swift
 import SQL
 
-let oldSpelling = SwifQL.select(Path.Column("id")) // deprecated -> SQL.root
-let canonical = SQL.root.select(Path.Column("id"))
+let oldSpelling = SwifQL.select(Path.Column("id")) // deprecated -> SQL
+let canonical = SQL.select(Path.Column("id"))
 ```
 
-The two call sites use the same canonical implementation identity; the old spelling is only a migration bridge.
+The two call sites use the same canonical implementation identity; the old spelling is only a migration bridge. `SQL` is the public root/function spelling, while `SQLValue` is the concrete fragment/result carrier to name only when an explicit concrete type is required.
 
 ## Package dependency
 
@@ -62,9 +62,9 @@ This identity migration is not intended to change SQL rendering, bind ordering, 
 
 Validated migration candidate:
 
-- Swiftly Apple Swift 6.3.3: 730 tests / 62 suites
-- Xcode Apple Swift 6.3.3: 730 tests / 62 suites
-- Xcode Apple Swift 6.4: 730 tests / 62 suites
+- Swiftly Apple Swift 6.3.3: 737 tests / 63 suites
+- Xcode 26.6 Apple Swift 6.3.3: 737 tests / 63 suites
+- Xcode 27 Apple Swift 6.4: 737 tests / 63 suites
 
 ## Recommended migration order
 
@@ -72,7 +72,7 @@ Validated migration candidate:
 2. Replace `import SwifQL` with `import SQL`.
 3. Build the project.
 4. Follow compiler rename diagnostics for remaining `SwifQL*` symbols.
-5. Prefer `SQL { ... }` for declarative construction and `SQL.root` for fluent construction.
+5. Prefer `SQL { ... }` for declarative construction and direct `SQL.<fluent>` for fluent construction.
 6. Keep any intentionally historical source/examples unchanged only where they document an older release.
 
 ---

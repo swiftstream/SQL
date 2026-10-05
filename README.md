@@ -62,12 +62,12 @@ let query = SQL {
 Fluent root:
 
 ```swift
-let query = SQL.root
+let query = SQL
     .select(Path.Column("id"))
     .from(Path.Table("users"))
 ```
 
-Canonical protocol/preparation names are `SQLable`, `SQLPart`, and `SQLPrepared`.
+Canonical protocol/preparation names are `SQLable`, `SQLPart`, and `SQLPrepared`. The public root/function spelling is `SQL`; when an API requires an explicit concrete fragment/result type, use `SQLValue`.
 
 ## Migrating from SwifQL
 
@@ -83,7 +83,7 @@ Then follow compiler rename diagnostics for old symbol spellings. Representative
 
 | Old | New |
 |---|---|
-| `SwifQL.select(...)` | `SQL.root.select(...)` |
+| `SwifQL.select(...)` | `SQL.select(...)` |
 | `SwifQL { ... }` | `SQL { ... }` |
 | `SwifQL(query)` | `SQL(query)` |
 | `SwifQLable` | `SQLable` |

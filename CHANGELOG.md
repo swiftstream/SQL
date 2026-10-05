@@ -6,7 +6,7 @@ The package/product/module identity is now `SQL`.
 
 - product `SwifQL` -> `SQL`
 - `import SwifQL` -> `import SQL`
-- canonical roots are `SQL { ... }` and `SQL.root`
+- canonical roots are `SQL { ... }` and direct `SQL.<fluent>`; the concrete fragment/result carrier is `SQLValue`
 - canonical protocol/preparation names include `SQLable`, `SQLPart`, and `SQLPrepared`
 - old `SwifQL*` symbol spellings remain deprecated/renamed inside module `SQL` where compatibility aliases/bridges are provided
 - there is no compatibility module named `SwifQL` and no `@_exported import SQL` shim
