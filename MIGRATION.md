@@ -37,11 +37,18 @@ For example:
 ```swift
 import SQL
 
-let oldSpelling = SwifQL.select(Path.Column("id")) // deprecated -> SQL
-let canonical = SQL.select(Path.Column("id"))
+let oldSpelling = SwifQL
+    .select(\User.$id)
+    .from(User.table) // deprecated root -> SQL
+
+let canonical = SQL
+    .select(\User.$id)
+    .from(User.table)
 ```
 
 The two call sites use the same canonical implementation identity; the old spelling is only a migration bridge. `SQL` is the public root/function spelling. `SQLContent` is the concrete formed-SQL carrier to name only when explicit concrete typing is genuinely required; reusable `SQLQuery` conformers normally use their protocol-local `Query` shorthand instead.
+
+The rename does **not** replace the model-backed type-safe DSL. Existing forms such as `\User.$id` and `User.table` remain first-class. `Path.Column(...)` and `Path.Table(...)` remain available as explicit path APIs when you intentionally build SQL without a model type.
 
 ## Package dependency
 

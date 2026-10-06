@@ -51,6 +51,21 @@ import SQL
 
 ## Quick start
 
+Model-backed, type-safe query authoring remains first-class in SQL 2:
+
+```swift
+struct User: Table {
+    static var tableName: String { "users" }
+
+    @Column("id") var id: Int
+    @Column("email") var email: String
+    @Column("active") var active: Bool
+    @Column("role") var role: String
+
+    init() {}
+}
+```
+
 Start from the SQL you want to express:
 
 ```sql
@@ -63,13 +78,10 @@ LIMIT 10
 The direct fluent API keeps the familiar SQL-shaped flow:
 
 ```swift
-let users = Path.Table("users")
-let email = users.column("email")
-
 let query = SQL
-    .select(users.column("id"), email)
-    .from(users)
-    .where(email == "john@example.com")
+    .select(\User.$id, \User.$email)
+    .from(User.table)
+    .where(\User.$email == "john@example.com")
     .limit(10)
 
 let prepared = query.prepare(.psql)
@@ -78,26 +90,25 @@ let prepared = query.prepare(.psql)
 The same query can be written declaratively with `SQL { ... }`:
 
 ```swift
-let users = Path.Table("users")
-let email = users.column("email")
-
 let query = SQL {
     Select {
-        users.column("id")
-        email
+        \User.$id
+        \User.$email
     }
 
     From {
-        users
+        User.table
     }
 
     Where {
-        email == "john@example.com"
+        \User.$email == "john@example.com"
     }
 
     Limit(10)
 }
 ```
+
+`Path.Table(...)` and `Path.Column(...)` are still available when you intentionally want to build SQL without a model type. They are an explicit lower-level alternative, not a replacement for `User.table` and type-safe key paths.
 
 Reusable queries can hide conditional SQL behind an ordinary Swift value:
 
@@ -109,26 +120,25 @@ struct UserQuery: SQLQuery {
 
     var query: Query {
         Select {
-            Path.Column("id")
-            Path.Column("email")
-            Path.Column("created_at")
+            \User.$id
+            \User.$email
         }
 
         From {
-            Path.Table("users")
+            User.table
         }
 
         Where {
-            Path.Column("active") == active
+            \User.$active == active
 
             if let email {
-                Path.Column("email") == email
+                \User.$email == email
             }
 
             if let roles {
                 Or {
                     for role in roles {
-                        Path.Column("role") == role
+                        \User.$role == role
                     }
                 }
             }

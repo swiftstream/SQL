@@ -27,8 +27,8 @@ was
 import SwifQL
 
 let query = SwifQL
-    .select(Path.Column("id"))
-    .from(Path.Table("users"))
+    .select(\User.$id)
+    .from(User.table)
 ```
 
 became
@@ -37,11 +37,13 @@ became
 import SQL
 
 let query = SQL
-    .select(Path.Column("id"))
-    .from(Path.Table("users"))
+    .select(\User.$id)
+    .from(User.table)
 ```
 
 There is no compatibility module named `SwifQL`. After `import SQL`, retained old `SwifQL*` symbol spellings may still be available as deprecated/renamed bridges where provided.
+
+The type-safe model DSL did not go away: `\User.$id`, `\User.$email`, and `User.table` remain first-class APIs. `Path.Column(...)` / `Path.Table(...)` are still available when an explicit path without a model type is what you want.
 
 See [MIGRATION.md](MIGRATION.md) for the complete v1/v2 migration checklist.
 
@@ -50,13 +52,10 @@ See [MIGRATION.md](MIGRATION.md) for the complete v1/v2 migration checklist.
 The familiar fluent API is now rooted directly at `SQL`:
 
 ```swift
-let users = Path.Table("users")
-let email = users.column("email")
-
 let query = SQL
-    .select(users.column("id"), email)
-    .from(users)
-    .where(email == "john@example.com")
+    .select(\User.$id, \User.$email)
+    .from(User.table)
+    .where(\User.$email == "john@example.com")
     .limit(10)
 ```
 
@@ -65,16 +64,16 @@ The same parts/preparation engine also has SQL-shaped result-builder authoring:
 ```swift
 let query = SQL {
     Select {
-        users.column("id")
-        email
+        \User.$id
+        \User.$email
     }
 
     From {
-        users
+        User.table
     }
 
     Where {
-        email == "john@example.com"
+        \User.$email == "john@example.com"
     }
 
     Limit(10)
@@ -95,25 +94,25 @@ struct UserQuery: SQLQuery {
 
     var query: Query {
         Select {
-            Path.Column("id")
-            Path.Column("email")
+            \User.$id
+            \User.$email
         }
 
         From {
-            Path.Table("users")
+            User.table
         }
 
         Where {
-            Path.Column("active") == active
+            \User.$active == active
 
             if let email {
-                Path.Column("email") == email
+                \User.$email == email
             }
 
             if let roles {
                 Or {
                     for role in roles {
-                        Path.Column("role") == role
+                        \User.$role == role
                     }
                 }
             }

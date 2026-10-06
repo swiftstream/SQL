@@ -8,6 +8,7 @@ SwifQL becomes **SQL** in the stable 2.0 major line.
 - package/product/module: `SQL`
 - `import SwifQL` -> `import SQL`
 - canonical roots: direct `SQL.<fluent>` and declarative `SQL { ... }`
+- model-backed type-safe authoring such as `\User.$id` and `User.table` remains first-class; explicit `Path.*` APIs remain available when no model type is desired
 - reusable parameterized query values through `SQLQuery`, with `Query` as its shorthand for the concrete result type
 - concrete formed-SQL carrier: `SQLContent`
 - canonical protocol/preparation names include `SQLable`, `SQLPart`, and `SQLPrepared`

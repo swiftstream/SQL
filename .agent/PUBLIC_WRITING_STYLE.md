@@ -36,6 +36,10 @@ PIVOT ...
 
 The example must use current public API and exact current SQL behavior.
 
+## Canonical API first
+
+Public examples must lead with the highest-level established type-safe API that users normally write. When a model-backed form exists, prefer examples such as `\User.$id` and `User.table`; show `Path.Column(...)` / `Path.Table(...)` only when documenting that explicit path API, writing SQL without a model type, or as a clearly labeled alternative. Never let a lower-level example imply that a higher-level type-safe API was removed or degraded.
+
 ## Migration style: `was` → `became`
 
 When source actually changes, make the migration mechanical and visible.
