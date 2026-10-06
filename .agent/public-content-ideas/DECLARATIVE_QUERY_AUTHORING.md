@@ -71,11 +71,11 @@ LIMIT 100
 
 ### Publication caveat
 
-The result-builder query API is implemented and validated in the canonical `SQL` source tree. The package/product/module and direct query root are `SQL`, declarative construction uses `SQL { ... }`, and the canonical public repository is `https://github.com/SwiftStream/SQL`. Stable `2.0.0` publication is a separate release gate and must not be claimed as published until the immutable tag, CI, remote-consumer, and GitHub Release checks pass.
+The result-builder query API is implemented, validated, and published in stable `2.0.0` from the canonical `SwiftStream/SQL` repository. The package/product/module and direct query root are `SQL`, and declarative construction uses `SQL { ... }`.
 
 ## Predicate composition mirrors boolean SQL
 
-Status: architecture-approved
+Status: implemented, validated, and published in stable 2.0.0
 Good for: README | website docs | release notes | short post
 
 ### Candidate example / visual
@@ -103,11 +103,11 @@ Direct children of `Where` compose with `AND`; `And { ... }` and `Or { ... }` ow
 
 ### Publication caveat
 
-Architecture-approved under DESIGN-020 but not yet implemented/shipped.
+Implemented under DESIGN-020 and published in stable `2.0.0`. `Where { ... }` composes direct children with `AND`; explicit `And { ... }` / `Or { ... }` groups own parentheses, and runtime-empty predicate groups disappear rather than emitting synthetic truth values.
 
 ## Clause-local builder ergonomics
 
-Status: idea under active design
+Status: implemented, validated, and published in stable 2.0.0
 Good for: README | website docs | article
 
 ### Candidate examples / visual
@@ -138,11 +138,11 @@ The intended theme is consistent: when a clause naturally owns a list, the closu
 
 ### Publication caveat
 
-These shapes are still being designed. Do not present them as final API until accepted into the stable design owner and implemented.
+These clause-local builder shapes are implemented and published in stable `2.0.0`; short argument forms remain useful alongside the vertical closure forms.
 
 ## Major identity migration: SwifQL to SQL
 
-Status: implemented and validated; stable 2.0.0 publication pending
+Status: implemented, validated, and published in stable 2.0.0
 Good for: migration guide | release notes | README | article | short post
 
 ### Why users should care
@@ -167,7 +167,7 @@ There is no compatibility module named `SwifQL`; retained old `SwifQL*` spelling
 
 ### Publication caveat
 
-The source/API/package/repository migration is current and implemented. Stable `2.0.0` must still not be described as published until its dedicated branch-CI, immutable-tag, tag-CI, remote exact-consumer, and GitHub Release gates pass.
+The source/API/package/repository migration is current and shipped in stable `2.0.0`. The immutable `2.0.0` tag resolves to release commit `07ea7555158aac3750152ebd898474d083dab6dc`, and the stable GitHub Release is published.
 
 ## Raw SQL conversion skill
 
@@ -190,7 +190,7 @@ Runtime or untrusted data never moves into raw SQL for textual convenience: it s
 
 ### Publication caveat
 
-This status records the validated local source-owned skill in the SQL repository. It does not claim publication to `/Users/imike/Development/SwiftStream/skills`, a remote repository rename, tag, release, package publication, or any other external rollout; those remain separate future gates.
+This status records the validated source-owned skill in the SQL repository. SQL `2.0.0` and the `SwiftStream/SQL` repository are published; publication of the separate skill to `/Users/imike/Development/SwiftStream/skills` remains an independent external workflow and is not implied here.
 
 ## Reusable parameterized queries with SQLQuery
 
@@ -305,7 +305,7 @@ The same principle is regression-tested through FROM/alias, JOIN, scalar SELECT 
 
 ### Publication caveat
 
-`SQLQuery` is implemented and freshly validated in the canonical `SQL` source tree, and the repository rename/move to `https://github.com/SwiftStream/SQL` is complete. Its final pre-publication API defines fixed shorthand `Query = SQLContent` and requires `@SQLBuilder var query: Query { get }`; ordinary conformers write `var query: Query { ... }` without repeating the builder attribute or adding a nested `SQL { ... }` wrapper. This keeps conditional filters, loops, and other SQL construction details inside the reusable query type while call sites simply create and compose `UsersQuery(...)` values without manual `.query` unwrapping. `SQLContent` is named only when explicit concrete formed-SQL typing is genuinely required. The exact candidate passed the three-lane package matrix and downstream client matrix; stable `2.0.0` still remains unpublished until its dedicated branch/tag/remote-consumer/GitHub Release gates pass.
+`SQLQuery` is implemented, freshly validated, and published in stable `2.0.0` in the canonical `SQL` source tree. It defines fixed shorthand `Query = SQLContent` and requires `@SQLBuilder var query: Query { get }`; ordinary conformers write `var query: Query { ... }` without repeating the builder attribute or adding a nested `SQL { ... }` wrapper. This keeps conditional filters, loops, and other SQL construction details inside the reusable query type while call sites simply create and compose `UsersQuery(...)` values without manual `.query` unwrapping. `SQLContent` is named only when explicit concrete formed-SQL typing is genuinely required. The exact release candidate passed the three-lane package matrix and downstream client matrix before immutable tag/release publication.
 
 ## Three equivalent alias authoring forms and general declarative As
 
@@ -951,6 +951,6 @@ Boundaries stay sharp: orphan `Join`/`On`/`Using`, loop-only/optional-only `FROM
 
 ### Publication caveat
 
-Shipped in the working tree as commit `1982790` but **not pushed/released**. Present as current source capability only after the maintainer authorizes publication. Explicit `FromBuilder.Result` annotations remain legacy completed clauses without sibling-JOIN ownership. A declarative `Where` builder is **not** in this surface yet — do not show `Where { ... }` as current API.
+Historical wave note: commit `1982790` introduced this sibling-JOIN capability before the final major-version closure. The capability is now published as part of stable `2.0.0`. Explicit `FromBuilder.Result` annotations remain legacy completed clauses without sibling-JOIN ownership. The final 2.0.0 query DSL also includes declarative `Where { ... }`; do not reuse this old wave boundary as current API guidance.
 
 

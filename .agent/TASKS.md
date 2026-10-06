@@ -2,13 +2,13 @@
 
 This file contains only approved current work. Ideas, unresolved choices, verified debt, and completed history belong in their separate owners.
 
-## Current: final pre-2.0 SQLContent / SQLQuery ergonomics
+## Current: post-2.0.0 2.x continuation
 
-The package/module/repository migration to `SQL` / `SwiftStream/SQL` is closed, and the previous release-documentation candidate was independently CLEAN. Before committing that candidate, the final public API ergonomics were tightened: the unpublished concrete carrier name `SQLValue` is replaced by `SQLContent`, and `SQLQuery` exposes fixed shorthand `Query = SQLContent` so ordinary conformers write `var query: Query { ... }`. `SQLValue` was never published under the canonical SQL identity and must not become a compatibility alias.
+Stable `2.0.0` is published from release commit `07ea7555158aac3750152ebd898474d083dab6dc` under immutable annotated tag `2.0.0` with GitHub Release `🚀 SQL 2.0.0`. The final public API includes direct fluent `SQL`, declarative `SQL { ... }`, `SQLContent`, and reusable `SQLQuery` values with protocol-local `Query = SQLContent`. Exact branch/tag CI and fresh remote exact-consumer publication gates passed.
 
-The exact source/test candidate has now passed fresh validation: focused SQLQuery 7/7, focused identity 5/5, 737 tests / 63 suites on each of the three supported toolchain lanes, external normal-import client PASS x3, `Query` alias and explicit `SQLContent` PASS x3, direct-root representatives 37/37 PASS x3, deprecated SwifQL parity PASS x3, and bind parity PASS x3. The active objective is the final independent integrated source/diff audit of the 21-path candidate, then exact candidate commit. Stable `2.0.0` publication remains blocked until that candidate is independently accepted and committed.
+There is no remaining 2.0.0 publication task. Future work may proceed on the compatible 2.x line: bug fixes in patch releases and additive/backward-compatible features in minor releases. Source-breaking public API changes belong to a later major unless a separately reviewed SemVer exception applies. Keep stable authority, README/migration/release material, source-owned skills, and downstream compatibility evidence synchronized with each accepted 2.x wave.
 
-After the final candidate commit, resume the already-approved release sequence: normal `master` push, exact-SHA branch CI, immutable annotated `2.0.0` tag, tag CI, fresh exact remote SwiftPM consumer, verified stable GitHub Release via `gh`, then a descendant post-publication governance commit. Compatible development may continue on the 2.x line after publication. Publication of skills in the independent `SwiftStream/skills` project remains outside this repository's release objective.
+Publication of skills in the independent `SwiftStream/skills` project remains outside this repository's release objective.
 
 ## Completed declarative query authoring lineage retained for context
 
