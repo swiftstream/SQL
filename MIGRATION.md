@@ -2,6 +2,8 @@
 
 The project formerly known as `SwifQL` is now `SQL`. The package/product/module identity changed to `SQL`, and the canonical repository moved to `https://github.com/SwiftStream/SQL`.
 
+This guide covers package/API migration. Database schema migrations are different: historical DDL must keep schema, table, and column identifiers as explicit strings rather than deriving them from current models or key paths.
+
 Start with the module import:
 
 ```swift
