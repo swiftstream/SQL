@@ -5,3 +5,10 @@ public func From(
 ) -> FromBuilder.Result {
     content()
 }
+
+public func From(
+    _ first: any SQLable,
+    _ rest: any SQLable...
+) -> FromBuilder.Result {
+    FromBuilder.conciseResult(from: [first] + rest)
+}

@@ -36,20 +36,22 @@ Inspect, as appropriate:
 
 Do not assume the repository's current HEAD APIs exist in an older resolved package.
 
-The current canonical major-version shape is:
+The current SQL 2.1+ canonical shape is:
 
 ```swift
 import SQL
 
 let fluent = SQL
-    .select(...)
-    .from(...)
+    .select(\User.$id, \User.$email)
+    .from(User.table)
 
 let declarative = SQL {
-    Select { ... }
-    From { ... }
+    Select(\User.$id, \User.$email)
+    From(User.table)
 }
 ```
+
+For resolved SQL 2.0.x packages, verify the exact declarative overloads from that version before using 2.1 concise clause forms.
 
 `SQLContent` is the concrete fragment/result carrier when an explicit concrete type is required. It is not the fluent root spelling.
 
@@ -117,15 +119,34 @@ A literal embedded in the source SQL may legitimately become a Swift value and t
 
 ## 5. Choose declarative, fluent, or raw structural output
 
-Prefer the declarative form when the installed package exposes a verified builder for the construct:
+Prefer the declarative form when the installed package exposes the verified construct. For SQL 2.1+, fixed clauses should normally use the concise spelling:
 
 ```swift
 SQL {
-    Select { ... }
-    From { ... }
-    Where { ... }
+    Select(\User.$id, \User.$email)
+    From(User.table)
+    Where(\User.$active == true)
 }
 ```
+
+Use the clause result-builder spelling when multiple children, optionals, conditions, or loops make it clearer:
+
+```swift
+SQL {
+    Select(\User.$id, \User.$email)
+    From(User.table)
+
+    Where {
+        \User.$active == true
+
+        if let email {
+            \User.$email == email
+        }
+    }
+}
+```
+
+Concise and builder forms are one DSL and must preserve the same SQL/preparation/bind semantics.
 
 Use direct fluent composition when:
 

@@ -1,3 +1,79 @@
+# SQL 2.1.0
+
+SQL 2.1.0 completes the concise side of the declarative query DSL. Simple fixed clauses no longer need closure syntax just to hold one or a few values, while the existing result-builder forms remain first-class for conditions, loops, and richer clause-local composition.
+
+The same query can now stay compact:
+
+```swift
+let query = SQL {
+    Select(\User.$id, \User.$email)
+    From(User.table)
+    Where(\User.$email == "john@example.com")
+    OrderBy(.asc(\User.$email))
+    Limit(20)
+}
+```
+
+and grow into result-builder form only where Swift control flow is useful:
+
+```swift
+let query = SQL {
+    Select(\User.$id, \User.$email)
+    From(User.table)
+
+    Where {
+        \User.$active == true
+
+        if let email {
+            \User.$email == email
+        }
+    }
+
+    OrderBy {
+        OrderByItem.asc(\User.$email)
+
+        if newestFirst {
+            OrderByItem.desc(\User.$id)
+        }
+    }
+
+    Limit(20)
+}
+```
+
+New additive concise declarative forms include:
+
+```swift
+From(User.table)
+From(User.table, Profile.table)
+
+Where(predicate)
+Having(predicate)
+Qualify(predicate)
+
+GroupBy(\User.$role, \User.$active)
+
+OrderBy(
+    .asc(\User.$email),
+    .desc(\User.$id)
+)
+```
+
+`From(...)` also closes the gap between the shipped source and the stable declarative design that already documented concise FROM authoring.
+
+Builder forms such as `From { ... }`, `Where { ... }`, `Having { ... }`, `Qualify { ... }`, `GroupBy { ... }`, and `OrderBy { ... }` are not deprecated or reduced. Concise and builder forms lower through the same existing SQL composition, preparation, and binding pipeline.
+
+This release is additive and requires no source migration from SQL 2.0.0. The Swift requirement remains Swift 6.3 or newer.
+
+Install with:
+
+```swift
+.package(
+    url: "https://github.com/SwiftStream/SQL",
+    from: "2.1.0"
+)
+```
+
 # SQL 2.0.0
 
 SwifQL is now **SQL**. The package, product, Swift module, query root, and repository all use the SQL name, and the project now lives at `SwiftStream/SQL`.

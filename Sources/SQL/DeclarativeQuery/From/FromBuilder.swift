@@ -542,6 +542,17 @@ public enum FromBuilder {
         makeResult([])
     }
 
+    static func conciseResult(from sources: [any SQLable]) -> Result {
+        let items = sources.map { source in
+            let sourceParts = source.parts
+            return FromItem(
+                kind: .source,
+                parts: _SQLStructuralComposition.nestedEmbeddingParts(from: sourceParts)
+            )
+        }
+        return makeResult(items)
+    }
+
     private static func makeResult(_ items: [FromItem]) -> Result {
         var children: [SQLPart] = []
         children.append(o: .custom("FROM"), .space)

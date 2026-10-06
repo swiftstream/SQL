@@ -513,18 +513,18 @@ The target query shape uses the established model/property-wrapper path surface 
 
 ```swift
 SQL {
-    Select(User.$id, User.$email)
+    Select(\User.$id, \User.$email)
     From(User.table)
 
     Where {
-        User.$isActive == true
+        \User.$isActive == true
 
         if let email {
-            User.$email == email
+            \User.$email == email
         }
     }
 
-    OrderBy(User.$createdAt, .desc)
+    OrderBy(\User.$createdAt, .desc)
     Limit(100)
 }
 ```
@@ -549,6 +549,40 @@ WHERE "User"."isActive" = TRUE
 ORDER BY "User"."createdAt" DESC
 LIMIT 100
 ```
+
+### Concise and builder forms are equivalent authoring surfaces
+
+Simple fixed clause content should not require closure ceremony. When the clause meaning is unambiguous, declarative SQL exposes a concise form alongside the result-builder form.
+
+Accepted concise core forms include:
+
+```swift
+From(User.table)
+From(User.table, Profile.table)
+Where(\User.$active == true)
+Having(Fn.count(\User.$id) > 1)
+Qualify(rank <= 3)
+GroupBy(\User.$role, \User.$active)
+OrderBy(.asc(\User.$email), .desc(\User.$id))
+```
+
+Builders remain first-class when multiple children or Swift control flow improve readability:
+
+```swift
+Where {
+    \User.$active == true
+
+    if let email {
+        \User.$email == email
+    }
+}
+```
+
+Equivalent concise and builder forms must preserve the same structural composition, SQL rendering, preparation path, and bind order.
+
+Predicate clauses intentionally accept one concise predicate expression rather than a positional predicate list. Multiple boolean conditions remain explicit through normal predicate operators or through the predicate builder; `Where(a, b)` must not silently invent an `AND` contract.
+
+`From(...)` and `GroupBy(...)` require at least one positional child. `OrderBy(...)` accepts one or more existing `OrderByItem` values, while `OrderBy(expression, direction)` remains a distinct established concise spelling.
 
 ### Default WHERE composition is AND
 

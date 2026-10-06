@@ -2,11 +2,15 @@
 
 This file contains only approved current work. Ideas, unresolved choices, verified debt, and completed history belong in their separate owners.
 
-## Current: post-2.0.0 2.x continuation
+## Current: SQL 2.1.0 declarative concise parity
 
-Stable `2.0.0` is published from release commit `07ea7555158aac3750152ebd898474d083dab6dc` under immutable annotated tag `2.0.0` with GitHub Release `🚀 SQL 2.0.0`. The final public API includes direct fluent `SQL`, declarative `SQL { ... }`, `SQLContent`, and reusable `SQLQuery` values with protocol-local `Query = SQLContent`. Exact branch/tag CI and fresh remote exact-consumer publication gates passed.
+Stable `2.0.0` remains published from release commit `07ea7555158aac3750152ebd898474d083dab6dc` under immutable annotated tag `2.0.0` with GitHub Release `🚀 SQL 2.0.0`.
 
-There is no remaining 2.0.0 publication task. Future work may proceed on the compatible 2.x line: bug fixes in patch releases and additive/backward-compatible features in minor releases. Source-breaking public API changes belong to a later major unless a separately reviewed SemVer exception applies. Keep stable authority, README/migration/release material, source-owned skills, and downstream compatibility evidence synchronized with each accepted 2.x wave.
+The active compatible 2.x wave is SQL 2.1.0 Declarative Concise Parity. Its independently audited plan is CLEAN and its mandatory pre-mutation P00 imported-module/compiler proof is `STRONG_PASS` on Swift 6.3.3 and Swift 6.4. Production implementation is now authorized for the exact additive concise forms `From(...)`, single-predicate `Where(...)` / `Having(...)` / `Qualify(...)`, `GroupBy(...)`, and `OrderBy(OrderByItem...)`, while all existing builder forms remain unchanged.
+
+The tracked source/test/documentation implementation is complete. Production Validation 03 passed the focused 15-test parity suite on all three toolchain lanes, the full 752-test / 64-suite package on all three lanes, and ordinary-`import SQL` consumers on Swift 6.3.3 and Swift 6.4. Validation 03 also closed both findings from the first independent staged Sol source/diff audit: C03 now protects aliased stored-statement `From(...)` nesting/placeholders/bind order, and the active task state is synchronized. Primary source/diff review remains CLEAN. The current gate is the independent staged source/diff correction re-audit. Do not describe SQL 2.1.0 as committed, tagged, pushed, or published until those gates actually occur. After a CLEAN re-audit, remaining gates are accepted commit, release validation, and separately authorized push/tag/GitHub Release publication.
+
+General 2.x policy remains: bug fixes belong in patch releases, additive/backward-compatible features in minor releases, and source-breaking public API changes in a later major unless a separately reviewed SemVer exception applies. Keep stable authority, README/migration/release material, source-owned skills, and downstream compatibility evidence synchronized with each accepted 2.x wave.
 
 Publication of skills in the independent `SwiftStream/skills` project remains outside this repository's release objective.
 

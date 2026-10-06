@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.1.0
+
+- adds concise declarative `From(...)` for one or more fixed sources, completing the stable DESIGN-020 FROM authoring shape
+- adds concise single-predicate `Where(...)`, `Having(...)`, and `Qualify(...)`
+- adds concise `GroupBy(...)` for one or more grouping expressions
+- adds concise `OrderBy(...)` for one or more existing `OrderByItem` values while preserving `OrderBy(expression, direction)`
+- keeps all result-builder forms unchanged for conditional, looped, and multi-child composition
+- preserves identical SQL preparation, bind ordering, structural composition, and PostgreSQL/MySQL/Duck rendering for equivalent concise and builder forms
+- introduces no breaking migration; Swift 6.3+ requirement is unchanged
+
 ## 2.0.0
 
 SwifQL becomes **SQL** in the stable 2.0 major line.

@@ -25,12 +25,12 @@ PostgreSQL, MySQL, and DuckDB are supported by the current preparation surface. 
 
 ## Installation
 
-SQL 2.0.0 requires Swift 6.3 or newer.
+SQL 2.1.0 requires Swift 6.3 or newer.
 
 ```swift
 .package(
     url: "https://github.com/SwiftStream/SQL",
-    from: "2.0.0"
+    from: "2.1.0"
 )
 ```
 
@@ -76,19 +76,9 @@ or declaratively:
 
 ```swift
 let query = SQL {
-    Select {
-        \User.$id
-        \User.$email
-    }
-
-    From {
-        User.table
-    }
-
-    Where {
-        \User.$email == "john@example.com"
-    }
-
+    Select(\User.$id, \User.$email)
+    From(User.table)
+    Where(\User.$email == "john@example.com")
     Limit(10)
 }
 ```
@@ -162,7 +152,19 @@ There is no `SQL.root` indirection.
 
 ## Result Builder DSL
 
-The same SQL parts can be written with `SQL { ... }` and clause-local result builders:
+`SQL { ... }` keeps simple clauses concise:
+
+```swift
+let query = SQL {
+    Select(\User.$id, \User.$email, \User.$name)
+    From(User.table)
+    Where(\User.$active == true)
+    OrderBy(.asc(\User.$name))
+    Limit(20)
+}
+```
+
+When a clause needs multiple children, conditions, or loops, switch only that clause to its result-builder form:
 
 ```swift
 let query = SQL {
@@ -172,9 +174,7 @@ let query = SQL {
         \User.$name
     }
 
-    From {
-        User.table
-    }
+    From(User.table)
 
     Where {
         \User.$active == true
@@ -200,6 +200,8 @@ let query = SQL {
 }
 ```
 
+The concise and builder forms are the same DSL, not separate capabilities. Use concise calls for fixed SQL and clause builders when Swift control flow makes the query clearer.
+
 This is not a separate query engine. Fluent SQL, declarative clauses, reusable fragments, and `SQLQuery` all feed the same composition/preparation/binding pipeline.
 
 Declarative clauses are ordinary composable SQL values, so you can extract and reuse them when that makes a query easier to read.
@@ -215,14 +217,8 @@ struct UserQuery: SQLQuery {
     let roles: [String]?
 
     var query: Query {
-        Select {
-            \User.$id
-            \User.$email
-        }
-
-        From {
-            User.table
-        }
+        Select(\User.$id, \User.$email)
+        From(User.table)
 
         Where {
             \User.$active == active
@@ -258,14 +254,14 @@ let prepared = users.prepare(.psql)
 Because `SQLQuery` is itself `SQLable`, it composes as an ordinary SQL value:
 
 ```swift
-let source = From {
+let source = From(
     UserQuery(
         active: true,
         email: nil,
         roles: ["admin", "moderator"]
     )
     .as("activeUsers")
-}
+)
 ```
 
 The protocol-local `Query` shorthand resolves to `SQLContent`. Most application code never needs to spell the concrete carrier directly.
@@ -480,35 +476,28 @@ A whole statement is composable:
 
 ```swift
 let users = SQL {
-    Select {
-        \User.$id
-    }
-
-    From {
-        User.table
-    }
+    Select(\User.$id)
+    From(User.table)
 }
 ```
 
 A clause is composable:
 
 ```swift
-let activeUsers = Where {
-    \User.$active == true
-}
+let activeUsers = Where(\User.$active == true)
 ```
 
 A reusable query is composable:
 
 ```swift
-let source = From {
+let source = From(
     UserQuery(
         active: true,
         email: nil,
         roles: nil
     )
     .as("u")
-}
+)
 ```
 
 And nested/subquery/set-operation composition stays on the same `SQLable` pipeline rather than switching to a separate AST or string-template engine.
@@ -633,8 +622,9 @@ At a high level:
 ```text
 SQL.select(...)
 SQL { ... }
-Select { ... }
-Where { ... }
+Select(...) / Select { ... }
+From(...) / From { ... }
+Where(...) / Where { ... }
 SQLQuery
 custom SQLable values
         ↓

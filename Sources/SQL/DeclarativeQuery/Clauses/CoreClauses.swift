@@ -119,11 +119,19 @@ public func Where(
     WhereClause(predicateParts: body().parts)
 }
 
+public func Where(_ predicate: any SQLable) -> WhereClause {
+    WhereClause(predicateParts: predicate.parts)
+}
+
 /// Creates a HAVING clause request using the established predicate grammar.
 public func Having(
     @PredicateBuilder _ body: () -> PredicateBuilder.Components
 ) -> HavingClause {
     HavingClause(predicateParts: body().parts)
+}
+
+public func Having(_ predicate: any SQLable) -> HavingClause {
+    HavingClause(predicateParts: predicate.parts)
 }
 
 /// Creates a QUALIFY clause request using the established predicate grammar.
@@ -133,6 +141,10 @@ public func Qualify(
     QualifyClause(predicateParts: body().parts)
 }
 
+public func Qualify(_ predicate: any SQLable) -> QualifyClause {
+    QualifyClause(predicateParts: predicate.parts)
+}
+
 /// Creates a GROUP BY request using the existing grouping expression grammar.
 public func GroupBy(
     @GroupByBuilder _ body: () -> GroupByBuilder.Result
@@ -140,11 +152,26 @@ public func GroupBy(
     GroupByClause(expressionParts: body().expressionParts)
 }
 
+public func GroupBy(
+    _ first: any SQLable,
+    _ rest: any SQLable...
+) -> GroupByClause {
+    let expressionParts = ([first] + rest).map(\.parts).filter { !$0.isEmpty }
+    return GroupByClause(expressionParts: expressionParts)
+}
+
 /// Creates an ORDER BY request using existing `OrderByItem` values.
 public func OrderBy(
     @OrderByBuilder _ body: () -> OrderByBuilder.Result
 ) -> OrderByClause {
     OrderByClause(items: body().items)
+}
+
+public func OrderBy(
+    _ first: OrderByItem,
+    _ rest: OrderByItem...
+) -> OrderByClause {
+    OrderByClause(items: [first] + rest)
 }
 
 /// Creates a concise single-expression ORDER BY request.
