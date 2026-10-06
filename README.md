@@ -15,11 +15,13 @@
 
 # SQL
 
-**SQL (formerly SwifQL)** is a strongly typed, declarative, composable Swift DSL for building SQL. If you were looking for SwifQL, you're in the right place: the project was renamed from **SwifQL** to **SQL** when it moved to the **SwiftStream** organization.
+**SQL (formerly SwifQL)** is a strongly typed, declarative, composable Swift DSL for building SQL.
 
-Canonical repository: `SwiftStream/SQL`. The package, product, Swift module, and public query root are all named `SQL`.
+The package, product, Swift module, and public query root are all named `SQL`. The canonical repository is `SwiftStream/SQL`.
 
-SQL builds SQL; execution belongs to your database driver or integration layer. PostgreSQL, MySQL, and DuckDB are supported by the current SQL-building surface.
+SQL is deliberately **SQL-first**. It is not an ORM and it does not execute queries. It gives you a Swift-native way to describe SQL while keeping the database language visible, composable, type-safe where your model gives us type information, and extensible when you need something unusual.
+
+PostgreSQL, MySQL, and DuckDB are supported by the current preparation surface. Use SQL directly with your database driver or put a higher-level integration/execution layer on top of it.
 
 ## Installation
 
@@ -49,24 +51,9 @@ and import it:
 import SQL
 ```
 
-## Quick start
+## Philosophy
 
-Model-backed, type-safe query authoring remains first-class in SQL 2:
-
-```swift
-struct User: Table {
-    static var tableName: String { "users" }
-
-    @Column("id") var id: Int
-    @Column("email") var email: String
-    @Column("active") var active: Bool
-    @Column("role") var role: String
-
-    init() {}
-}
-```
-
-Start from the SQL you want to express:
+The idea is simple: start from the SQL you actually want.
 
 ```sql
 SELECT "users"."id", "users"."email"
@@ -75,7 +62,7 @@ WHERE "users"."email" = 'john@example.com'
 LIMIT 10
 ```
 
-The direct fluent API keeps the familiar SQL-shaped flow:
+Then express the same idea directly in Swift:
 
 ```swift
 let query = SQL
@@ -83,11 +70,9 @@ let query = SQL
     .from(User.table)
     .where(\User.$email == "john@example.com")
     .limit(10)
-
-let prepared = query.prepare(.psql)
 ```
 
-The same query can be written declaratively with `SQL { ... }`:
+or declaratively:
 
 ```swift
 let query = SQL {
@@ -108,9 +93,120 @@ let query = SQL {
 }
 ```
 
-`Path.Table(...)` and `Path.Column(...)` are still available when you intentionally want to build SQL without a model type. They are an explicit lower-level alternative, not a replacement for `User.table` and type-safe key paths.
+Simple SQL should stay simple. Monster-complex SQL should still be possible without escaping into a second query language.
 
-Reusable queries can hide conditional SQL behind an ordinary Swift value:
+That is the main design goal: **write SQL ideas in Swift, compose them like Swift values, and let the selected dialect prepare the final statement**.
+
+## Type-safe tables and columns
+
+Model-backed authoring is first-class in SQL 2.
+
+```swift
+struct User: Table {
+    static var tableName: String { "users" }
+
+    @Column("id") var id: Int
+    @Column("email") var email: String
+    @Column("name") var name: String
+    @Column("active") var active: Bool
+    @Column("role") var role: String
+
+    init() {}
+}
+```
+
+Now the table and columns can be referenced through the model:
+
+```swift
+User.table
+\User.$id
+\User.$email
+\User.$name
+```
+
+This is the normal high-level API for model-backed query code.
+
+When you intentionally do not have a model type, explicit paths are available too:
+
+```swift
+let users = Path.Table("users")
+let email = users.column("email")
+```
+
+`Path.Table(...)` and `Path.Column(...)` are an additional explicit path API, not a replacement for `User.table` or type-safe key paths.
+
+## Fluent SQL
+
+The direct fluent root mirrors normal SQL-shaped authoring:
+
+```swift
+let query = SQL
+    .select(\User.$id, \User.$email, \User.$name)
+    .from(User.table)
+    .where(\User.$active == true)
+    .orderBy(.asc(\User.$name))
+    .limit(20)
+```
+
+The root is simply `SQL`:
+
+```swift
+SQL.select(...)
+SQL.insertInto(...)
+SQL.update(...)
+SQL.delete(from: ...)
+SQL.where(...)
+```
+
+There is no `SQL.root` indirection.
+
+## Result Builder DSL
+
+The same SQL parts can be written with `SQL { ... }` and clause-local result builders:
+
+```swift
+let query = SQL {
+    Select {
+        \User.$id
+        \User.$email
+        \User.$name
+    }
+
+    From {
+        User.table
+    }
+
+    Where {
+        \User.$active == true
+
+        if let email {
+            \User.$email == email
+        }
+
+        if let roles {
+            Or {
+                for role in roles {
+                    \User.$role == role
+                }
+            }
+        }
+    }
+
+    OrderBy {
+        OrderByItem.asc(\User.$name)
+    }
+
+    Limit(20)
+}
+```
+
+This is not a separate query engine. Fluent SQL, declarative clauses, reusable fragments, and `SQLQuery` all feed the same composition/preparation/binding pipeline.
+
+Declarative clauses are ordinary composable SQL values, so you can extract and reuse them when that makes a query easier to read.
+
+## Reusable queries
+
+`SQLQuery` lets a normal Swift value own a reusable parameterized query:
 
 ```swift
 struct UserQuery: SQLQuery {
@@ -147,7 +243,7 @@ struct UserQuery: SQLQuery {
 }
 ```
 
-The call site only needs the parameters:
+The call site stays small:
 
 ```swift
 let users = UserQuery(
@@ -159,7 +255,7 @@ let users = UserQuery(
 let prepared = users.prepare(.psql)
 ```
 
-Because `SQLQuery` is itself `SQLable`, reusable queries compose directly without unwrapping `.query`:
+Because `SQLQuery` is itself `SQLable`, it composes as an ordinary SQL value:
 
 ```swift
 let source = From {
@@ -172,189 +268,161 @@ let source = From {
 }
 ```
 
-The protocol-local `Query` name keeps the concrete carrier out of the normal authoring path. If advanced code genuinely needs an explicit concrete type—for example a function return type or a heterogeneous layer normalized to one SQL carrier—use `SQLContent`. All forms use the same parts/preparation/binding pipeline.
+The protocol-local `Query` shorthand resolves to `SQLContent`. Most application code never needs to spell the concrete carrier directly.
 
-## Migrating from v1 / SwifQL
+## Preparation, binds, and execution
 
-For most projects, the first migration is intentionally mechanical.
+SQL builds statements. Your driver executes them.
 
-**v1 / Swift 5:**
-
-```swift
-.package(url: "https://github.com/SwifQL/SwifQL", from: "1.5.0")
-```
+Prepare for the target database:
 
 ```swift
-import SwifQL
-
-let query = SwifQL
-    .select(...)
-    .from(...)
+let postgres = query.prepare(.psql)
+let mysql = query.prepare(.mysql)
+let duck = query.prepare(.duck)
 ```
 
-**v2 / Swift 6.3+:**
+For a plain rendered statement:
 
 ```swift
-.package(url: "https://github.com/SwiftStream/SQL", from: "2.0.0")
+let sql = query.prepare(.psql).plain
 ```
+
+For a statement with separated bind values:
 
 ```swift
-import SQL
+let prepared = query.prepare(.psql).splitted
 
-let query = SQL
-    .select(...)
-    .from(...)
+let sql = prepared.query
+let values = prepared.values
 ```
 
-The product/module changed from `SwifQL` to `SQL`, and the canonical root changed from `SwifQL.<fluent>` to `SQL.<fluent>`. There is **no compatibility module named `SwifQL`** in v2. After `import SQL`, retained old `SwifQL*` symbol spellings may still compile where a deprecated/renamed bridge is provided, so compiler rename diagnostics can guide the remaining source migration.
+That split is the normal boundary for a database driver or integration layer:
 
-For the complete migration checklist and advanced compatibility notes, see [MIGRATION.md](MIGRATION.md).
+```text
+SQL / SQLable
+      ↓
+prepare(dialect)
+      ↓
+SQLPrepared
+      ↓
+plain SQL
+or
+query + values
+      ↓
+your driver / connection / executor
+```
 
----
+SQL intentionally does not own connection pools, transaction policy, result decoding policy, or execution lifecycle.
 
-## Historical SwifQL 2 documentation
+## INSERT, UPDATE, and DELETE
 
-The material below documents earlier SwifQL 2 releases and remains for historical migration/reference purposes. Examples that use `import SwifQL`, `SwifQL...`, the old product name, or old source paths describe those earlier releases rather than the new canonical SQL module.
+The same model-backed references work for DML.
 
-SwifQL can be used stand-alone, with frameworks like Vapor and Hummingbird, or with database drivers like SwiftDuckDB and others.
-
-For server-side projects we recommend [Bridges](https://github.com/SwifQL/Bridges), which is built on top of SwifQL and keeps the full flexibility of the query DSL. For iOS and Android we recommend SwiftDuckDB, a driver built on top of SwifQL that brings the same query-building flexibility directly to embedded DuckDB.
-
-It supports PostgreSQL, MySQL, and DuckDB. It's also not hard to add other dialects 🙂 just check [SwifQL/Dialect](https://github.com/SwifQL/SwifQL/tree/master/Sources/SwifQL/Dialect) folder
-
-Please feel free to ask any questions in issues, and also you could find me in the [Discord app](https://discordapp.com) as `@iMike#3049` or even better just join **#swifql** channel on [SwiftStream's Discord server](https://discord.gg/q5wCPYv) 🙂
-
-> NOTE:
->
-> If you haven't found some functions available out-of-the-box
-> then please check files like `SwifQLable+Select` and others in `Sources/SwifQL` folder
-> to ensure how easy it is to extend SwifQL to support anything you need 🚀
->
-> And feel free to send pull requests with your awesome new extensions ❤️
-
-### Support SwifQL development by giving a ⭐️
-
-## Historical version guidance
-
-For the earlier SwifQL release line, **1.5.0 was the last stable Swift 5 release**. The later SwifQL 2 beta line moved to Swift 6 and eventually became the SQL 2.0.0 release documented above.
-
-The last SwifQL-named prerelease was **2.0.0-beta.6.1.0**. These examples are retained so existing projects and old release notes remain understandable; new projects should use the SQL 2.0.0 installation at the top of this README.
-
-## Historical installation examples
-
-### Swift 5 / existing Vapor 4 projects
+### INSERT
 
 ```swift
-.package(url: "https://github.com/SwifQL/SwifQL", from: "1.5.0")
+let insert = SQL
+    .insertInto(
+        User.table,
+        fields: \User.$email, \User.$name
+    )
+    .values("john@example.com", "John")
 ```
 
-### Swift 6.3+ / SwifQL 2
+Batch values can be appended through the same values surface.
+
+### UPDATE
 
 ```swift
-.package(url: "https://github.com/SwifQL/SwifQL", exact: "2.0.0-beta.6.1.0")
+let update = SQL
+    .update(User.table)
+    .set[items:
+        \User.$name == "Mike"
+    ]
+    .where(\User.$id == userID)
 ```
 
-### With Vapor 4 + [Bridges](https://github.com/SwifQL/Bridges) + PostgreSQL
+Schema-qualified model aliases remain available when you need them:
+
 ```swift
-.package(url: "https://github.com/vapor/vapor", from:"4.0.0-rc"),
-.package(url: "https://github.com/SwifQL/VaporBridges", from:"1.0.0-rc"),
-.package(url: "https://github.com/SwifQL/PostgresBridge", from:"1.0.0-rc"),
-.target(name: "App", dependencies: [
-    .product(name: "Vapor", package: "vapor"),
-    .product(name: "VaporBridges", package: "VaporBridges"),
-    .product(name: "PostgresBridge", package: "PostgresBridge")
-]),
+let vip = User.inSchema("VIP")
+
+let update = SQL
+    .update(vip.table)
+    .set[items:
+        vip.$name == "Mike"
+    ]
 ```
 
-### With Vapor 4 + [Bridges](https://github.com/SwifQL/Bridges) + MySQL
+### DELETE
+
 ```swift
-.package(url: "https://github.com/vapor/vapor", from:"4.0.0-rc"),
-.package(url: "https://github.com/SwifQL/VaporBridges", from:"1.0.0-rc"),
-.package(url: "https://github.com/SwifQL/MySQLBridge", from:"1.0.0-rc"),
-.target(name: "App", dependencies: [
-    .product(name: "Vapor", package: "vapor"),
-    .product(name: "VaporBridges", package: "VaporBridges"),
-    .product(name: "MySQLBridge", package: "MySQLBridge")
-]),
+let delete = SQL
+    .delete(from: User.table)
+    .where(\User.$id == userID)
 ```
 
-### Pure
-```swift
-.package(url: "https://github.com/SwifQL/SwifQL", exact: "2.0.0-beta.6.1.0"),
-.target(name: "App", dependencies: [
-    .product(name: "SwifQL", package: "SwifQL"),
-]),
-```
+The broader DML surface also includes RETURNING and conflict-related composition where supported by the target SQL dialect.
 
-### Pure on NIO2
-```swift
-.package(url: "https://github.com/SwifQL/SwifQL", exact: "2.0.0-beta.6.1.0"),
-.package(url: "https://github.com/SwifQL/SwifQLNIO", from:"2.0.0"),
-.target(name: "App", dependencies: [
-    .product(name: "SwifQL", package: "SwifQL"),
-    .product(name: "SwifQLNIO", package: "SwifQLNIO"),
-]),
-```
+## Declarative table DDL
 
-#### Pure on NIO1 (deprecated)
-```swift
-.package(url: "https://github.com/SwifQL/SwifQL", from:"1.0.0"),
-.package(url: "https://github.com/SwifQL/SwifQLNIO", from:"1.0.0"),
-.target(name: "App", dependencies: ["SwifQL", "SwifQLNIO"]),
-```
-
-#### With Vapor 3 + Fluent (deprecated)
-```swift
-.package(url: "https://github.com/SwifQL/SwifQL", from:"1.0.0"),
-.package(url: "https://github.com/SwifQL/SwifQLVapor", from:"1.0.0"),
-.target(name: "App", dependencies: ["Vapor", "SwifQL", "SwifQLVapor"]),
-```
-
-## Declarative Table DDL
-
-SwifQL `2.0.0-beta.6.1.0` adds a small SQL-shaped declarative surface for table creation and alteration.
+SQL includes SQL-shaped builders for table DDL:
 
 ```swift
 let createUsers = CreateTable("users") {
     NewColumn("id", .uuid).primaryKey()
     NewColumn("email", .text).unique().notNull()
 }
-
-createUsers.prepare(.psql).plain
 ```
 
-will give:
+which gives:
 
 ```sql
 CREATE TABLE "users" ("id" uuid PRIMARY KEY, "email" text UNIQUE NOT NULL)
 ```
 
-To add columns, build one `ALTER TABLE` statement:
+And one `ALTER TABLE` statement can own multiple actions:
 
 ```swift
 let alterUsers = AlterTable("users") {
     AddColumn("display_name", .text)
 }
-
-alterUsers.prepare(.psql).plain
 ```
 
-will give:
+### Migration identifiers are intentionally strings
 
-```sql
-ALTER TABLE "users" ADD COLUMN "display_name" text
+Database migrations are historical records. They must not silently change because the current Swift model was renamed later.
+
+So migration-facing schema, table, and column identifiers stay explicit:
+
+```swift
+CreateTable("users") {
+    NewColumn("email", .text)
+}
+
+AlterTable("users") {
+    AddColumn("display_name", .text)
+}
 ```
 
-Table, schema, and column identifiers are explicit strings so historical DDL declarations do not change when current model metadata changes. These builders are intentionally static and non-empty, and `AlterTable` always represents one SQL `ALTER TABLE` statement. SwifQL only builds the SQL; migration versioning, history, transactions, and execution remain the consuming library or application's responsibility.
+Do **not** derive historical migration identifiers from current `User.table` / `\User.$email` model metadata.
 
-## Shared Semantic Values
+SQL only builds the DDL statement. Migration versions, history, transaction policy, and execution belong to the consuming application or database layer.
 
-SwifQL `2.0.0-beta.6.0.0` first published four shared value types for database-facing civil and interval semantics: `PureDate`, `PureTime`, `DateTime`, and `Interval`. The `2.0.0-beta.6.0.1` hotfix keeps the same SQL/API behavior and aligns the Swift tools floor with the validated Swift 6.3 line.
+## Shared semantic values
+
+SQL includes database-facing civil and interval values:
 
 ```swift
 let date = PureDate(year: 2026, month: 9, day: 4)!
-let time = PureTime(hour: 12, minute: 34, second: 56, nanosecond: 123_456_789)!
-let timestamp = DateTime(
+let time = PureTime(
+    hour: 12,
+    minute: 34,
+    second: 56,
+    nanosecond: 123_456_789
+)!
+let dateTime = DateTime(
     year: 2026,
     month: 9,
     day: 4,
@@ -363,484 +431,286 @@ let timestamp = DateTime(
     second: 56,
     nanosecond: 123_456_789
 )!
-let interval = Interval(months: 2, days: -3, microseconds: 4)
+let interval = Interval(
+    months: 2,
+    days: -3,
+    microseconds: 4
+)
 
-SwifQL.select(date, time, timestamp, interval).prepare(.psql).plain
+SQL
+    .select(date, time, dateTime, interval)
+    .prepare(.psql)
+    .plain
 ```
 
-will give:
+PostgreSQL gives:
 
 ```sql
 SELECT DATE '2026-09-04', TIME '12:34:56.123456789', TIMESTAMP '2026-09-04 12:34:56.123456789', INTERVAL '2 months -3 days 4 microseconds'
 ```
 
-- `PureDate` is a proleptic-Gregorian civil date with astronomical `Int64` years, including canonical year zero/BCE and extended-year spellings such as `+10000-01-01`. It has finite and explicit positive/negative infinity states, no time zone, and is not an instant; its explicit `Foundation.Date` conversion requires a Gregorian `Calendar` and `TimeZone` and can fail.
-- `PureTime` is nanosecond-capable time of day, not a duration. Its domain is `00:00:00` through the distinct `24:00:00` endpoint; leap second `60` is rejected.
-- `DateTime` combines a timezone-free `PureDate` and `PureTime`. It has finite and explicit positive/negative infinity states, is not `Foundation.Date`, and exact `24:00:00` input becomes the following date's midnight. Foundation conversion requires an explicit Gregorian calendar and time zone.
-- `Interval` keeps independent months, days, and microseconds, including explicit positive/negative infinity states. Mixed signs are allowed, it is not `Comparable` or a fixed `TimeInterval`, and exact `Duration` conversion is available only when months and days are zero.
+These values model database semantics rather than pretending every temporal value is a `Foundation.Date` or every interval is a fixed duration.
 
-The four values use the ordinary SwifQL value/binding path, so `.splitted.values` preserves the original Swift values and their traversal order. `PureDate` and `PureTime` infer `.date` and `.time`; `Foundation.Date` remains `.timestamptz`. `DateTime` and `Interval` retain the historical `.text` fallback, so use explicit `.timestamp` or `.interval` schema types when that contract is intended.
+- `PureDate` is a timezone-free civil date.
+- `PureTime` is a nanosecond-capable time of day.
+- `DateTime` is a timezone-free civil date + time, not an instant.
+- `Interval` preserves independent months, days, and microseconds.
 
-Dialect output is intentionally exact rather than universal. PostgreSQL and Duck preserve nanosecond lexical values in their supported forms; MySQL emits only finite values and precisions it can represent exactly, and fails closed for unsupported years, special states, or non-microsecond nanoseconds. Duck's `TIMESTAMP_NS` still has a finite physical range, and shared interval infinity values are not native Duck interval infinity.
+Rendering is dialect-aware and fails closed where a selected database cannot represent a value exactly.
 
-## Philosophy
+## Dialects
 
-This lib gives an ability to build absolutely any SQL query from simplest to monster complex.
-
-Example of simple query
-```sql
-SELECT * FROM "User" WHERE "email" = 'john.smith@gmail.com'
-```
-build it with pure SwifQL this way
-```swift
-SwifQL.select(User.table.*).from(User.table).where(\User.email == "john.smith@gmail.com")
-```
-or with SwifQL + [Bridges](https://github.com/SwifQL/Bridges)
-```swift
-SwifQL.select(User.table.*).from(User.table).where(\User.$email == "john.smith@gmail.com")
-// or shorter
-User.select.where(\User.$email == "john.smith@gmail.com")
-```
-
-## Usage
-
-### Preparation
-
-> 💡 TIP: It is simpler and more powerful with [Bridges](https://github.com/SwifQL/Bridges)
-
-Of course you have to import the lib
-```swift
-import SwifQL
-```
-
-#### For v1 Your table models should be conformed to `Tableable` protocol
-```swift
-extension MyTable: Tableable {}
-```
-
-#### For v2 Your table models should be conformed to `Table` protocol
-```swift
-extension MyTable: Table {}
-```
-
-### How to build query
-
-> Instead of writing `Model.self` you should write `Model.table`, cause without Vapor you should conform your models to `Table`, and with Vapor its `Model`s are already conforms to `Table`.
+The same query value can be prepared for the built-in dialects:
 
 ```swift
-let query = SwifQL.select(\User.email, \User.name, \User.role)
-                  .from(User.table)
-                  .orderBy(.asc(\User.name))
-                  .limit(10)
-```
-or with SwifQL + [Bridges](https://github.com/SwifQL/Bridges)
-```swift
-let query = SwifQL.select(\User.$email, \User.$name, \User.$role)
-                  .from(User.table)
-                  .orderBy(.asc(\User.$name))
-                  .limit(10)
-// or shorter
-User.select(\.$email, \.$name, \.$role).orderBy(.asc(\User.$name)).limit(10)
+query.prepare(.psql)
+query.prepare(.mysql)
+query.prepare(.duck)
 ```
 
-### How to print raw query
+The goal is not to pretend PostgreSQL, MySQL, and DuckDB are identical. The goal is to keep one composable Swift SQL model while the selected dialect owns the rendering differences that actually belong to that database.
 
-There are two options
+Dialect-specific capabilities remain dialect-specific.
 
-##### 1. Get just plain query
+## Composition
+
+Everything useful in SQL is meant to compose.
+
+A whole statement is composable:
+
 ```swift
-let rawSQLString = query.prepare(.psql).plain
-```
-
-or when using SwifQLSelectBuilder() - see below
-
-```swift
-let rawSQLBuilderString = query.build().prepare(.psql).plain
-```
-
-##### 2. Get object splitted into: formatted raw SQL string with $ symbols, and separated array with values
-```swift
-let splittedQuery = query.prepare(.psql).splitted
-let formattedSQLQuery = splittedQuery.query // formatted raw SQL string with $ symbols instead of values
-let values = splittedQuery.values // an array of [Encodable] values
-```
-
-Then just put it into your database driver somehow 🙂 or use [Bridges](https://github.com/SwifQL/Bridges)
-
-### How to execute query?
-
-SwifQL is only about building queries. For execution you have to use your favourite database driver.
-
-Below you can see an example for SwifQL + Vapor4 + [Bridges](https://github.com/SwifQL/Bridges) + PostgreSQL
-
-> 💡 You can get connection on both `Application` and `Request` objects.
-
-Example for `Application` object e.g. for `configure.swift` file
-```swift
-// Called before your application initializes.
-public func configure(_ app: Application) throws {
-    app.postgres.connection(to: .myDb1) { conn in
-        SwifQL.select(User.table.*).from(User.table).execute(on: conn).all(decoding: User.self).flatMap { rows in
-            print("yaaay it works and returned \(rows.count) rows!")
-        }
-    }.whenComplete {
-        switch $0 {
-        case .success: print("query was successful")
-        case .failure(let error): print("query failed: \(error)")
-        }
+let users = SQL {
+    Select {
+        \User.$id
     }
-}
-```
-Example for `Request` object
-```swift
-func routes(_ app: Application) throws {
-    app.get("users") { req -> EventLoopFuture<[User]> in
-        req.postgres.connection(to: .myDb1) { conn in
-            SwifQL.select(User.table.*).from(User.table).execute(on: conn).all(decoding: User.self)
-        }
+
+    From {
+        User.table
     }
 }
 ```
 
-> 💡 In examples above we use `.all(decoding: User.self)` for decoding results, but we also can use `.first(decoding: User.self).unwrap(or: Abort(.notFound))` to get only first row and unwrap it since it may be nil.
-
-## Insert Into
-
-### Single record
-SQL example
-```sql
-INSERT INTO "User" ("email", "name") VALUES ('john@gmail.com', 'John Doe'), ('sam@gmail.com', 'Samuel Jackson')
-```
-SwifQL representation
-```swift
-SwifQL.insertInto(User.table, fields: \User.email, \User.name).values("john@gmail.com", "John Doe")
-```
-or with SwifQL + [Bridges](https://github.com/SwifQL/Bridges)
-```swift
-User(email: "john@gmail.com", name: "John Doe").insert(on: conn)
-```
-
-### Batch
-SQL example
-```sql
-INSERT INTO "User" ("email", "name") VALUES ('john@gmail.com', 'John Doe'), ('sam@gmail.com', 'Samuel Jackson')
-```
-SwifQL representation
-```swift
-SwifQL.insertInto(User.table, fields: \User.email, \User.name).values(array: ["john@gmail.com", "John Doe"], ["sam@gmail.com", "Samuel Jackson"])
-```
-or with SwifQL + [Bridges](https://github.com/SwifQL/Bridges)
-```swift
-let user1 = User(email: "hello@gmail.com", name: "John")
-let user2 = User(email: "byebye@gmail.com", name: "Amily")
-let user3 = User(email: "trololo@gmail.com", name: "Trololo")
-[user1, user2, user3].batchInsert(on: conn)
-```
-## Update
-
-### General Update
-SQL example
-```sql
-UPDATE "User" SET "name" = 'Mike'
-```
-SwifQL representation
-```swift
-SwifQL.update(User.table).set[items: User.$name == "Mike"]
-```
-
-### In Schema Update
-SQL example
-```sql
-UPDATE "VIP"."User" SET "name" = 'Mike'
-```
-SwifQL representation
-```swift
-let vip = User.inSchema("VIP")
-SwifQL.update(vip.table).set[items: vip.$name == "Mike"]
-```
-
-## Builders
-
-For now there are only one implemented builder
-
-### Select builder
-
-`SwifQLSelectBuilder` - by using it you could easily build a select query but in multiple lines without carying about ordering.
+A clause is composable:
 
 ```swift
-let builder = SwifQLSelectBuilder()
-builder.where(\User.id == 1)
-builder.from(User.table)
-builder.limit(1)
-builder.select(User.table.*)
-let query = builder.build()
-return query.execute(on: req, as: .psql)
-            .first(decoding: User.self)
-            .unwrap(or: Abort(.notFound, reason: "User not found"))
-```
-
-So it will build query like: `SELECT "User".* FROM "User" WHERE "User"."id" = 1 LIMIT 1`.
-
-As you can see you shouldn't worry about parts ordering, it will sort them the right way before building.
-
-### More builders
-
-Feel free to make your own builders and send pull request with it here!
-
-Also more conveniences are available in [Bridges](https://github.com/SwifQL/Bridges) lib which is created on top of SwifQL and support all its flexibility
-
-## More query examples
-
-*Let's use `SwifQLSelectBuilder` for some next examples below, cause it's really convenient especially for complex queries.*
-
-1. Let's imagine that you want to query count of users.
-
-```swift
-/// Just query
-let query = SwifQL.select(Fn.count(\User.id) => "count").from(User.table)
-
-/// Execution and decoding for Vapor
-struct CountResult: Codable {
-  let count: Int64
+let activeUsers = Where {
+    \User.$active == true
 }
-query.execute(on: req, as: .psql)
-     .first(decoding: CountResult.self)
-     .unwrap(or: Abort(.notFound)) // returns Future<CountResult>
 ```
 
-Here you can see two interesting things: `Fn.count()` and `=> "count"`
+A reusable query is composable:
 
-`Fn` is a collection of function builders, so just call `Fn.` and take a look at the functions list on autocompletion.
+```swift
+let source = From {
+    UserQuery(
+        active: true,
+        email: nil,
+        roles: nil
+    )
+    .as("u")
+}
+```
 
-`=>` uses for two things: 1) to write alias through `as` 2) to cast values to some other types
+And nested/subquery/set-operation composition stays on the same `SQLable` pipeline rather than switching to a separate AST or string-template engine.
 
-`// TBD: Expand list of examples`
+## Aliases and casts
 
-## Aliasing
-Use `=>` operator for that, e.g.:
+The `=>` operator is intentionally useful for both aliasing and SQL casts.
 
-If you want to write `SELECT "User"."email" as eml` then do it like this `SwifQL.select(\User.email => "eml")`
+Column alias:
 
-Or if to speak about table name aliasing:
+```swift
+SQL.select(
+    \User.$email => "email"
+)
+```
 
-If you want to reach `"User" as u` then do it like this `User.as("u")`
+Cast:
 
-And then keypaths will work like
+```swift
+SQL.select(
+    \User.$email => .text
+)
+```
+
+Table aliases keep typed column access:
 
 ```swift
 let u = User.as("u")
-let emailKeypath = u.email
+
+let query = SQL
+    .select(u.$id, u.$email)
+    .from(u.table)
 ```
 
-## Type casting
-Use `=>` operator for that, e.g.:
+## Predicates and operators
 
-If you want to write `SELECT "User"."email"::text` then do it like this `SwifQL.select(\User.email => .text)`
+Normal Swift-looking operators map to SQL predicates:
 
-## Predicates
-| Infix operator  | SQL equivalent |
-| ------- | -------------- |
-| > | > |
-| >= | >= |
-| < | < |
-| <= | <= |
-| == | = |
-| == nil | IS NULL |
-| != | != |
-| != nil | IS NOT NULL |
-| && | AND |
+| Swift | SQL |
+| --- | --- |
+| `>` | `>` |
+| `>=` | `>=` |
+| `<` | `<` |
+| `<=` | `<=` |
+| `==` | `=` |
+| `== nil` | `IS NULL` |
+| `!=` | `!=` / dialect equivalent |
+| `!= nil` | `IS NOT NULL` |
+| `&&` | `AND` |
+| `||` | `OR` |
 
-And also
+For example:
 
-`||` is for `OR`
-
-`||>` is for `@>`
-
-`<||` is for `<@`
-
-> Please feel free to add more predicates in `Predicates.swift` 😉
-
-## Operators
-Please feel free to take a look at `Fn.Operator` enum in `Functions.swift`
-
-## Functions
-Please feel free to take a look at the list of function in `Functions.swift`
-
-## Postgres JSON Object
-You could build JSON objects by using `PostgresJsonObject`
-
-SQL example
-```sql
-jsonb_build_object('id', "User"."id", 'email', "User"."email")
-```
-SwifQL representation
 ```swift
-PgJsonObject().field(key: "id", value: \User.id).field(key: "email", value: \User.email)
+let predicate =
+    \User.$active == true &&
+    \User.$email != nil
 ```
 
-## Postgres Array
-You could build PostgreSQL arrays by using `PostgresArray`
+Functions are ordinary SQL values too:
 
-SQL example
-```sql
-$$[]$$
-ARRAY[]
-ARRAY[1,2,3]
-$$[]$$::uuid[]
-ARRAY[]::text[]
-```
-SwifQL representation
 ```swift
-PgArray(emptyMode: .dollar)
+let activeCount =
+    Fn.count(\User.$id)
+        .filter(where: \User.$active == true)
+        => "active_count"
+```
+
+## PostgreSQL JSON and arrays
+
+PostgreSQL-specific helpers remain available when you actually want PostgreSQL-specific SQL.
+
+JSON object:
+
+```swift
+let json = PgJsonObject()
+    .field(key: "id", value: \User.$id)
+    .field(key: "email", value: \User.$email)
+```
+
+Arrays:
+
+```swift
 PgArray()
 PgArray(1, 2, 3)
-PgArray(emptyMode: .dollar) => .uuidArray
 PgArray() => .textArray
 ```
 
-Postgress range query examples
+The project also supports JSON paths, nested values, array/list operations, and other dialect-aware SQL families without turning them into ORM abstractions.
+
+## More SQL
+
+SQL 2 includes a much broader surface than basic SELECT/INSERT/UPDATE/DELETE, including:
+
+- joins, subqueries, CTEs, and set operations;
+- aggregates, FILTER, ordering, grouping, and analytical SQL;
+- JSON and nested values;
+- PostgreSQL arrays and related operators;
+- DuckDB LIST/lambda helpers and nested types;
+- PIVOT / UNPIVOT;
+- MERGE;
+- COPY;
+- DML + RETURNING;
+- DDL and schema operations;
+- sequences and macros;
+- table and file functions;
+- catalog/file-oriented DuckDB SQL;
+- custom SQL functions, operators, paths, and raw/static structure when a typed surface does not exist yet.
+
+The library is intentionally not limited to the examples in this README.
+
+If the database can express the SQL, the long-term goal is that SQL should make it practical to express that idea in Swift without hiding what the query actually means.
+
+## How it works under the hood
+
+The original SwifQL idea is still the core of SQL 2, just with a much stronger composition model.
+
+`SQL` is the public starting point. Values that participate in SQL conform to `SQLable` and expose composable `SQLPart` values.
+
+At a high level:
+
+```text
+SQL.select(...)
+SQL { ... }
+Select { ... }
+Where { ... }
+SQLQuery
+custom SQLable values
+        ↓
+composable SQLPart structure
+        ↓
+selected SQLDialect
+        ↓
+SQLPrepared
+        ↓
+plain / splitted
+```
+
+That is why very different authoring styles can mix together without creating separate query engines.
+
+Most SQL capabilities are small composable pieces. If a function, operator, clause, or dialect feature is missing, the architecture is intentionally designed so it can usually be added as another SQL value/part instead of requiring an ORM rewrite or another parser.
+
+Advanced extensions that manually work with `parts` should preserve structural composition rather than blindly flattening arrays. See [MIGRATION.md](MIGRATION.md) for the compatibility note.
+
+That flexibility is one of the library's main ideas: **you should not hit a wall just because your query stopped being simple**.
+
+## Swift 6 and concurrency
+
+SQL 2 uses Swift 6 language mode and requires Swift 6.3+.
+
+The query/bind graph is intentionally not hidden behind unchecked `Sendable` conformances.
+
+When crossing an actor boundary, keep query construction/preparation on the originating isolation and send an application-owned Sendable snapshot containing the data your driver actually needs.
+
+## Migrating from SwifQL
+
+The project was renamed from **SwifQL** to **SQL** for the 2.0 stable release.
+
+The common source migration is intentionally mechanical:
+
+was
+
 ```swift
-// var ingredients: [IngredientsEnum] 
-SwifQL.select(FoodMenu.table.*).WHERE( \FoodMenu.$ingredients ||> [.tomato] )
+import SwifQL
 
-// var ingredients: [String]
-SwifQL.select(FoodMenu.table.*).WHERE( \FoodMenu.$ingredients ||> PgArray(["tomato"]) )
-
-// var vendors: [UUID]
-SwifQL.select(FoodMenu.table.*).WHERE( \FoodMenu.$vendors ||> PgArray([vendorUuid]) )
+let query = SwifQL
+    .select(\User.$id, \User.$email)
+    .from(User.table)
 ```
 
-## Nesting array of objects inside of query result
-Consider such response object you want to achieve:
+became
 
 ```swift
-struct Book {
-  let title: String
-  let authors: [Author]
-}
+import SQL
 
-struct Author {
-  let name: String
-}
+let query = SQL
+    .select(\User.$id, \User.$email)
+    .from(User.table)
 ```
 
-you have to build it with use of subquery to dump Authors in JSON array and then attach them to result query. This will allow you to get all `Books` with their respective `Authors` 
-
-This example uses Pivot table `BookAuthor` to join `Books` with their `Authors`
+The important part is what did **not** disappear:
 
 ```swift
-    let authors = SwifQL.select(Fn.coalesce(Fn.array_agg(Fn.to_jsonb(Author.table)), PgArray() => .jsonbArray))
-
-    let query = SwifQLSelectBuilder()
-    query.select(Book.table.*)
-
-    query.from(Book.table)
-
-    query.join(.left, BookAuthor.table, on: \Book.$id == \BookAuthor.$bookID)
-    query.join(.left, Author.table, on: \Author.$id == \BookAuthor.$authorID)
-
-    // then query.group(...) as required in your case
+\User.$id
+\User.$email
+User.table
 ```
 
-## FILTER
-SQL example
-```sql
-COUNT("User"."id") FILTER (WHERE \User.isAdmin = TRUE) as "admins"
-```
-SwifQL representation
-```swift
-Fn.count(\User.id).filter(where: \User.isAdmin == true) => "admins"
-```
+The model-backed, type-safe query surface remains first-class.
 
-## CASE ... WHEN ... THEN ... END
-SQL example
-```sql
-CASE
-  WHEN "User"."email" IS NULL
-  THEN NULL
-  ELSE "User"."email"
-END
-```
-SwifQL representation
-```swift
-Case.when(\User.email == nil).then(nil).else(\User.email).end
-// or as many cases as needed
-Case.when(...).then(...).when(...).then(...).when(...).then(...).else(...).end
-```
+There is no compatibility module named `SwifQL`. After `import SQL`, retained old `SwifQL*` symbol spellings may still exist as deprecated/renamed bridges where provided.
 
-## Brackets
+For the complete v1 → v2 checklist and advanced compatibility details, see [MIGRATION.md](MIGRATION.md).
 
-Yes, we really often use round brackets in our queries, e.g. in where clauses or in subqueries.
-
-SwifQL provides you with `|` prefix and postfix operators which is representates `(` and `)`.
-
-So it's easy to wrap some part of query into brackets, e.g.:
-SQL example
-```sql
-"User.role" = 'admin' OR ("User.role" = 'user' AND "User"."age" >= 21)
-```
-SwifQL representation
-```swift
-let where = \User.role == .admin || |\User.role == .user && \User.age >= 21|
-```
-
-## Keypaths
-| SQL | SwiftQL | SwiftQL + Bridges |
-| ------- | -------------- | -------------- |
-| `"User"` | `User.table` | `the same` |
-| `"User" as u` | `User.as("u")` you could declare it as `let u = User.as("u")` | `the same` |
-| `"User".*` | `User.table.*` | `the same` |
-| `u.*` | `u.*` | `the same` |
-| `"User"."email"` | `\User.email` | `\User.$email` |
-| `u."email"` | `u.email` | `u.$email` |
-| `"User"."jsonObject"->"jsonField"` | `\User.jsonObject.jsonField` | `only through full path for now` |
-| `"User"."jsonObject"->"jsonField"` | `Path.Table("User").column("jsonObject", "jsonField")` | `the same` |
-
-## Tests
-
-For now tests coverage is maybe around 70%. If you have timе and interest please feel free to send pull requests with more tests.
-
-You could find tests in `Tests` folder
-
-### How it works under the hood
-
-`SwifQL` object needed just to start writing query, but it's just an empty object that conforms to `SwifQLable`.
-
-You can build your query with everything which conforms to `SwifQLable`, because `SwifQLable` is that very piece which will be used for concatenation to build a query.
-
-> If you take a look at the lib's files you may realize that the most of files are just extensions to `SwifQLable`.
-
-All available operators like `select`, `from`, `where`, and `orderBy` realized just as a function in `SwifQLable` extension and these functions always returns `SwifQLable` as a result. That's why you can write a query by calling `SwifQL.select().from().where().orderBy()` one by one. That's awesome cause it feels like writing a raw SQL, but it also gives you an ordering limitation, so if you write `SwifQL.select().where().from()` then you'll get wrong query as a result. But this limitation is resolved by using special builders, like `SwifQLSelectBuilder` (read about it later below).
-
-So let's take a look how lib builds a simple `SELECT "User".* FROM "User" WHERE "User"."email" = 'john.smith@gmail.com'` query
-
-First of all we should split query into the parts. Almost every word and punctuation here is a `SwifQLable` piece.
-
-- `SELECT` is `Fn.Operator.select`
-- ` ` is `Fn.Operator.space`
-- `"User"` is `User.table`
-- `.*` is `postfix operator .*`
-- ` ` is `Fn.Operator.space`
-- `FROM` is `Fn.Operator.from`
-- `"User"` is `User.table`
-- ` ` is `Fn.Operator.space`
-- `WHERE` is `Fn.Operator.where`
-- ` ` is `Fn.Operator.space`
-- `"User"."email"` is `\User.email` keypath
-- ` ` is `Fn.Operator.space`
-- `==` is `infix operator ==`
-- ` ` is `Fn.Operator.space`
-- `'john.smith@gmail.com'` is `SwifQLPartUnsafeValue` (it means that this value should be passed as $1 to the database)
-
-That's crazy, but awesome, right? 😄 But it's under the hood, so no worries! 😃 I just wanted to explain, that if you need something more than already provided then you'll be able to add needed operators/functions easily just by writing little extensions.
-
-> And also there is no overhead, it works pretty fast, but I'd love to hear if you know how to make it faster.
-
-This way gives you almost absolute flexibility in building queries. More than that as lib support `SQLDialect`'s it will build this query different way for PostgreSQL and MySQL, e.g.:
-
-- PostgreSQL: `SELECT "User".* FROM "User" WHERE "User"."email" = 'john.smith@gmail.com'`
-- MySQL: `SELECT User.* FROM User WHERE User.email = 'john.smith@gmail.com'`
+For the complete 2.0.0 release overview, see [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
 ## Contributing
 
-Please feel free to contribute!
+If you cannot find a function or SQL construct out of the box, check the existing source first — a lot of the library is intentionally built from small `SQLable` extensions.
+
+If something is genuinely missing, issues and pull requests are welcome ❤️
+
+Tests live under `Tests/SQLTests`.
+
+And if SQL saves you some time, giving the project a ⭐️ is always appreciated 🙂

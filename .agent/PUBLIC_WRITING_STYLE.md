@@ -110,7 +110,7 @@ Do not lead with internal dialect identifiers, closure terminology, compatibilit
 
 Installation examples must point to a version/tag that exists for the release state being documented. A pre-release may be described as a pre-release; do not say it is unavailable when its tag is the intended install target.
 
-README examples should normally start with the SQL idea and then show the SQL DSL representation, matching the established project philosophy.
+README examples should normally start with the SQL idea and then show the SQL DSL representation, matching the established project philosophy. After a stable major release, fold still-useful philosophy/examples into the current API instead of keeping a second historical/prerelease README body; keep release-history detail in `MIGRATION.md` / `RELEASE_NOTES.md`.
 
 ## MIGRATION.md
 
