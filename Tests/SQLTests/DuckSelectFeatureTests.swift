@@ -413,6 +413,14 @@ struct DuckSelectFeatureTests {
                 == #"SELECT count("events"."value") FILTER (WHERE "events"."value" > 20) FROM "events""#
         )
 
+        let multiFiltered = SwifQL.select(
+            Fn.count(value).filter(where: value > 20, value < 100)
+        ).from(table)
+        #expect(
+            multiFiltered.prepare(.duck).plain
+                == #"SELECT count("events"."value") FILTER (WHERE "events"."value" > 20 AND "events"."value" < 100) FROM "events""#
+        )
+
         let windowed = SwifQL.select(
             Fn.rowNumber().over(partitionBy: category, orderBy: .asc(value))
         ).from(table)

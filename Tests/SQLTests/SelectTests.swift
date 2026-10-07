@@ -500,6 +500,96 @@ struct SelectTests: SwifQLTests {
             .duck(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'active')"#)
         )
 
+        let firstPredicate = CarBrands.column("name") == "first"
+        let secondPredicate = CarBrands.column("id") == "second"
+        let twoPredicates = SwifQL.select(
+            Fn.count().filter(where: firstPredicate, secondPredicate)
+        )
+        check(
+            twoPredicates,
+            .psql(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."id" = 'second')"#),
+            // Render compatibility only; this does not claim native MySQL FILTER support.
+            .mysql("SELECT count(*) FILTER (WHERE CarBrands.name = 'first' AND CarBrands.id = 'second')"),
+            .duck(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."id" = 'second')"#)
+        )
+
+        let twoPredicatesArray = SwifQL.select(
+            Fn.count().filter(where: [firstPredicate, secondPredicate])
+        )
+        for dialect in [SQLDialect.psql, .mysql, .duck] {
+            #expect(
+                twoPredicatesArray.prepare(dialect).plain
+                    == twoPredicates.prepare(dialect).plain
+            )
+        }
+
+        let threePredicates = SwifQL.select(
+            Fn.count().filter(
+                where:
+                    CarBrands.column("name") == "first",
+                    CarBrands.column("name") == "second",
+                    CarBrands.column("name") == "third"
+            )
+        )
+        check(
+            threePredicates,
+            .psql(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."name" = 'second' AND "CarBrands"."name" = 'third')"#),
+            .duck(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."name" = 'second' AND "CarBrands"."name" = 'third')"#)
+        )
+        #expect(
+            threePredicates.prepare(.psql).splitted.values.map { String(describing: $0) }
+                == ["first", "second", "third"]
+        )
+
+        let grouped = Or {
+            CarBrands.column("name") == "active"
+            CarBrands.column("name") == "pending"
+        }
+        let groupedFilter = SwifQL.select(
+            Fn.count().filter(
+                where: grouped,
+                CarBrands.column("id") == "selected"
+            )
+        )
+        check(
+            groupedFilter,
+            .psql(#"SELECT count(*) FILTER (WHERE ("CarBrands"."name" = 'active' OR "CarBrands"."name" = 'pending') AND "CarBrands"."id" = 'selected')"#),
+            .duck(#"SELECT count(*) FILTER (WHERE ("CarBrands"."name" = 'active' OR "CarBrands"."name" = 'pending') AND "CarBrands"."id" = 'selected')"#)
+        )
+
+        let multiFilteredWindow = SwifQL.select(
+            Fn.count()
+                .filter(where: firstPredicate, secondPredicate)
+                .over(partitionBy: CarBrands.column("name"))
+        )
+        check(
+            multiFilteredWindow,
+            .psql(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."id" = 'second') OVER (PARTITION BY "CarBrands"."name")"#),
+            .duck(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."id" = 'second') OVER (PARTITION BY "CarBrands"."name")"#)
+        )
+
+        let empty = SQLableParts(rawParts: [])
+        let emptyFragmentFilter = SwifQL.select(
+            Fn.count().filter(
+                where: [
+                    empty,
+                    CarBrands.column("name") == "first",
+                    empty,
+                    CarBrands.column("id") == "second",
+                    empty
+                ]
+            )
+        )
+        check(
+            emptyFragmentFilter,
+            .psql(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."id" = 'second')"#),
+            .duck(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."id" = 'second')"#)
+        )
+        #expect(
+            emptyFragmentFilter.prepare(.psql).splitted.values.map { String(describing: $0) }
+                == ["first", "second"]
+        )
+
         check(
             SwifQL.select(
                 Fn.count().over(partitionBy: CarBrands.column("name"))

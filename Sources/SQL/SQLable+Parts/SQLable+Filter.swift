@@ -22,13 +22,13 @@ extension SQLable {
         parts.append(o: .openBracket)
         parts.append(o: .where)
         parts.append(o: .space)
-        predicates.enumerated().forEach { i, v in
-            if i > 0 {
-                parts.append(o: .comma)
-                parts.append(o: .space)
-            }
-            parts.append(contentsOf: v.parts)
-        }
+        parts.append(
+            contentsOf: _PredicateComposition.join(
+                predicates.map { $0.parts },
+                with: .and,
+                parenthesized: false
+            )
+        )
         parts.append(o: .closeBracket)
         return _SQLStructuralComposition.reconstructingWholeValueTransform(from: self, resultParts: parts)
     }
