@@ -218,7 +218,7 @@ Current live source and stable architecture owners define the implementation bas
 
 ## Current Shared Semantic Value state
 
-The accepted shared semantic value source and integration are complete, with cross-platform consumer evidence and fresh independent audits accepted CLEAN. `PureDate`, `PureTime`, `DateTime`, and `Interval` were first published in prerelease `2.0.0-beta.6.0.0` and remain current source truth. `2.0.0-beta.6.0.1` remains the immutable Swift 6.3 tools/CI compatibility hotfix. The current release candidate/current prerelease is `2.0.0-beta.6.1.0`, which adds the accepted Declarative DDL authoring surface without redesigning the shared value APIs or existing query source. Downstream dependency handoff remains a separate consumer-repository step.
+The accepted shared semantic value source and integration are complete, with cross-platform consumer evidence and fresh independent audits accepted CLEAN. `PureDate`, `PureTime`, `DateTime`, and `Interval` were first published in prerelease `2.0.0-beta.6.0.0` and remain current source truth. `2.0.0-beta.6.0.1` remains the immutable Swift 6.3 tools/CI compatibility hotfix, and `2.0.0-beta.6.1.0` introduced the accepted Declarative DDL authoring surface without redesigning the shared value APIs or existing query source. Both capabilities are part of the current stable `2.1.0` line. Downstream dependency handoff remains a separate consumer-repository step.
 
 ## Future validation gates
 

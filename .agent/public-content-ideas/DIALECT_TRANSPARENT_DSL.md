@@ -6,7 +6,7 @@ Do not load this shard during ordinary source work. Read/update it only when a p
 
 ## Same clean query, dialect-specific rendering under the hood
 
-Status: published in 2.0.0-beta.5.0.0 pre-release
+Status: shipped
 Good for: README | website docs | article | short post
 
 ### Why users should care
@@ -65,11 +65,11 @@ Architecture checkpoint:
 
 ### Publication caveat
 
-The generic semantic render-scope mechanism and the clean structural Duck PIVOT API are implemented, native-/compatibility-validated, and published in `2.0.0-beta.5.0.0`. Public material may present them as current SwifQL 2 pre-release behavior while still distinguishing that pre-release from a future final stable `2.0.0`.
+The generic semantic render-scope mechanism and the clean structural Duck PIVOT API first shipped in `2.0.0-beta.5.0.0` and remain part of the current stable SQL 2.x surface. Current public material should use the canonical SQL identity while distinguishing later deferred Duck families from shipped behavior.
 
 ## Semantic render scopes: context travels with the expression
 
-Status: published in 2.0.0-beta.5.0.0 pre-release
+Status: shipped
 Good for: website docs | article | technical deep dive | short post
 
 ### Why users should care
@@ -165,11 +165,11 @@ is only a valid PIVOT query when the parent PIVOT construct is actually present.
 
 ### Publication caveat
 
-The generic render-scope mechanism and Duck PIVOT APIs are implemented and published in `2.0.0-beta.5.0.0`. Present them as current SwifQL 2 pre-release behavior, not as final stable `2.0.0` until a separate stable release is actually published.
+The generic render-scope mechanism and Duck PIVOT APIs first shipped in `2.0.0-beta.5.0.0` and remain part of the current stable SQL 2.x surface. The SwifQL spellings in this captured example are historical and must be normalized to current SQL names before promotion unless the old spelling is itself the migration subject.
 
 ## Nested expressions keep their grammar context
 
-Status: published in 2.0.0-beta.5.0.0 pre-release
+Status: shipped
 Good for: website docs | article | technical diagram
 
 ### Why users should care
@@ -213,7 +213,7 @@ Architecture decision in `DIALECT_RENDERING.md` DIALECT-008 and Duck-specific qu
 
 ### Publication caveat
 
-The nested-path behavior is implemented, covered by the current 2.0.0 Duck validation, and published in `2.0.0-beta.5.0.0`. Public examples may describe it as current 2.0.0 pre-release behavior.
+The nested-path behavior is implemented, validated, and part of the current stable SQL 2.x surface. Public examples should use the canonical SQL identity and preserve the exact Duck-specific rendering behavior.
 
 ## Preserve `KeyPathLastPath` without faking a PIVOT-only overload
 
@@ -252,7 +252,7 @@ Do not describe `KeyPathLastPath` as an internal detail or as removed. It remain
 
 ## Public extension point for semantic scopes
 
-Status: published in 2.0.0-beta.5.0.0 pre-release
+Status: shipped
 Good for: advanced website docs | article | extension-author docs
 
 ### Why users should care
@@ -310,7 +310,7 @@ External-consumer validation established that `SQLDialect.init()` is public, a d
 
 ### Publication caveat
 
-The scope/extensibility architecture is implemented and published in `2.0.0-beta.5.0.0` together with the approved first-closure Duck statement APIs. Public material should distinguish the current SwifQL 2 pre-release APIs from later deferred Duck families and from the Swift-5-era 1.5.x line.
+The scope/extensibility architecture first shipped in `2.0.0-beta.5.0.0` together with the approved first-closure Duck statement APIs and remains part of the current stable SQL 2.x surface. Public material should distinguish current SQL 2.x APIs from later deferred Duck families and from the Swift-5-era 1.5.x line.
 
 ## Scopes first, focused semantic statement representation only when grammar truly needs more
 
@@ -400,4 +400,4 @@ Stable Duck facts are owned by `.agent/architecture/dialects/DUCK.md`. Current t
 
 ### Publication caveat
 
-The native engine facts and the redesigned SwifQL PIVOT API are both implemented, validated, and published in the `2.0.0-beta.5.0.0` pre-release line. Public content should distinguish that current SwifQL 2 pre-release feature availability from later deferred Duck work and from the Swift-5-era 1.5.x line.
+The native engine facts and the redesigned PIVOT API were implemented and validated before stable `2.0.0` and remain relevant to the current SQL 2.x surface. Public content should use current SQL naming, distinguish shipped behavior from later deferred Duck work, and treat the SwifQL spellings in this shard as historical context.

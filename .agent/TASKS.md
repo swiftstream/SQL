@@ -63,7 +63,7 @@ The post-authoring naming/package/repository migration is closed. Stable 2.1.0 p
 
 ## Historical published capability state retained for context
 
-Shared Semantic Values are complete and were first published in SwifQL `2.0.0-beta.6.0.0`; `2.0.0-beta.6.0.1` remains the immutable Swift 6.3 tools/CI compatibility hotfix. The current release candidate/current prerelease is `2.0.0-beta.6.1.0`, which adds the accepted Declarative DDL authoring surface. No follow-up SwifQL implementation task is active for either completed capability.
+Shared Semantic Values are complete and were first published in SwifQL `2.0.0-beta.6.0.0`; `2.0.0-beta.6.0.1` remains the immutable Swift 6.3 tools/CI compatibility hotfix, and `2.0.0-beta.6.1.0` introduced the accepted Declarative DDL authoring surface. Both capabilities are included in the current stable `2.1.0` line. No follow-up implementation task is active for either completed capability.
 
 The maintainer accepted SwiftDuckDB Research 01, Plan Correction 01, P00 temporal executable evidence, and the fresh independent Plan Re-audit 01 CLEAN result. SwifQL is the accepted shared owner for:
 
@@ -74,7 +74,7 @@ DateTime
 Interval
 ```
 
-The shared-value capability passed its source, binding/rendering, external-consumer, cross-platform, documentation, immutable-validation, and independent root-audit gates before publication. It remains available from `2.0.0-beta.6.0.0`; `2.0.0-beta.6.0.1` remains its toolchain/CI hotfix, while the current release candidate is `2.0.0-beta.6.1.0` with the accepted Declarative DDL authoring capability.
+The shared-value capability passed its source, binding/rendering, external-consumer, cross-platform, documentation, immutable-validation, and independent root-audit gates before publication. It remains available from `2.0.0-beta.6.0.0`; `2.0.0-beta.6.0.1` remains its toolchain/CI hotfix, and `2.0.0-beta.6.1.0` introduced the accepted Declarative DDL authoring capability. The current stable line is `2.1.0`.
 
 Publication closes the SwifQL work for this capability. Any future SwifQL mutation requires a new explicit maintainer objective and exact task scope; the completed shared-value lineage does not authorize unrelated refactors, Bridges/PostgresBridge modernization, macros, migrations, Table decoding, or wider cross-dialect abstractions.
 

@@ -241,7 +241,7 @@ Relevant architecture commits:
 
 ### Publication caveat
 
-The compatibility philosophy is stable architecture. Generic semantic render scopes and the clean structural Duck PIVOT implementation are published in the `2.0.0-beta.5.0.0` pre-release. Public material should distinguish the Swift-5-era 1.5.x line, the current SwifQL 2 pre-release line, and later deferred Duck families without describing shipped beta behavior as merely planned or unpublished.
+The compatibility philosophy is stable architecture. Generic semantic render scopes and the clean structural Duck PIVOT implementation first shipped in the `2.0.0-beta.5.0.0` line and are part of the current stable SQL 2.x surface. Public material should distinguish the Swift-5-era 1.5.x line, the historical SwifQL 2 prerelease lineage, the current SQL 2.x line, and later deferred Duck families.
 
 ## Migration story: Structural `parts` Without Rewriting Query Source
 
@@ -286,16 +286,16 @@ This creates a strong explanation of why a breaking internal/public representati
 
 ### Publication caveat
 
-The structural SQL-region frames, `SwifQLClauseOwner` / `SwifQLClauseKind`, owner-sensitive clauses, and `structurallyAppending(_:)` are implemented, validated, and published in `2.0.0-beta.5.0.0`. Public material may present them as current SwifQL 2 pre-release behavior while still distinguishing the pre-release from a future final stable `2.0.0` declaration.
+The structural SQL-region frames, historical `SwifQLClauseOwner` / `SwifQLClauseKind` spellings, owner-sensitive clauses, and `structurallyAppending(_:)` were implemented and validated before stable 2.0.0 and remain part of the current SQL 2.x architecture. Current public material should use the canonical SQL identity and treat the SwifQL spellings here as historical migration context.
 
-## Planned major identity migration: SwifQL -> SQL
+## Major identity migration: SwifQL -> SQL
 
-Status: roadmap-approved, not implemented
+Status: shipped
 Good for: migration guide | release notes | README | article | maintainer post
 
 ### Why users should care
 
-The final major-version public identity is planned to become shorter and more literal:
+The SQL 2.x public identity is shorter and more literal:
 
 ```swift
 import SQL
@@ -311,14 +311,14 @@ let query: SQLable = SQL {
 }
 ```
 
-The migration scope includes the root `SwifQL -> SQL` identity, `SwifQLable -> SQLable`, reviewed corresponding `SwifQL...` symbols, package/module naming, and repository relocation to `github.com/swiftstream/SQL`.
+The completed migration moved the root `SwifQL -> SQL` identity, `SwifQLable -> SQLable`, reviewed corresponding `SwifQL...` symbols, package/module naming, and the public repository to `github.com/SwiftStream/SQL`. Compatibility remains symbol-level where current source intentionally provides deprecated/renamed bridges inside module `SQL`. `import SwifQL` is not supported.
 
 ### Migration discipline
 
-This is a deliberate source-breaking major-version wave. Before implementation, every concrete rename must be inventoried with literal `was -> became` examples, downstream extension impact, and a decision on whether a compatibility alias/deprecated bridge is valuable or would create more confusion than benefit.
+This was a deliberate source-breaking major-version wave. Public migration material should use literal `was -> became` examples, explain downstream extension impact, and mention compatibility bridges only where they help users update real source.
 
-A dedicated coding-agent/LLM migration workflow should be part of the release story so large codebases can update mechanically rather than by hand.
+The source-owned conversion skill can support mechanical migration of large codebases, but current public examples should lead with the canonical SQL API.
 
 ### Publication caveat
 
-Current source and released pre-releases are still SwifQL. Do not present `import SQL`, `SQL { ... }`, `SQLable`, or the `swiftstream/SQL` repository as shipped until the dedicated migration wave is implemented, validated, audited, and published.
+The SQL identity shipped in stable `2.0.0` and remains current in `2.1.0`. Use SwifQL spellings here only as historical migration context.
