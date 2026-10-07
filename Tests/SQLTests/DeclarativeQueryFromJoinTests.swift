@@ -289,7 +289,7 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
             Repeatable(42)
         }
         #expect(sourceOwned.prepare(.duck).plain == #""DQ04Table" TABLESAMPLE system(10 PERCENT) REPEATABLE (42)"#)
-        #expect(sourceOwned.prepare(.psql).plain == #""DQ04Table" TABLESAMPLE system(10 PERCENT) REPEATABLE (42)"#)
+        #expect(sourceOwned.prepare(.psql).plain == #""DQ04Table" TABLESAMPLE system(10) REPEATABLE (42)"#)
         #expect(sourceOwned.method == .system)
         #expect(sourceOwned.arguments.count == 1)
         #expect(sourceOwned.arguments[0].role == .percentage)
@@ -302,6 +302,9 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
         #expect(legacySize.parts.first is SwifQLPartSampling)
         #expect(legacySize.prepare(.duck).plain == "TABLESAMPLE (10 PERCENT)")
         #expect(legacyArguments.prepare(.duck).plain == "TABLESAMPLE system(7 ROWS)")
+        #expect(legacyArguments.prepare(.psql).plain == "TABLESAMPLE system(7)")
+        // Render compatibility only; this does not claim native MySQL TABLESAMPLE support.
+        #expect(legacyArguments.prepare(.mysql).plain == "TABLESAMPLE system(7 ROWS)")
         #expect(legacyRepeatable.prepare(.duck).plain == "TABLESAMPLE reservoir(10 PERCENT) REPEATABLE (42)")
         #expect(DQ04Table.table.tableSample(legacyRepeatable).prepare(.duck).plain == #""DQ04Table" TABLESAMPLE reservoir(10 PERCENT) REPEATABLE (42)"#)
 
@@ -317,6 +320,7 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
         #expect(openLegacy.method == customMethod)
         #expect(openSourceOwned.method == customMethod)
         #expect(openSourceOwned.prepare(.duck).plain == #""DQ04Table" TABLESAMPLE stratified(10 PERCENT)"#)
+        #expect(openSourceOwned.prepare(.psql).plain == #""DQ04Table" TABLESAMPLE stratified(10)"#)
     }
 
     @Test("D04-S25 source owning TABLESAMPLE is one aliased FROM item")

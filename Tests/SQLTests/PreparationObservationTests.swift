@@ -318,6 +318,28 @@ struct PreparationObservationTests {
         #expect(tableOccurrences.map(\.disposition) == [.notBound, .notBound])
     }
 
+    @Test("O08P PostgreSQL TABLESAMPLE keeps argument and repeatability bound in grammar order")
+    func postgresTableSamplingRoles() {
+        let tableArgument = StatefulPartsValue { _ in [SwifQLPartUnsafeValue(30)] }
+        let repeatability = StatefulPartsValue { _ in [SwifQLPartUnsafeValue(40)] }
+        let table = TableSample(
+            arguments: [SampleArgument(rows: tableArgument)],
+            method: .system,
+            repeatable: repeatability
+        )
+
+        let observed = table.prepareObservingUnsafeValues(.psql)
+        let occurrences = completeOccurrences(observed)
+
+        #expect(tableArgument.evaluationCount == 1)
+        #expect(repeatability.evaluationCount == 1)
+        #expect(observed.prepared.plain == "TABLESAMPLE system(30) REPEATABLE (40)")
+        #expect(observed.prepared.splitted.query == "TABLESAMPLE system($1) REPEATABLE ($2)")
+        #expect(observed.prepared.splitted.values.compactMap { $0 as? Int } == [30, 40])
+        #expect(occurrences.compactMap { $0.value as? Int } == [30, 40])
+        #expect(occurrences.map(\.disposition) == [.bound(index: 0), .bound(index: 1)])
+    }
+
     @Test("O09A rejected Duck sampling traces one direct unsafe without descending into rejected container")
     func duckSamplingRejectedOneUnsafePlusContainer() {
         let nested = StatefulPartsValue { _ in [SwifQLPartUnsafeValue(999)] }

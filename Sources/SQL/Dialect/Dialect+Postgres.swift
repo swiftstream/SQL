@@ -41,14 +41,46 @@ private func postgresDateTimeInput(_ value: DateTime) -> String {
     return "\(parts.date) \(time.description)" + (parts.isBC ? " BC" : "")
 }
 
+private func postgresTableSampleParts(
+    _ sample: SQLPartSampling,
+    method: SampleMethod
+) -> [SQLPart] {
+    var parts: [SQLPart] = [
+        SQLPartOperator.custom("TABLESAMPLE"),
+        SQLPartOperator.space
+    ]
+    parts.append(contentsOf: method.parts)
+    parts.append(o: .openBracket)
+    for (index, argument) in sample.arguments.enumerated() {
+        if index > 0 {
+            parts.append(o: .comma, .space)
+        }
+        parts.append(contentsOf: argument.parts)
+    }
+    parts.append(o: .closeBracket)
+    if let repeatability = sample.repeatability {
+        parts.append(o: .space, .custom("REPEATABLE"), .space, .openBracket)
+        parts.append(contentsOf: repeatability.parts)
+        parts.append(o: .closeBracket)
+    }
+    return parts
+}
+
 class PostgreSQLDialect: SQLDialect {
     override var id: String? { "psql" }
+
+    override func sampling(_ sample: SQLPartSampling) -> [SQLPart] {
+        guard sample.construct == .tableSample, let method = sample.method else {
+            return defaultSamplingParts(sample)
+        }
+        return postgresTableSampleParts(sample, method: method)
+    }
 
     override func sampling(
         _ sample: SQLPartSampling,
         observingUnsafeValues observation: SQLUnsafeValueObservation
     ) -> SQLObservedParts {
-        .complete(defaultSamplingParts(sample))
+        .complete(sampling(sample))
     }
 
     override func lambda(
