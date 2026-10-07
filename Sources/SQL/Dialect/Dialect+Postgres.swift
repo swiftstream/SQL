@@ -69,6 +69,20 @@ private func postgresTableSampleParts(
 class PostgreSQLDialect: SQLDialect {
     override var id: String? { "psql" }
 
+    override func subscriptBaseGrouping(
+        _ part: SQLExpressionSubscriptPart
+    ) -> SQLSubscriptBaseGrouping {
+        guard part.baseParts.count == 1 else { return .parenthesized }
+        switch part.baseParts[0] {
+        case is SQLPartColumn, is SQLExpressionSubscriptPart:
+            return .direct
+        case let path as SQLPartKeyPath where path.paths.count == 1:
+            return .direct
+        default:
+            return .parenthesized
+        }
+    }
+
     override func sampling(_ sample: SQLPartSampling) -> [SQLPart] {
         guard sample.construct == .tableSample, let method = sample.method else {
             return defaultSamplingParts(sample)

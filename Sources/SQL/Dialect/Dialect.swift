@@ -7,6 +7,12 @@
 
 import Foundation
 
+/// Internal renderer policy; not a public custom-dialect extension contract.
+enum SQLSubscriptBaseGrouping {
+    case direct
+    case parenthesized
+}
+
 open class SQLDialect {
     open var id: String? { nil }
     
@@ -99,6 +105,12 @@ open class SQLDialect {
         context: SQLRenderContext
     ) -> String {
         self.keyPath(keyPath)
+    }
+
+    /// Controls only delimiters around the recursively rendered subscript
+    /// base. Custom dialect subclasses inherit historical direct output.
+    func subscriptBaseGrouping(_ part: SQLExpressionSubscriptPart) -> SQLSubscriptBaseGrouping {
+        .direct
     }
 
     /// Selects an open dialect representation when a hybrid value provides

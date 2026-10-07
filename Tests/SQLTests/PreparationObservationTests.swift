@@ -516,6 +516,39 @@ struct PreparationObservationTests {
         #expect(occurrences.map(\.disposition) == [.notBound, .bound(index: 0)])
     }
 
+    @Test("Wave 04: subscript observation traverses the base before the item exactly once")
+    func wave04SubscriptObservationAndStatefulParts() {
+        let base = StatefulPartsValue { _ in [SQLPartUnsafeValue("base")] }
+        let index = StatefulPartsValue { _ in [SQLPartUnsafeValue(2)] }
+        let expression = Fn.arrayAgg(base)[index]
+
+        #expect(base.evaluationCount == 1)
+        #expect(index.evaluationCount == 1)
+
+        let observed = expression.prepareObservingUnsafeValues(.psql)
+        let occurrences = completeOccurrences(observed)
+
+        #expect(observed.prepared.plain == "(array_agg('base'))[2]")
+        #expect(observed.prepared.splitted.query == "(array_agg($1))[$2]")
+        #expect(describedValues(observed.prepared) == ["base", "2"])
+        #expect(occurrences.count == 2)
+        #expect(occurrences.first?.value as? String == "base")
+        #expect(occurrences.last?.value as? Int == 2)
+        #expect(occurrences.map(\.disposition) == [
+            .bound(index: 0),
+            .bound(index: 1)
+        ])
+        #expect(base.evaluationCount == 1)
+        #expect(index.evaluationCount == 1)
+
+        let ordinary = expression.prepare(.psql)
+        #expect(ordinary.plain == observed.prepared.plain)
+        #expect(ordinary.splitted.query == observed.prepared.splitted.query)
+        #expect(describedValues(ordinary) == describedValues(observed.prepared))
+        #expect(base.evaluationCount == 1)
+        #expect(index.evaluationCount == 1)
+    }
+
     @Test("O17 observed preparation preserves representative built-in output and value order")
     func builtInCompatibilityMatrix() {
         let arrayPart = [1, 2]

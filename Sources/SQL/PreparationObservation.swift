@@ -133,6 +133,19 @@ final class SQLPreparationRenderer {
             }
 
             switch part {
+            case let v as SQLExpressionSubscriptPart:
+                // Render each child once so observation and prepared values
+                // remain in base-then-item order for every dialect.
+                let base = render(v.baseParts, context: context)
+                let item = render(v.itemParts, context: context)
+                let groupedBase: String
+                switch dialect.subscriptBaseGrouping(v) {
+                case .direct:
+                    groupedBase = base
+                case .parenthesized:
+                    groupedBase = "(" + base + ")"
+                }
+                return groupedBase + "[" + item + "]"
             case let v as SQLStructuralFramePart:
                 return render(v.children, context: SQLRenderContext())
             case let v as SQLGroupByPart:

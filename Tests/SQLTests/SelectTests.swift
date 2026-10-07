@@ -787,8 +787,100 @@ struct SelectTests: SwifQLTests {
         )
     }
     
+    // MARK: - Wave 04 PostgreSQL expression-subscript correctness
+
+    @Test("Wave 04: column subscripts stay direct in every established dialect")
+    func wave04ColumnSubscript() {
+        let expression = Path.Table("items").column("scores")[1]
+        check(
+            SwifQL.select(expression),
+            .psql(#"SELECT "items"."scores"[1]"#),
+            .mysql("SELECT items.scores[1]"), // Render compatibility only.
+            .duck(#"SELECT "items"."scores"[1]"#)
+        )
+    }
+
+    @Test("Wave 04: aggregate subscripts group only in PostgreSQL")
+    func wave04AggregateSubscript() {
+        let expression = Fn.arrayAgg(Path.Column("score"))[1]
+        check(
+            SwifQL.select(expression),
+            .psql(#"SELECT (array_agg("score"))[1]"#),
+            .mysql("SELECT array_agg(score)[1]"), // Render compatibility only.
+            .duck(#"SELECT array_agg("score")[1]"#)
+        )
+    }
+
+    @Test("Wave 04: bound aggregate base and bound index retain value order")
+    func wave04BoundAggregateSubscript() {
+        let expression = Fn.arrayAgg("base")[2]
+        let postgres = expression.prepare(.psql)
+        #expect(postgres.plain == "(array_agg('base'))[2]")
+        #expect(postgres.splitted.query == "(array_agg($1))[$2]")
+        #expect(postgres.splitted.values.map { String(describing: $0) } == ["base", "2"])
+
+        let duck = expression.prepare(.duck)
+        #expect(duck.plain == "array_agg('base')[2]")
+        #expect(duck.splitted.query == "array_agg($1)[$2]")
+        #expect(duck.splitted.values.map { String(describing: $0) } == ["base", "2"])
+
+        let mysql = expression.prepare(.mysql)
+        #expect(mysql.plain == "array_agg('base')[2]") // Render compatibility only.
+        #expect(mysql.splitted.query == "array_agg(?)[?]")
+        #expect(mysql.splitted.values.map { String(describing: $0) } == ["base", "2"])
+
+        let defaultDialect = expression.prepare(SQLDialect())
+        #expect(defaultDialect.plain == "array_agg('base')[2]")
+        #expect(defaultDialect.splitted.query == "array_agg(?)[?]")
+
+        let copied = SQLableParts(parts: expression.parts)
+        #expect(copied.prepare(.psql).splitted.query == postgres.splitted.query)
+        #expect(copied.prepare(.psql).splitted.values.map { String(describing: $0) } == ["base", "2"])
+    }
+
+    @Test("Wave 04: JSON traversal is a general PostgreSQL subscript base")
+    func wave04JSONTraversalSubscript() {
+        let traversal = SQLableParts(parts: SQLPartKeyPath(
+            table: "items",
+            paths: ["payload", "scores"]
+        ))
+        let expression = traversal[1]
+        #expect(expression.prepare(.psql).plain == #"("items"."payload"->'scores')[1]"#)
+        #expect(expression.prepare(.psql).splitted.query == #"("items"."payload"->'scores')[$1]"#)
+    }
+
+    @Test("Wave 04: chained subscripts group only the original general base")
+    func wave04ChainedSubscripts() {
+        let column = Path.Table("items").column("matrix")[1][2]
+        #expect(column.prepare(.psql).plain == #""items"."matrix"[1][2]"#)
+        #expect(column.prepare(.psql).splitted.query == #""items"."matrix"[$1][$2]"#)
+
+        let aggregate = Fn.arrayAgg(Path.Column("score"))[1][2]
+        #expect(aggregate.prepare(.psql).plain == #"(array_agg("score"))[1][2]"#)
+        #expect(aggregate.prepare(.psql).splitted.query == #"(array_agg("score"))[$1][$2]"#)
+        #expect(aggregate.prepare(.duck).plain == #"array_agg("score")[1][2]"#)
+        #expect(aggregate.prepare(.mysql).plain == "array_agg(score)[1][2]") // Render only.
+    }
+
+    @Test("Wave 04: non-function expression and value bases are grouped")
+    func wave04OtherGeneralBases() {
+        let arithmeticBase = Path.Column("left") + Path.Column("right")
+        #expect(arithmeticBase.parts.count > 1)
+        let expression = arithmeticBase[1]
+        #expect(expression.prepare(.psql).plain == "(" + arithmeticBase.prepare(.psql).plain + ")[1]")
+        #expect(expression.prepare(.duck).plain == arithmeticBase.prepare(.duck).plain + "[1]")
+
+        let safeBase = SQLableParts(parts: SQLPartSafeValue("literal"))[1]
+        #expect(safeBase.prepare(.psql).plain == "('literal')[1]")
+
+        let boundBase = SQLableParts(parts: SQLPartUnsafeValue("literal"))[1]
+        #expect(boundBase.prepare(.psql).plain == "('literal')[1]")
+        #expect(boundBase.prepare(.psql).splitted.query == "($1)[$2]")
+        #expect(boundBase.prepare(.psql).splitted.values.map { String(describing: $0) } == ["literal", "1"])
+    }
+
     // MARK: - SELECT with alias in select params
-    
+
     @Test("Select With Alias In Select Params")
     func selectWithAliasInSelectParams() {
         check(
