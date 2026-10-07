@@ -74,6 +74,7 @@ public prefix func => (rhs: String) -> SQLable {
 }
 
 //MARK: - Basic arithmetic functions
+@_disfavoredOverload
 public func + (lhs: SQLable, rhs: SQLable) -> SQLable {
     var parts: [SQLPart] = lhs.parts
     parts.append(o: .space)
@@ -93,6 +94,7 @@ public func ++ (lhs: SQLable, rhs: SQLable) -> SQLable {
     return _SQLStructuralComposition.reconstructingWholeValueTransform(from: lhs, resultParts: parts)
 }
 
+@_disfavoredOverload
 public func - (lhs: SQLable, rhs: SQLable) -> SQLable {
     var parts: [SQLPart] = lhs.parts
     parts.append(o: .space)
@@ -112,6 +114,7 @@ public func -- (lhs: SQLable, rhs: SQLable) -> SQLable {
     return _SQLStructuralComposition.reconstructingWholeValueTransform(from: lhs, resultParts: parts)
 }
 
+@_disfavoredOverload
 public func * (lhs: SQLable, rhs: SQLable) -> SQLable {
     var parts: [SQLPart] = lhs.parts
     parts.append(o: .space)
@@ -131,6 +134,7 @@ public func ** (lhs: SQLable, rhs: SQLable) -> SQLable {
     return _SQLStructuralComposition.reconstructingWholeValueTransform(from: lhs, resultParts: parts)
 }
 
+@_disfavoredOverload
 public func / (lhs: SQLable, rhs: SQLable) -> SQLable {
     var parts: [SQLPart] = lhs.parts
     parts.append(o: .space)

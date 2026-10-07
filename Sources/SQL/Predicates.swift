@@ -27,18 +27,22 @@ public struct SQLPredicate: SQLable {
     }
 }
 
+@_disfavoredOverload
 public func > (lhs: SQLable, rhs: SQLable) -> SQLable {
     SQLPredicate(operator: .greaterThan, lhs: lhs, rhs: rhs)
 }
 
+@_disfavoredOverload
 public func < (lhs: SQLable, rhs: SQLable) -> SQLable {
     SQLPredicate(operator: .lessThan, lhs: lhs, rhs: rhs)
 }
 
+@_disfavoredOverload
 public func >= (lhs: SQLable, rhs: SQLable) -> SQLable {
     SQLPredicate(operator: .greaterThanOrEqual, lhs: lhs, rhs: rhs)
 }
 
+@_disfavoredOverload
 public func <= (lhs: SQLable, rhs: SQLable) -> SQLable {
     SQLPredicate(operator: .lessThanOrEqual, lhs: lhs, rhs: rhs)
 }
