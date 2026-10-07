@@ -8,6 +8,9 @@
 - adds concise `OrderBy(...)` for one or more existing `OrderByItem` values while preserving `OrderBy(expression, direction)`
 - keeps all result-builder forms unchanged for conditional, looped, and multi-child composition
 - preserves identical SQL preparation, bind ordering, structural composition, and PostgreSQL/MySQL/Duck rendering for equivalent concise and builder forms
+- restores ordinary Swift overload preference for `+ - * / > < >= <=` when SQL is imported, while preserving the same operators for SQLable/model-backed SQL expressions
+- keeps bare Swift literal defaults unchanged under direct and re-exported SQL imports: integer literals infer `Int`, floating literals infer `Double`, and string literals infer `String`
+- deliberately leaves SQLable `==` / `!=` precedence unchanged so SQL equality and `== nil` / `!= nil` continue producing SQL predicates; concrete primitive equality remains ordinary Swift `Bool`
 - introduces no breaking migration; Swift 6.3+ requirement is unchanged
 
 ## 2.0.0

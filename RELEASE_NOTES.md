@@ -63,6 +63,47 @@ OrderBy(
 
 Builder forms such as `From { ... }`, `Where { ... }`, `Having { ... }`, `Qualify { ... }`, `GroupBy { ... }`, and `OrderBy { ... }` are not deprecated or reduced. Concise and builder forms lower through the same existing SQL composition, preparation, and binding pipeline.
 
+## Ordinary Swift operators stay ordinary Swift
+
+SQL 2.1 also fixes a long-standing overload-preference compatibility problem on Swift 6.3.x. Merely importing SQL could cause broad SQLable overloads for ordinary arithmetic or ordering to win over the standard library, so unrelated expressions could infer as `any SQLable`.
+
+The broad SQLable overloads for:
+
+```text
++  -  *  /
+>  <  >= <=
+```
+
+now remain available for SQL expressions but are lower-priority when Swift has a better ordinary overload.
+
+With `import SQL`, ordinary Swift keeps its normal types:
+
+```swift
+let integer = 5
+// Int
+
+let floating = 5.0
+// Double
+
+let text = ""
+// String
+
+let total = UInt64(7) * 10 + 3
+// UInt64
+
+let negative = Int64(-1) < 0
+// Bool
+```
+
+while model-backed expressions still build SQL:
+
+```swift
+let expression = \User.$score + 1
+let predicate = \User.$age >= 18
+```
+
+The `==` / `!=` family is intentionally unchanged. SQLable equality must continue to construct SQL predicates, especially `== nil` / `!= nil` for `IS NULL` / `IS NOT NULL`. Concrete primitive equality remains `Bool` on the validated Swift 6.3.3 and Swift 6.4 toolchains. In generic or overloaded code where ordinary Swift equality is intended, keep operands concrete and make the `Bool` expectation explicit when that improves clarity.
+
 This release is additive and requires no source migration from SQL 2.0.0. The Swift requirement remains Swift 6.3 or newer.
 
 Install with:

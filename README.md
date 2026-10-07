@@ -206,6 +206,67 @@ This is not a separate query engine. Fluent SQL, declarative clauses, reusable f
 
 Declarative clauses are ordinary composable SQL values, so you can extract and reuse them when that makes a query easier to read.
 
+## Swift operator interoperability
+
+SQL overloads Swift operators so model-backed expressions can stay SQL-shaped:
+
+```swift
+let predicate = \User.$age >= 18
+let expression = \User.$score + 1
+```
+
+SQL 2.1 keeps those SQL expressions intact while making ordinary Swift arithmetic and ordering prefer the standard-library overloads again. Importing SQL should not turn unrelated Swift values into `any SQLable`:
+
+```swift
+let count = 5
+// Int
+
+let ratio = 5.0
+// Double
+
+let text = ""
+// String
+
+let total = UInt64(7) * 10 + 3
+// UInt64
+
+let negative = Int64(-1) < 0
+// Bool
+```
+
+The broad SQLable overloads for `+`, `-`, `*`, `/`, `>`, `<`, `>=`, and `<=` are deliberately lower-priority when Swift has a better ordinary overload. Model-backed SQL operands still select SQL:
+
+```swift
+let score = \User.$score + 1
+let active = \User.$age >= 18
+```
+
+Equality is a deliberate boundary. SQL's `==` / `!=` overloads are **not** demoted because SQLable values must continue to build SQL predicates, including null checks:
+
+```swift
+let value: any SQLable = \User.$email
+
+let missing = value == nil
+// SQL: "users"."email" IS NULL
+```
+
+Concrete primitive equality remains normal Swift on the validated Swift 6.3.3 / 6.4 toolchains:
+
+```swift
+let same = Int64(1) == 1
+// Bool
+```
+
+If ordinary Swift equality matters in generic or heavily overloaded code, keep the operands as their concrete Swift types and, when useful, make the expected result explicit:
+
+```swift
+let lhs: Int64 = 1
+let rhs: Int64 = 1
+let same: Bool = lhs == rhs
+```
+
+Once a value has intentionally been erased to `any SQLable`, `==` / `!=` mean SQL predicate construction rather than ordinary Swift value comparison.
+
 ## Reusable queries
 
 `SQLQuery` lets a normal Swift value own a reusable parameterized query:
