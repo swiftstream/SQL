@@ -18,6 +18,8 @@ Prefer this order:
 
 Use PostgreSQL as the default generated-SQL example unless the feature is dialect-specific. Use split query/bind output when binding behavior is the point. Do not mechanically repeat SQL output when it adds no information.
 
+Format SQL snippets for comfortable reading in GitHub Markdown. Avoid long one-line statements that force horizontal scrolling. Break long statements at major clauses such as `SELECT`, `FROM`, `WHERE`, `GROUP BY`, `HAVING`, `ORDER BY`, and `LIMIT`, and split long projection/value lists onto indented lines when that improves readability. Reflow presentation whitespace only. Preserve SQL tokens, order, literals, bind semantics, and dialect behavior. If exact byte-for-byte renderer whitespace is itself the subject of the example or assertion, show that exact output and label it accordingly instead of reformatting it.
+
 Do not replace a useful example with an abstract paragraph or an exhaustive internal feature inventory.
 
 For SQL features, the preferred shape is:
