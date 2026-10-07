@@ -1,8 +1,8 @@
 # Public Writing Style
 
-This is the stable owner of maintainer-facing writing style for `README.md`, `MIGRATION.md`, `RELEASE_NOTES.md`, `CHANGELOG.md`, GitHub Releases, website/public documentation, and maintainer posts about SQL.
+This is the stable owner of writing style for user-facing public material: `README.md`, `MIGRATION.md`, `RELEASE_NOTES.md`, `CHANGELOG.md`, GitHub Releases, website/public documentation, and maintainer posts about SQL.
 
-It owns **how public material is written**. Architecture owners and live source/tests still own technical truth.
+It owns **how public material is written**. It does not govern agent-facing or implementation-internal documentation. Architecture owners and live source/tests still own technical truth.
 
 ## Core rule: show it, then explain it
 
@@ -12,9 +12,11 @@ Prefer this order:
 
 1. name the concrete user-visible feature/change;
 2. show the Swift call site;
-3. when SQL is involved, show the SQL it generates;
-4. explain only the non-obvious behavior, reason, limitation, or migration consequence;
+3. show generated SQL when it materially clarifies what the Swift means;
+4. explain only the non-obvious behavior, limitation, or migration consequence;
 5. link to deeper documentation only when the reader actually needs it.
+
+Use PostgreSQL as the default generated-SQL example unless the feature is dialect-specific. Use split query/bind output when binding behavior is the point. Do not mechanically repeat SQL output when it adds no information.
 
 Do not replace a useful example with an abstract paragraph or an exhaustive internal feature inventory.
 
@@ -90,29 +92,46 @@ Avoid corporate release-note language such as:
 - `Key strategic enhancements include...`
 - `The architectural foundation has been significantly evolved...`
 
-Avoid turning internal implementation/audit vocabulary into public prose. Task numbers, correction waves, audit names, evidence ledgers, coordinator terminology, internal gates, and artifact hashes do not belong in normal public docs or release posts.
+Avoid turning internal implementation/audit vocabulary into public prose. Task numbers, correction waves, audit names, evidence ledgers, coordinator terminology, internal gates, artifact hashes, rejected API names, unpublished alternatives, and implementation-history trivia do not belong in normal public docs.
 
-Do not use semicolons to join prose in user-facing public material. Write separate sentences or use a natural conjunction instead. This applies to README, migration guides, release notes, changelogs, GitHub Releases, website documentation, and maintainer posts. Semicolons are allowed only when they are part of code, SQL, shell commands, URLs, generated syntax, or quoted source text.
+Do not explain an absence the reader has no reason to expect. Describe the current public API positively instead of saying that an internal or rejected alternative does not exist.
+
+Avoid slogans, tautologies, and architecture shorthand that require project history to understand. Prefer a concrete statement of what the user writes, what it produces, and why that is useful.
+
+Do not use semicolons to join prose in user-facing public material. Write separate sentences or use a natural conjunction instead. Semicolons are allowed only when they are part of code, SQL, shell commands, URLs, generated syntax, or quoted source text.
 
 The tone may be informal and enthusiastic when natural, but examples and technical truth come first.
 
 ## README
 
-README is the first-use document, not a release audit.
+README is the first-use document for the current package, not a release audit or development history.
 
 At the top:
 
-- explain what SQL is and where it can be used;
-- point server-side users to the normal server integration path;
-- point mobile users to the normal embedded-driver path when relevant;
+- use the human-facing project name and keep compatibility badges aligned with the current supported minimum;
+- explain what SQL is and what the user can do with it;
 - state supported databases without making one dialect dominate the project identity;
 - keep current installation instructions directly usable.
 
-Do not lead with internal dialect identifiers, closure terminology, compatibility-gate history, or implementation details such as `SQLDialect.all` unless the reader is in the part of README where that API is actually relevant.
+General README prose should be version-agnostic. Use version numbers where the version itself matters, such as installation requirements or an explicit migration link. Put release-specific fixes and historical behavior in release notes/changelog, and put old-to-new source transitions in `MIGRATION.md`.
 
-Installation examples must point to a version/tag that exists for the release state being documented. A pre-release may be described as a pre-release; do not say it is unavailable when its tag is the intended install target.
+Describe only public concepts a current user needs. Do not mention rejected names, superseded designs, canonical-repository trivia, or internal compatibility history merely to explain that they are absent.
 
-README examples should normally start with the SQL idea and then show the SQL DSL representation, matching the established project philosophy. After a stable major release, fold still-useful philosophy/examples into the current API instead of keeping a second historical/prerelease README body; keep release-history detail in `MIGRATION.md` / `RELEASE_NOTES.md`.
+When several syntaxes express one concept, name the concept first and present the syntaxes as forms of it. For example, fluent chaining and `SQL { ... }` are both declarative query authoring, not competing paradigms.
+
+Keep the composition model visible. Show that `SQLable` expressions, predicates, clauses, statements, and reusable queries can be created separately, stored, passed around, and combined later. Do not overstate this as grammar-free composition. Each fragment still has to appear where SQL grammar allows it.
+
+Keep current behavioral caveats only when they change how users should write code. Explain the actionable rule directly. Keep the history of why the caveat exists out of README.
+
+README examples should normally start from a concrete SQL idea and show the public Swift API. Show generated PostgreSQL SQL when it helps the reader verify what the DSL means, and show dialect-specific output only when the difference matters.
+
+## Context budget and single ownership
+
+Keep public docs compact. README owns current usage, MIGRATION owns source transitions, RELEASE_NOTES owns release detail, CHANGELOG owns compact history, and GitHub Releases own concise announcements.
+
+Link instead of copying the same explanation. Reuse an example only when the second document must stand on its own. Prefer one strong, self-contained example over several near-duplicates.
+
+After editing a public document, scan the whole affected file for stale version wording, internal/rejected terminology, duplication, unexplained jargon, and examples that no longer match the current API.
 
 ## MIGRATION.md
 
@@ -172,24 +191,15 @@ Preferred structure:
 
 The title does not need to enumerate every feature. It should read like a maintainer describing the release, not a generated changelog summary. For a large stable release, a concise title such as `🚀 SQL 2.0.0` is preferable to a generated multi-clause marketing headline. Open with concrete user value and put the install snippet near the top.
 
-## Reference style from historical SwifQL releases
-
-The maintainer's established release-writing style is visible in releases such as:
-
-- `1.5.0` — `union` / `with` examples followed by the SQL they “will give”;
-- `2.0.0-beta.2.0.0` — explicit `Breaking change`, literal `was` / `became`, then schema/alias usage examples with result comments;
-- `2.0.0-beta.3.0.0` — concise breaking rename plus immediate model/property-wrapper examples;
-- `2.0.0-beta.3.2.0` — problem statement followed by two concrete encoding examples and their JSON output;
-- `2.0.0-beta.5.0.0` — large-release example with a short summary, install snippet near the top, feature headings, Swift-to-SQL examples, explicit `was` / `became` breaking changes, and a brief validation close.
-
-Use these as tone/shape references, not as technical authority for current APIs.
+Historical SwifQL releases may be consulted for maintainer tone and example shape, but never as technical authority for current APIs.
 
 ## Accuracy rules
 
 Before publishing an example:
 
-- verify the public symbol exists in current source;
-- verify the exact SQL/result against current tests or direct preparation when practical;
+- verify every public symbol, model property, and call shape exists in current source;
+- verify exact SQL/result against current tests or direct preparation when practical;
+- keep the example internally consistent with declarations shown earlier in the document;
 - distinguish released/stable/pre-release/future states truthfully;
 - do not advertise deferred features;
 - do not invent a compatibility alias, package version, driver URL, generated SQL string, or platform promise;
