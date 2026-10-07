@@ -224,6 +224,10 @@ The accepted shared semantic value source and integration are complete, with cro
 
 Substantial waves require design/UX review before implementation, source/diff review afterward, PostgreSQL/MySQL exact regression checks, bind-order checks where relevant, DESIGN-015 composition checks, downstream consumer fixtures when extension compatibility is at risk, native DuckDB validation where renderer tests are insufficient, `git diff --check`, and exact changed-path review.
 
+## Low-low priority deferred research
+
+When the active correctness/additive/release/downstream roadmap is otherwise idle, run a dedicated large-query compile-performance and binary-size benchmark comparing raw SQL, fluent composition, one large declarative `SQL { ... }` expression, and pre-fragmented declarative composition. Use a structurally realistic PostgreSQL-heavy query (recursive CTE / LATERAL / arrays / binds / long predicates), measure clean and incremental compile/type-check cost plus object/final binary size across supported compiler lines, and only create technical debt if a reproducible material scaling problem is demonstrated. The detailed frozen research brief lives in disposable research artifacts; do not pull this work forward while higher-priority roadmap items remain.
+
 ## Documentation roadmap
 
 Keep detailed principles in their single owners rather than duplicating them here. Maintain Duck docs now; later run dedicated PostgreSQL and MySQL documentation/research mega-audits. Public-content ideas remain lazy-loaded candidate material, never implementation authority.
