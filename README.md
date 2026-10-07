@@ -143,7 +143,11 @@ let query = SQL
 which gives:
 
 ```sql
-SELECT "users"."id", "users"."email", "users"."name" FROM "users" WHERE "users"."active" = TRUE ORDER BY "users"."name" ASC LIMIT 20
+SELECT "users"."id", "users"."email", "users"."name"
+FROM "users"
+WHERE "users"."active" = TRUE
+ORDER BY "users"."name" ASC
+LIMIT 20
 ```
 
 Start directly from `SQL`:
@@ -242,7 +246,9 @@ Here `idOffset`, `minimumID`, `email`, and `true` are ordinary Swift values. The
 PostgreSQL gives:
 
 ```sql
-SELECT "users"."id", "users"."id" + 1 FROM "users" WHERE "users"."id" >= 100 AND "users"."email" = 'john@example.com' AND "users"."active" = TRUE
+SELECT "users"."id", "users"."id" + 1
+FROM "users"
+WHERE "users"."id" >= 100 AND "users"."email" = 'john@example.com' AND "users"."active" = TRUE
 ```
 
 ### One caveat: optional nil checks
@@ -515,7 +521,11 @@ SQL
 PostgreSQL gives:
 
 ```sql
-SELECT DATE '2026-09-04', TIME '12:34:56.123456789', TIMESTAMP '2026-09-04 12:34:56.123456789', INTERVAL '2 months -3 days 4 microseconds'
+SELECT
+    DATE '2026-09-04',
+    TIME '12:34:56.123456789',
+    TIMESTAMP '2026-09-04 12:34:56.123456789',
+    INTERVAL '2 months -3 days 4 microseconds'
 ```
 
 These values model database semantics directly:
@@ -567,7 +577,10 @@ let query = SQL {
 PostgreSQL gives:
 
 ```sql
-SELECT "users"."id", "users"."id" + 1 FROM "users" WHERE "users"."active" = TRUE AND "users"."email" IS NOT NULL ORDER BY "users"."name" ASC
+SELECT "users"."id", "users"."id" + 1
+FROM "users"
+WHERE "users"."active" = TRUE AND "users"."email" IS NOT NULL
+ORDER BY "users"."name" ASC
 ```
 
 A complete statement can itself become a fragment:
