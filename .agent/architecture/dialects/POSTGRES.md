@@ -139,3 +139,32 @@ TABLESAMPLE system(30) REPEATABLE (40)
 Sampling arguments and `REPEATABLE` values remain ordinary parts on the central PostgreSQL preparation path, so unsafe runtime values keep positional bind markers and left-to-right observation/bind ordering.
 
 This verified closure does **not** establish methodless PostgreSQL `TABLESAMPLE (...)` as a positive supported capability.
+
+## Verified subscript-base grouping
+
+### POSTGRES-011 - General expression subscript bases are parenthesized
+
+PostgreSQL postfix subscripting keeps a direct base for structurally proven column references and for an already completed subscript expression:
+
+```sql
+"items"."scores"[1]
+"items"."matrix"[1][2]
+```
+
+A general expression base is parenthesized before the postfix subscript:
+
+```sql
+(array_agg("score"))[1]
+("items"."payload"->'scores')[1]
+```
+
+The shared runtime-value part is also treated conservatively as a general base because the same prepared skeleton must serve both inline-literal and split-bind forms. The accepted split form therefore remains valid and unambiguous:
+
+```sql
+($1)[$2]
+(array_agg($1))[$2]
+```
+
+The structural classification is semantic rather than text-based: a one-path PostgreSQL key path is a column reference; a multi-path key path owns JSON traversal and is therefore general; a completed subscript remains direct so chaining does not accumulate redundant parentheses.
+
+Grouping changes only PostgreSQL delimiter policy. Child expressions remain on the central preparation/observation path, preserving base-before-index evaluation and bind ordering. Duck, MySQL render-compatibility behavior, the default dialect, and downstream custom dialect subclasses retain their established direct grouping unless they own a separate dialect rule.
