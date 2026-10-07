@@ -48,7 +48,7 @@ let canonical = SQL
     .from(User.table)
 ```
 
-The two call sites use the same canonical implementation identity; the old spelling is only a migration bridge. `SQL` is the public root/function spelling. `SQLContent` is the concrete formed-SQL carrier to name only when explicit concrete typing is genuinely required; reusable `SQLQuery` conformers normally use their protocol-local `Query` shorthand instead.
+The two call sites use the same canonical implementation identity. The old spelling is only a migration bridge. `SQL` is the public root/function spelling. `SQLContent` is the concrete formed-SQL carrier to name only when explicit concrete typing is genuinely required. Reusable `SQLQuery` conformers normally use their protocol-local `Query` shorthand instead.
 
 The rename does **not** replace the model-backed type-safe DSL. Existing forms such as `\User.$id` and `User.table` remain first-class. `Path.Column(...)` and `Path.Table(...)` remain available as explicit path APIs when you intentionally build SQL without a model type.
 
@@ -85,7 +85,7 @@ Validated migration candidate:
 3. Replace `import SwifQL` with `import SQL`.
 4. Replace the main fluent root from `SwifQL.<fluent>` to `SQL.<fluent>`.
 5. Build the project and follow compiler rename diagnostics for remaining `SwifQL*` symbols.
-6. Prefer `SQL { ... }` for declarative construction where it improves readability; direct `SQL.<fluent>` remains canonical fluent construction.
+6. Prefer `SQL { ... }` for declarative construction where it improves readability. Direct `SQL.<fluent>` remains the fluent form.
 7. Keep intentionally historical source/examples unchanged only where they document an older release.
 
 ---
@@ -101,7 +101,7 @@ The final prerelease published under the SwifQL name was `2.0.0-beta.6.1.0`.
 )
 ```
 
-If you are moving from SwifQL 1.5.x or from an earlier 2.0 beta, this guide shows the changes that may require something from your code. Shared semantic values are available starting with `2.0.0-beta.6.0.0`, and `2.0.0-beta.6.0.1` remains the Swift toolchain compatibility hotfix. `2.0.0-beta.6.1.0` adds declarative table DDL authoring; existing query source does not need to migrate to adopt it.
+If you are moving from SwifQL 1.5.x or from an earlier 2.0 beta, this guide shows the changes that may require something from your code. Shared semantic values are available starting with `2.0.0-beta.6.0.0`, and `2.0.0-beta.6.0.1` remains the Swift toolchain compatibility hotfix. `2.0.0-beta.6.1.0` adds declarative table DDL authoring. Existing query source does not need to migrate to adopt it.
 
 The good news is that normal SQL-shaped SwifQL queries mostly stay normal SQL-shaped SwifQL queries.
 
@@ -459,7 +459,7 @@ No migration is needed unless your code depended on internal formatter identity 
 ## Quick migration checklist
 
 - For the historical SwifQL 2 prerelease path, move the consuming project to Swift 6.3 or newer.
-- The final SwifQL-named prerelease was pinned with `exact: "2.0.0-beta.6.1.0"`; new migrations should use SQL 2.0.0 from `SwiftStream/SQL` as documented at the top of this file.
+- The final SwifQL-named prerelease was pinned with `exact: "2.0.0-beta.6.1.0"`. New migrations should use SQL 2.0.0 from `SwiftStream/SQL` as documented at the top of this file.
 - Check local/package extensions that manually append or pattern-match `SwifQLable.parts`.
 - Use `structurallyAppending(_:)` when a helper means “continue this framed query”.
 - Replace mutations of predefined `Fn.Name` values with `Fn.Name.custom(_:)` / `Fn.build(_:)`.

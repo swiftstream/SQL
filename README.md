@@ -17,7 +17,9 @@
 
 **SQL (formerly SwifQL)** is a strongly typed, declarative, composable Swift DSL for building SQL.
 
-Write SQL concepts directly in Swift, compose them as values, and prepare the result for PostgreSQL, MySQL, or DuckDB. SQL builds statements; execution stays with your database driver.
+Write SQL concepts directly in Swift, compose them as values, and prepare the result for PostgreSQL, MySQL, or DuckDB. SQL builds statements. Execution stays with your database driver.
+
+Generated SQL examples in this README use PostgreSQL `.plain` rendering unless noted otherwise. Use `.splitted` when you need query placeholders and bind values for a driver.
 
 ## Installation
 
@@ -119,11 +121,15 @@ let users = Path.Table("users")
 let email = users.column("email")
 ```
 
-Use `Path.Table(...)` and `Path.Column(...)` when you need explicit paths; model-backed code can keep using `User.table` and type-safe key paths.
+Use `Path.Table(...)` and `Path.Column(...)` when you need explicit paths. Model-backed code can keep using `User.table` and type-safe key paths.
 
-## Fluent SQL
+## Declarative queries
 
-Fluent queries mirror normal SQL-shaped authoring:
+SQL supports two declarative styles. Chain clauses directly, or use the result builder when that reads better for the query you are writing.
+
+### Fluent form
+
+Chain SQL clauses directly:
 
 ```swift
 let query = SQL
@@ -132,6 +138,12 @@ let query = SQL
     .where(\User.$active == true)
     .orderBy(.asc(\User.$name))
     .limit(20)
+```
+
+which gives:
+
+```sql
+SELECT "users"."id", "users"."email", "users"."name" FROM "users" WHERE "users"."active" = TRUE ORDER BY "users"."name" ASC LIMIT 20
 ```
 
 Start directly from `SQL`:
@@ -144,9 +156,9 @@ SQL.delete(from: ...)
 SQL.where(...)
 ```
 
-## Result Builder DSL
+### Result builder form
 
-`SQL { ... }` keeps simple clauses concise:
+The same query can be written with `SQL { ... }`:
 
 ```swift
 let query = SQL {
@@ -157,6 +169,8 @@ let query = SQL {
     Limit(20)
 }
 ```
+
+This prepares to the same SQL as the fluent form above.
 
 When a clause needs multiple children, conditions, or loops, switch only that clause to its result-builder form:
 
@@ -196,9 +210,7 @@ let query = SQL {
 
 Use concise calls for fixed SQL and clause builders when Swift control flow makes the query clearer.
 
-Fluent SQL, declarative clauses, reusable fragments, and `SQLQuery` share the same preparation and binding behavior.
-
-Declarative clauses are ordinary composable SQL values, so you can extract and reuse them when that makes a query easier to read.
+Both declarative forms use the same preparation and binding behavior. Clauses are ordinary composable `SQLable` values, so you can extract and reuse them when that makes a query easier to read.
 
 ## Swift expressions in queries
 
@@ -226,6 +238,12 @@ let query = SQL {
 ```
 
 Here `idOffset`, `minimumID`, `email`, and `true` are ordinary Swift values. They become part of SQL expressions only where they are used with SQL operands.
+
+PostgreSQL gives:
+
+```sql
+SELECT "users"."id", "users"."id" + 1 FROM "users" WHERE "users"."id" >= 100 AND "users"."email" = 'john@example.com' AND "users"."active" = TRUE
+```
 
 ### One caveat: optional nil checks
 
@@ -521,26 +539,49 @@ query.prepare(.duck)
 
 Queries can share structure across PostgreSQL, MySQL, and DuckDB while each dialect owns its database-specific rendering.
 
-## Composition
+## Everything composes through `SQLable`
 
-Statements, clauses, and reusable queries are all composable.
+Values, columns, expressions, predicates, functions, clauses, complete statements, and reusable `SQLQuery` values all participate through `SQLable`.
 
-A whole statement is composable:
+That means you can build SQL pieces wherever it is convenient, keep them in variables or constants, pass them through your own APIs, and combine them later:
+
+```swift
+let shiftedID: any SQLable = \User.$id + 1
+let active: any SQLable = \User.$active == true
+let hasEmail: any SQLable = \User.$email != nil
+let predicate: any SQLable = active && hasEmail
+
+let selection = Select(\User.$id, shiftedID)
+let source = From(User.table)
+let filter = Where(predicate)
+let ordering = OrderBy(.asc(\User.$name))
+
+let query = SQL {
+    selection
+    source
+    filter
+    ordering
+}
+```
+
+PostgreSQL gives:
+
+```sql
+SELECT "users"."id", "users"."id" + 1 FROM "users" WHERE "users"."active" = TRUE AND "users"."email" IS NOT NULL ORDER BY "users"."name" ASC
+```
+
+A complete statement can itself become a fragment:
 
 ```swift
 let users = SQL {
     Select(\User.$id)
     From(User.table)
 }
+
+let source = From(users.as("u"))
 ```
 
-A clause is composable:
-
-```swift
-let activeUsers = Where(\User.$active == true)
-```
-
-A reusable query is composable:
+`SQLQuery` values compose the same way:
 
 ```swift
 let source = From(
@@ -553,7 +594,9 @@ let source = From(
 )
 ```
 
-Nested queries, subqueries, and set operations compose through `SQLable` too.
+Nested queries, subqueries, set operations, and your own custom `SQLable` types all use the same composition model.
+
+SQL grammar still matters. A scalar expression belongs where SQL expects an expression, a clause belongs where that clause is valid, and a statement becomes a nested statement when used as a source.
 
 ## Aliases and casts
 
@@ -610,6 +653,12 @@ let predicate =
     \User.$email != nil
 ```
 
+which gives:
+
+```sql
+"users"."active" = TRUE AND "users"."email" IS NOT NULL
+```
+
 Functions are ordinary SQL values too:
 
 ```swift
@@ -645,19 +694,19 @@ The project also supports JSON paths, nested values, array/list operations, and 
 
 SQL includes a much broader surface than basic SELECT/INSERT/UPDATE/DELETE, including:
 
-- joins, subqueries, CTEs, and set operations;
-- aggregates, FILTER, ordering, grouping, and analytical SQL;
-- JSON and nested values;
-- PostgreSQL arrays and related operators;
-- DuckDB LIST/lambda helpers and nested types;
-- PIVOT / UNPIVOT;
-- MERGE;
-- COPY;
-- DML + RETURNING;
-- DDL and schema operations;
-- sequences and macros;
-- table and file functions;
-- catalog/file-oriented DuckDB SQL;
+- joins, subqueries, CTEs, and set operations
+- aggregates, FILTER, ordering, grouping, and analytical SQL
+- JSON and nested values
+- PostgreSQL arrays and related operators
+- DuckDB LIST/lambda helpers and nested types
+- PIVOT / UNPIVOT
+- MERGE
+- COPY
+- DML + RETURNING
+- DDL and schema operations
+- sequences and macros
+- table and file functions
+- catalog/file-oriented DuckDB SQL
 - custom SQL functions, operators, paths, and raw/static structure when a typed surface does not exist yet.
 
 The examples above cover only part of the API. SQL is designed to stay close to the database language even as queries grow more complex.

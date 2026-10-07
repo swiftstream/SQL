@@ -250,7 +250,7 @@ let users = UserQuery(
 let prepared = users.prepare(.psql)
 ```
 
-`SQLQuery` is itself `SQLable`, so callers can compose `UserQuery(...)` directly without unwrapping `.query`. The protocol-local `Query` shorthand resolves to `SQLContent`; most application code never needs to spell the concrete carrier.
+`SQLQuery` is itself `SQLable`, so callers can compose `UserQuery(...)` directly without unwrapping `.query`. The protocol-local `Query` shorthand resolves to `SQLContent`. Most application code never needs to spell the concrete carrier.
 
 ## Swift 6
 
@@ -297,7 +297,7 @@ let alterUsers = AlterTable("users") {
 }
 ```
 
-Table/schema/column identifiers are explicit so historical migration declarations do not silently change when current model metadata changes. SQL builds these statements; migration history, transactions, and execution remain outside this library.
+Table/schema/column identifiers are explicit so historical migration declarations do not silently change when current model metadata changes. SQL builds these statements. Migration history, transactions, and execution remain outside this library.
 
 ## Shared semantic values
 
@@ -440,7 +440,7 @@ ALTER TABLE "users" ADD COLUMN "display_name" text
 
 Multiple actions stay in one `ALTER TABLE` statement and preserve source order.
 
-Table, schema, and column identifiers are explicit strings so historical DDL declarations do not silently change when current model metadata or key paths change. The DDL result builders are intentionally static and non-empty; direct runtime branching and loops are not part of this first grammar.
+Table, schema, and column identifiers are explicit strings so historical DDL declarations do not silently change when current model metadata or key paths change. The DDL result builders are intentionally static and non-empty. Direct runtime branching and loops are not part of this first grammar.
 
 This is additive. Existing fluent/query source and legacy DDL APIs do not need to migrate. SwifQL only builds SQL: migration versioning, history, transaction policy, and execution belong to the consuming library or application.
 
@@ -488,9 +488,9 @@ will give:
 SELECT DATE '2026-09-04', CAST('12:34:56.123456789' AS TIME_NS), CAST('2026-09-04 12:34:56.123456789' AS TIMESTAMP_NS), INTERVAL '2 months -3 days 4 microseconds'
 ```
 
-`PureDate` and `PureTime` model timezone-free civil values; `PureDate` supports astronomical years and explicit temporal infinity states. `DateTime` is a timezone-free civil combination with finite and explicit infinity states, not an instant or `Foundation.Date`; exact `24:00:00` canonicalizes to the next day's midnight. `Interval` preserves independent signed months, days, and microseconds plus explicit infinity states, so it is not a fixed duration or `Comparable`. `Foundation.Date` interop for `PureDate` and `DateTime` requires an explicit Gregorian `Calendar` and `TimeZone` and can fail.
+`PureDate` and `PureTime` model timezone-free civil values. `PureDate` supports astronomical years and explicit temporal infinity states. `DateTime` is a timezone-free civil combination with finite and explicit infinity states, not an instant or `Foundation.Date`. Exact `24:00:00` canonicalizes to the next day's midnight. `Interval` preserves independent signed months, days, and microseconds plus explicit infinity states, so it is not a fixed duration or `Comparable`. `Foundation.Date` interop for `PureDate` and `DateTime` requires an explicit Gregorian `Calendar` and `TimeZone` and can fail.
 
-All four types use the ordinary value/binding path. Automatic inference remains intentionally limited: `PureDate` maps to `.date`, `PureTime` to `.time`, and `Foundation.Date` keeps `.timestamptz`; `DateTime` and `Interval` retain `.text` fallback and should use explicit `.timestamp` or `.interval` schema types when required. Check the selected dialect's range and precision before assuming portability: MySQL uses exact-or-hard-fail rendering, Duck `TIMESTAMP_NS` has a finite physical range, and shared interval infinity is not native Duck interval infinity.
+All four types use the ordinary value/binding path. Automatic inference remains intentionally limited: `PureDate` maps to `.date`, `PureTime` to `.time`, and `Foundation.Date` keeps `.timestamptz`. `DateTime` and `Interval` retain `.text` fallback and should use explicit `.timestamp` or `.interval` schema types when required. Check the selected dialect's range and precision before assuming portability: MySQL uses exact-or-hard-fail rendering, Duck `TIMESTAMP_NS` has a finite physical range, and shared interval infinity is not native Duck interval infinity.
 
 Install this prerelease with `exact: "2.0.0-beta.6.0.0"`.
 

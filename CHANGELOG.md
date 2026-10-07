@@ -10,8 +10,8 @@
 - preserves identical SQL preparation, bind ordering, structural composition, and PostgreSQL/MySQL/Duck rendering for equivalent concise and builder forms
 - restores ordinary Swift overload preference for `+ - * / > < >= <=` when SQL is imported, while preserving the same operators for SQLable/model-backed SQL expressions
 - keeps bare Swift literal defaults unchanged under direct and re-exported SQL imports: integer literals infer `Int`, floating literals infer `Double`, and string literals infer `String`
-- deliberately leaves SQLable `==` / `!=` precedence unchanged so SQL equality and `== nil` / `!= nil` continue producing SQL predicates; concrete primitive equality remains ordinary Swift `Bool`
-- introduces no breaking migration; Swift 6.3+ requirement is unchanged
+- deliberately leaves SQLable `==` / `!=` precedence unchanged so SQL equality and `== nil` / `!= nil` continue producing SQL predicates. Concrete primitive equality remains ordinary Swift `Bool`
+- introduces no breaking migration. Swift 6.3+ requirement is unchanged
 
 ## 2.0.0
 
@@ -21,7 +21,7 @@ SwifQL becomes **SQL** in the stable 2.0 major line.
 - package/product/module: `SQL`
 - `import SwifQL` -> `import SQL`
 - canonical roots: direct `SQL.<fluent>` and declarative `SQL { ... }`
-- model-backed type-safe authoring such as `\User.$id` and `User.table` remains first-class; explicit `Path.*` APIs remain available when no model type is desired
+- model-backed type-safe authoring such as `\User.$id` and `User.table` remains first-class. Explicit `Path.*` APIs remain available when no model type is desired
 - reusable parameterized query values through `SQLQuery`, with `Query` as its shorthand for the concrete result type
 - concrete formed-SQL carrier: `SQLContent`
 - canonical protocol/preparation names include `SQLable`, `SQLPart`, and `SQLPrepared`
@@ -30,7 +30,7 @@ SwifQL becomes **SQL** in the stable 2.0 major line.
 - expanded SQL surface including analytics, joins/set operations, PIVOT/UNPIVOT, MERGE, COPY, DML/RETURNING, DDL, sequences, macros, and table/file functions
 - declarative table DDL with `CreateTable`, `AlterTable`, and `AddColumn`
 - shared semantic values: `PureDate`, `PureTime`, `DateTime`, and `Interval`
-- retained old `SwifQL*` symbol spellings are deprecated/renamed inside module `SQL` where compatibility bridges are provided; there is no compatibility module named `SwifQL`
+- retained old `SwifQL*` symbol spellings are deprecated/renamed inside module `SQL` where compatibility bridges are provided. There is no compatibility module named `SwifQL`
 
 See [RELEASE_NOTES.md](RELEASE_NOTES.md) for examples and [MIGRATION.md](MIGRATION.md) for the v1/v2 migration path.
 

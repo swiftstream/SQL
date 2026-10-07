@@ -92,6 +92,8 @@ Avoid corporate release-note language such as:
 
 Avoid turning internal implementation/audit vocabulary into public prose. Task numbers, correction waves, audit names, evidence ledgers, coordinator terminology, internal gates, and artifact hashes do not belong in normal public docs or release posts.
 
+Do not use semicolons to join prose in user-facing public material. Write separate sentences or use a natural conjunction instead. This applies to README, migration guides, release notes, changelogs, GitHub Releases, website documentation, and maintainer posts. Semicolons are allowed only when they are part of code, SQL, shell commands, URLs, generated syntax, or quoted source text.
+
 The tone may be informal and enthusiastic when natural, but examples and technical truth come first.
 
 ## README
