@@ -17,9 +17,7 @@
 
 **SQL (formerly SwifQL)** is a strongly typed, declarative, composable Swift DSL for building SQL.
 
-SQL is **SQL-first**. It is not an ORM and it does not execute queries. It gives you a Swift-native way to describe SQL while keeping the database language visible, composable, type-safe where model metadata provides type information, and extensible when you need something unusual.
-
-PostgreSQL, MySQL, and DuckDB are supported. Prepare SQL for the selected dialect and execute it with your database driver.
+Write SQL concepts directly in Swift, compose them as values, and prepare the result for PostgreSQL, MySQL, or DuckDB. SQL builds statements; execution stays with your database driver.
 
 ## Installation
 
@@ -202,64 +200,58 @@ Fluent SQL, declarative clauses, reusable fragments, and `SQLQuery` share the sa
 
 Declarative clauses are ordinary composable SQL values, so you can extract and reuse them when that makes a query easier to read.
 
-## Swift operator interoperability
+## Swift expressions in queries
 
-SQL overloads Swift operators so model-backed expressions can stay SQL-shaped:
+Inside a query, you can mix normal Swift literals and values directly with model-backed SQL expressions. You do not need to wrap them in `SQLable` first.
 
-```swift
-let predicate = \User.$age >= 18
-let expression = \User.$score + 1
-```
-
-Model-backed SQL expressions stay SQL-shaped while ordinary Swift arithmetic and ordering use the standard-library overloads. Importing SQL does not turn unrelated Swift values into `any SQLable`:
+As each expression is built, SQL's operator overloads produce composable `SQLable` values automatically:
 
 ```swift
-let count = 5
-// Int
+let minimumID = 100
+let idOffset = 1
+let email = "john@example.com"
 
-let ratio = 5.0
-// Double
-
-let text = ""
-// String
-
-let total = UInt64(7) * 10 + 3
-// UInt64
-
-let negative = Int64(-1) < 0
-// Bool
+let query = SQL {
+    Select(
+        \User.$id,
+        \User.$id + idOffset
+    )
+    From(User.table)
+    Where(
+        \User.$id >= minimumID
+        && \User.$email == email
+        && \User.$active == true
+    )
+}
 ```
 
-The broad SQLable overloads for `+`, `-`, `*`, `/`, `>`, `<`, `>=`, and `<=` are lower-priority when Swift has a better ordinary overload. Model-backed SQL operands still select SQL:
+Here `idOffset`, `minimumID`, `email`, and `true` are ordinary Swift values. They become part of SQL expressions only where they are used with SQL operands.
 
-```swift
-let score = \User.$score + 1
-let active = \User.$age >= 18
-```
+### One caveat: optional nil checks
 
-### Equality and optionals
+There are two expressions to be careful with in ordinary Swift code outside a query: `== nil` and `!= nil`.
 
-SQL also overloads `==` and `!=` because those operators are used to build predicates such as `IS NULL` and `IS NOT NULL`.
-
-There is one important edge case around Swift optionals. When `Wrapped: SQLable`, `Optional<Wrapped>` is also `SQLable`, so `== nil` can participate in both normal Swift and SQL overload resolution.
-
-For example, code like this may be ambiguous in SQL-shaped or generic code:
+When `Wrapped: SQLable`, `Optional<Wrapped>` is also `SQLable`. That means these expressions can participate in SQL overload resolution even when they look like ordinary Swift optional checks:
 
 ```swift
 let someOptional: String? = nil
+
 let a = someOptional == nil
+let b = someOptional != nil
 ```
 
-Depending on the surrounding type context, `a` can resolve to a `SQLable` predicate instead of `Bool`.
+Depending on the surrounding type context, `a` and `b` can resolve to `SQLable` predicates instead of `Bool`.
 
-If you need an ordinary Swift nil-check, make the expected result explicit:
+If you mean a normal Swift nil-check, make the result type explicit:
 
 ```swift
 let someOptional: String? = nil
+
 let a: Bool = someOptional == nil
+let b: Bool = someOptional != nil
 ```
 
-For model-backed SQL expressions, the same operators build SQL predicates:
+Inside SQL expressions, `== nil` and `!= nil` are exactly what you want:
 
 ```swift
 let isMissing = \User.$email == nil
@@ -268,14 +260,6 @@ let isMissing = \User.$email == nil
 let isPresent = \User.$email != nil
 // SQL: "users"."email" IS NOT NULL
 ```
-
-Concrete primitive equality remains ordinary Swift too:
-
-```swift
-let same: Bool = Int64(1) == 1
-```
-
-So if `== nil` is meant to inspect a Swift optional, give the result a `Bool` context. If the left side is a SQL expression, `== nil` / `!= nil` build SQL null predicates.
 
 ## Reusable queries
 
@@ -750,7 +734,7 @@ User.table
 
 `import SwifQL` is no longer supported. After `import SQL`, retained old `SwifQL*` symbol spellings may still exist as deprecated/renamed bridges where provided.
 
-For the complete migration checklist and advanced compatibility details, see [MIGRATION.md](MIGRATION.md).
+For a step-by-step guide to migrating from SwifQL v1 → SQL v2, see [MIGRATION.md](MIGRATION.md).
 
 For current release details, see [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
