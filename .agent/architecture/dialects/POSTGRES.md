@@ -121,3 +121,21 @@ A dedicated PostgreSQL documentation/research tranche should eventually expand t
 - current test/native evidence where relevant.
 
 Until that audit exists, keep this file compact and do not invent missing PostgreSQL guarantees for symmetry with Duck documentation.
+
+## Verified TABLESAMPLE behavior
+
+### POSTGRES-010 - Method-bearing TABLESAMPLE owns PostgreSQL argument grammar
+
+For method-bearing `TABLESAMPLE`, PostgreSQL renders the sampling method followed by its ordered argument expressions without Duck-style `PERCENT` or `ROWS` unit tokens:
+
+```sql
+TABLESAMPLE system(10)
+TABLESAMPLE stratified(10)
+TABLESAMPLE system(30) REPEATABLE (40)
+```
+
+`SampleArgumentRole` remains shared semantic metadata for other dialects; PostgreSQL does not turn those roles into unit keywords. Open/custom sampling methods use the same PostgreSQL argument grammar rather than a built-in method whitelist.
+
+Sampling arguments and `REPEATABLE` values remain ordinary parts on the central PostgreSQL preparation path, so unsafe runtime values keep positional bind markers and left-to-right observation/bind ordering.
+
+This verified closure does **not** establish methodless PostgreSQL `TABLESAMPLE (...)` as a positive supported capability.
