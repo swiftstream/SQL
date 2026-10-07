@@ -23,7 +23,7 @@ PostgreSQL, MySQL, and DuckDB are supported. Prepare SQL for the selected dialec
 
 ## Installation
 
-SQL 2.1.0 requires Swift 6.3 or newer.
+Requires Swift 6.3 or newer.
 
 ```swift
 .package(
@@ -87,7 +87,7 @@ Simple SQL should stay simple. Monster-complex SQL should still be possible with
 
 ## Type-safe tables and columns
 
-Model-backed authoring is first-class in SQL 2.
+Model-backed authoring is first-class.
 
 ```swift
 struct User: Table {
@@ -211,7 +211,7 @@ let predicate = \User.$age >= 18
 let expression = \User.$score + 1
 ```
 
-SQL 2.1 keeps those SQL expressions intact while making ordinary Swift arithmetic and ordering prefer the standard-library overloads again. Importing SQL should not turn unrelated Swift values into `any SQLable`:
+Model-backed SQL expressions stay SQL-shaped while ordinary Swift arithmetic and ordering use the standard-library overloads. Importing SQL does not turn unrelated Swift values into `any SQLable`:
 
 ```swift
 let count = 5
@@ -237,31 +237,45 @@ let score = \User.$score + 1
 let active = \User.$age >= 18
 ```
 
-SQL's `==` / `!=` overloads keep their existing behavior so SQLable values can continue to build SQL predicates, including null checks:
+### Equality and optionals
+
+SQL also overloads `==` and `!=` because those operators are used to build predicates such as `IS NULL` and `IS NOT NULL`.
+
+There is one important edge case around Swift optionals. When `Wrapped: SQLable`, `Optional<Wrapped>` is also `SQLable`, so `== nil` can participate in both normal Swift and SQL overload resolution.
+
+For example, code like this may be ambiguous in SQL-shaped or generic code:
 
 ```swift
-let value: any SQLable = \User.$email
+let someOptional: String? = nil
+let a = someOptional == nil
+```
 
-let missing = value == nil
+Depending on the surrounding type context, `a` can resolve to a `SQLable` predicate instead of `Bool`.
+
+If you need an ordinary Swift nil-check, make the expected result explicit:
+
+```swift
+let someOptional: String? = nil
+let a: Bool = someOptional == nil
+```
+
+For model-backed SQL expressions, the same operators build SQL predicates:
+
+```swift
+let isMissing = \User.$email == nil
 // SQL: "users"."email" IS NULL
+
+let isPresent = \User.$email != nil
+// SQL: "users"."email" IS NOT NULL
 ```
 
-Concrete primitive equality remains normal Swift on the validated Swift 6.3.3 / 6.4 toolchains:
+Concrete primitive equality remains ordinary Swift too:
 
 ```swift
-let same = Int64(1) == 1
-// Bool
+let same: Bool = Int64(1) == 1
 ```
 
-If ordinary Swift equality matters in generic or heavily overloaded code, keep the operands as their concrete Swift types and, when useful, make the expected result explicit:
-
-```swift
-let lhs: Int64 = 1
-let rhs: Int64 = 1
-let same: Bool = lhs == rhs
-```
-
-Once a value is typed as `any SQLable`, `==` / `!=` mean SQL predicate construction rather than ordinary Swift value comparison.
+So if `== nil` is meant to inspect a Swift optional, give the result a `Bool` context. If the left side is a SQL expression, `== nil` / `!= nil` build SQL null predicates.
 
 ## Reusable queries
 
@@ -645,7 +659,7 @@ The project also supports JSON paths, nested values, array/list operations, and 
 
 ## More SQL
 
-SQL 2 includes a much broader surface than basic SELECT/INSERT/UPDATE/DELETE, including:
+SQL includes a much broader surface than basic SELECT/INSERT/UPDATE/DELETE, including:
 
 - joins, subqueries, CTEs, and set operations;
 - aggregates, FILTER, ordering, grouping, and analytical SQL;
@@ -696,13 +710,13 @@ If you implement custom `SQLable` values by working with `parts` directly, prese
 
 ## Swift 6.3 and concurrency
 
-SQL 2 uses Swift 6 language mode and requires Swift 6.3+.
+SQL uses Swift 6 language mode and requires Swift 6.3+.
 
 Query and bind values are not `Sendable` by default. When crossing an actor boundary, keep query construction/preparation on the originating isolation and send an application-owned `Sendable` snapshot containing the data your driver actually needs.
 
 ## Migrating from SwifQL
 
-The project was renamed from **SwifQL** to **SQL** for the 2.0 stable release.
+The project was renamed from **SwifQL** to **SQL**.
 
 The common migration is:
 
@@ -736,7 +750,7 @@ User.table
 
 `import SwifQL` is no longer supported. After `import SQL`, retained old `SwifQL*` symbol spellings may still exist as deprecated/renamed bridges where provided.
 
-For the complete v1 → v2 checklist and advanced compatibility details, see [MIGRATION.md](MIGRATION.md).
+For the complete migration checklist and advanced compatibility details, see [MIGRATION.md](MIGRATION.md).
 
 For current release details, see [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
