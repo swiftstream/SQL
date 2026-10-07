@@ -469,6 +469,10 @@ struct SelectTests: SwifQLTests {
     @Test("Select count")
     func selectFnCount() {
         check(
+            SwifQL.select(Fn.count()),
+            all: "SELECT count(*)"
+        )
+        check(
             SwifQL.select(Fn.count(CarBrands.column("id"))),
             .psql(#"SELECT count("CarBrands"."id")"#),
             .mysql("SELECT count(CarBrands.id)"),
@@ -479,6 +483,45 @@ struct SelectTests: SwifQLTests {
             .psql(#"SELECT count("cb"."id")"#),
             .mysql("SELECT count(cb.id)"),
             .duck(#"SELECT count("cb"."id")"#)
+        )
+        check(
+            SwifQL.select(Fn.count(Distinct(CarBrands.column("id")))),
+            .psql(#"SELECT count(DISTINCT "CarBrands"."id")"#),
+            .mysql("SELECT count(DISTINCT CarBrands.id)"),
+            .duck(#"SELECT count(DISTINCT "CarBrands"."id")"#)
+        )
+
+        let filtered = SwifQL.select(
+            Fn.count().filter(where: CarBrands.column("name") == "active")
+        )
+        check(
+            filtered,
+            .psql(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'active')"#),
+            .duck(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'active')"#)
+        )
+
+        check(
+            SwifQL.select(
+                Fn.count().over(partitionBy: CarBrands.column("name"))
+            ),
+            .psql(#"SELECT count(*) OVER (PARTITION BY "CarBrands"."name")"#),
+            .mysql("SELECT count(*) OVER (PARTITION BY CarBrands.name)"),
+            .duck(#"SELECT count(*) OVER (PARTITION BY "CarBrands"."name")"#)
+        )
+
+        let allRows = SwifQL.select(Fn.count()).prepare(.psql).splitted
+        #expect(allRows.values.isEmpty)
+
+        let composed = SwifQL.select(
+            Fn.count()
+                .filter(where: CarBrands.column("name") == "active")
+                .over(partitionBy: CarBrands.column("id")),
+            "tail"
+        )
+        let composedPrepared = composed.prepare(.psql).splitted
+        #expect(
+            composedPrepared.values.map { String(describing: $0) }
+                == ["active", "tail"]
         )
     }
     

@@ -60,7 +60,7 @@ extension Fn {
 
     /// Returns the count of all rows in the current aggregate input.
     public static func count() -> SQLable {
-        build(.count, body: [])
+        build(.count, body: SQLPartOperator("*"))
     }
 
     /// Returns DuckDB's grouping bitfield for one or more grouping expressions.

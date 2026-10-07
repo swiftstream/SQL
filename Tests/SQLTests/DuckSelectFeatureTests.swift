@@ -153,10 +153,10 @@ struct DuckSelectFeatureTests {
         let value = table.column("value")
         let query = SwifQL.select(Fn.count(), Fn.count(value)).from(table)
 
-        let expected = #"SELECT count(), count("events"."value") FROM "events""#
+        let expected = #"SELECT count(*), count("events"."value") FROM "events""#
         #expect(query.prepare(.duck).plain == expected)
         #expect(query.prepare(.psql).plain == expected)
-        #expect(query.prepare(.mysql).plain == "SELECT count(), count(events.value) FROM events")
+        #expect(query.prepare(.mysql).plain == "SELECT count(*), count(events.value) FROM events")
     }
 
     @Test("QUALIFY composes with a real window expression")
