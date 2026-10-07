@@ -5,7 +5,7 @@
         <img src="https://img.shields.io/badge/license-MIT-brightgreen.svg" alt="MIT License">
     </a>
     <a href="https://swift.org">
-        <img src="https://img.shields.io/badge/swift-6-brightgreen.svg" alt="Swift 6">
+        <img src="https://img.shields.io/badge/swift-6.3-brightgreen.svg" alt="Swift 6.3">
     </a>
     <a href="https://discord.gg/q5wCPYv">
         <img src="https://img.shields.io/discord/612561840765141005" alt="Swift.Stream">
@@ -13,15 +13,13 @@
 </p>
 <br>
 
-# SQL
+# Swift Stream SQL
 
 **SQL (formerly SwifQL)** is a strongly typed, declarative, composable Swift DSL for building SQL.
 
-The package, product, Swift module, and public query root are all named `SQL`. The canonical repository is `SwiftStream/SQL`.
+SQL is **SQL-first**. It is not an ORM and it does not execute queries. It gives you a Swift-native way to describe SQL while keeping the database language visible, composable, type-safe where model metadata provides type information, and extensible when you need something unusual.
 
-SQL is deliberately **SQL-first**. It is not an ORM and it does not execute queries. It gives you a Swift-native way to describe SQL while keeping the database language visible, composable, type-safe where your model gives us type information, and extensible when you need something unusual.
-
-PostgreSQL, MySQL, and DuckDB are supported by the current preparation surface. Use SQL directly with your database driver or put a higher-level integration/execution layer on top of it.
+PostgreSQL, MySQL, and DuckDB are supported. Prepare SQL for the selected dialect and execute it with your database driver.
 
 ## Installation
 
@@ -85,7 +83,7 @@ let query = SQL {
 
 Simple SQL should stay simple. Monster-complex SQL should still be possible without escaping into a second query language.
 
-That is the main design goal: **write SQL ideas in Swift, compose them like Swift values, and let the selected dialect prepare the final statement**.
+**Write SQL ideas in Swift, compose them like Swift values, and let the selected dialect prepare the final statement.**
 
 ## Type-safe tables and columns
 
@@ -114,20 +112,20 @@ User.table
 \User.$name
 ```
 
-This is the normal high-level API for model-backed query code.
+Use these references throughout model-backed queries.
 
-When you intentionally do not have a model type, explicit paths are available too:
+When you do not have a model type, explicit paths are available too:
 
 ```swift
 let users = Path.Table("users")
 let email = users.column("email")
 ```
 
-`Path.Table(...)` and `Path.Column(...)` are an additional explicit path API, not a replacement for `User.table` or type-safe key paths.
+Use `Path.Table(...)` and `Path.Column(...)` when you need explicit paths; model-backed code can keep using `User.table` and type-safe key paths.
 
 ## Fluent SQL
 
-The direct fluent root mirrors normal SQL-shaped authoring:
+Fluent queries mirror normal SQL-shaped authoring:
 
 ```swift
 let query = SQL
@@ -138,7 +136,7 @@ let query = SQL
     .limit(20)
 ```
 
-The root is simply `SQL`:
+Start directly from `SQL`:
 
 ```swift
 SQL.select(...)
@@ -147,8 +145,6 @@ SQL.update(...)
 SQL.delete(from: ...)
 SQL.where(...)
 ```
-
-There is no `SQL.root` indirection.
 
 ## Result Builder DSL
 
@@ -200,9 +196,9 @@ let query = SQL {
 }
 ```
 
-The concise and builder forms are the same DSL, not separate capabilities. Use concise calls for fixed SQL and clause builders when Swift control flow makes the query clearer.
+Use concise calls for fixed SQL and clause builders when Swift control flow makes the query clearer.
 
-This is not a separate query engine. Fluent SQL, declarative clauses, reusable fragments, and `SQLQuery` all feed the same composition/preparation/binding pipeline.
+Fluent SQL, declarative clauses, reusable fragments, and `SQLQuery` share the same preparation and binding behavior.
 
 Declarative clauses are ordinary composable SQL values, so you can extract and reuse them when that makes a query easier to read.
 
@@ -234,14 +230,14 @@ let negative = Int64(-1) < 0
 // Bool
 ```
 
-The broad SQLable overloads for `+`, `-`, `*`, `/`, `>`, `<`, `>=`, and `<=` are deliberately lower-priority when Swift has a better ordinary overload. Model-backed SQL operands still select SQL:
+The broad SQLable overloads for `+`, `-`, `*`, `/`, `>`, `<`, `>=`, and `<=` are lower-priority when Swift has a better ordinary overload. Model-backed SQL operands still select SQL:
 
 ```swift
 let score = \User.$score + 1
 let active = \User.$age >= 18
 ```
 
-Equality is a deliberate boundary. SQL's `==` / `!=` overloads are **not** demoted because SQLable values must continue to build SQL predicates, including null checks:
+SQL's `==` / `!=` overloads keep their existing behavior so SQLable values can continue to build SQL predicates, including null checks:
 
 ```swift
 let value: any SQLable = \User.$email
@@ -265,7 +261,7 @@ let rhs: Int64 = 1
 let same: Bool = lhs == rhs
 ```
 
-Once a value has intentionally been erased to `any SQLable`, `==` / `!=` mean SQL predicate construction rather than ordinary Swift value comparison.
+Once a value is typed as `any SQLable`, `==` / `!=` mean SQL predicate construction rather than ordinary Swift value comparison.
 
 ## Reusable queries
 
@@ -325,7 +321,7 @@ let source = From(
 )
 ```
 
-The protocol-local `Query` shorthand resolves to `SQLContent`. Most application code never needs to spell the concrete carrier directly.
+`Query` is the shorthand return type provided by `SQLQuery`.
 
 ## Preparation, binds, and execution
 
@@ -370,7 +366,7 @@ query + values
 your driver / connection / executor
 ```
 
-SQL intentionally does not own connection pools, transaction policy, result decoding policy, or execution lifecycle.
+SQL does not manage connection pools, transaction policy, result decoding, or execution lifecycle.
 
 ## INSERT, UPDATE, and DELETE
 
@@ -447,7 +443,7 @@ let alterUsers = AlterTable("users") {
 }
 ```
 
-### Migration identifiers are intentionally strings
+### Migration identifiers use strings
 
 Database migrations are historical records. They must not silently change because the current Swift model was renamed later.
 
@@ -506,7 +502,7 @@ PostgreSQL gives:
 SELECT DATE '2026-09-04', TIME '12:34:56.123456789', TIMESTAMP '2026-09-04 12:34:56.123456789', INTERVAL '2 months -3 days 4 microseconds'
 ```
 
-These values model database semantics rather than pretending every temporal value is a `Foundation.Date` or every interval is a fixed duration.
+These values model database semantics directly:
 
 - `PureDate` is a timezone-free civil date.
 - `PureTime` is a nanosecond-capable time of day.
@@ -525,13 +521,11 @@ query.prepare(.mysql)
 query.prepare(.duck)
 ```
 
-The goal is not to pretend PostgreSQL, MySQL, and DuckDB are identical. The goal is to keep one composable Swift SQL model while the selected dialect owns the rendering differences that actually belong to that database.
-
-Dialect-specific capabilities remain dialect-specific.
+Queries can share structure across PostgreSQL, MySQL, and DuckDB while each dialect owns its database-specific rendering.
 
 ## Composition
 
-Everything useful in SQL is meant to compose.
+Statements, clauses, and reusable queries are all composable.
 
 A whole statement is composable:
 
@@ -561,11 +555,11 @@ let source = From(
 )
 ```
 
-And nested/subquery/set-operation composition stays on the same `SQLable` pipeline rather than switching to a separate AST or string-template engine.
+Nested queries, subqueries, and set operations compose through `SQLable` too.
 
 ## Aliases and casts
 
-The `=>` operator is intentionally useful for both aliasing and SQL casts.
+Use `=>` for aliases and SQL casts.
 
 Column alias:
 
@@ -647,7 +641,7 @@ PgArray(1, 2, 3)
 PgArray() => .textArray
 ```
 
-The project also supports JSON paths, nested values, array/list operations, and other dialect-aware SQL families without turning them into ORM abstractions.
+The project also supports JSON paths, nested values, array/list operations, and other dialect-aware SQL families.
 
 ## More SQL
 
@@ -668,15 +662,11 @@ SQL 2 includes a much broader surface than basic SELECT/INSERT/UPDATE/DELETE, in
 - catalog/file-oriented DuckDB SQL;
 - custom SQL functions, operators, paths, and raw/static structure when a typed surface does not exist yet.
 
-The library is intentionally not limited to the examples in this README.
-
-If the database can express the SQL, the long-term goal is that SQL should make it practical to express that idea in Swift without hiding what the query actually means.
+The examples above cover only part of the API. SQL is designed to stay close to the database language even as queries grow more complex.
 
 ## How it works under the hood
 
-The original SwifQL idea is still the core of SQL 2, just with a much stronger composition model.
-
-`SQL` is the public starting point. Values that participate in SQL conform to `SQLable` and expose composable `SQLPart` values.
+SQL is built from composable values. Values that participate in SQL conform to `SQLable` and expose `SQLPart` values.
 
 At a high level:
 
@@ -698,27 +688,23 @@ SQLPrepared
 plain / splitted
 ```
 
-That is why very different authoring styles can mix together without creating separate query engines.
+These authoring styles can be mixed in the same query.
 
-Most SQL capabilities are small composable pieces. If a function, operator, clause, or dialect feature is missing, the architecture is intentionally designed so it can usually be added as another SQL value/part instead of requiring an ORM rewrite or another parser.
+Functions, operators, clauses, and dialect-specific features are composable SQL values, so custom extensions fit the same model.
 
-Advanced extensions that manually work with `parts` should preserve structural composition rather than blindly flattening arrays. See [MIGRATION.md](MIGRATION.md) for the compatibility note.
+If you implement custom `SQLable` values by working with `parts` directly, preserve the existing structure instead of flattening it. See [MIGRATION.md](MIGRATION.md) for the compatibility note.
 
-That flexibility is one of the library's main ideas: **you should not hit a wall just because your query stopped being simple**.
-
-## Swift 6 and concurrency
+## Swift 6.3 and concurrency
 
 SQL 2 uses Swift 6 language mode and requires Swift 6.3+.
 
-The query/bind graph is intentionally not hidden behind unchecked `Sendable` conformances.
-
-When crossing an actor boundary, keep query construction/preparation on the originating isolation and send an application-owned Sendable snapshot containing the data your driver actually needs.
+Query and bind values are not `Sendable` by default. When crossing an actor boundary, keep query construction/preparation on the originating isolation and send an application-owned `Sendable` snapshot containing the data your driver actually needs.
 
 ## Migrating from SwifQL
 
 The project was renamed from **SwifQL** to **SQL** for the 2.0 stable release.
 
-The common source migration is intentionally mechanical:
+The common migration is:
 
 was
 
@@ -740,7 +726,7 @@ let query = SQL
     .from(User.table)
 ```
 
-The important part is what did **not** disappear:
+Model-backed references remain first-class:
 
 ```swift
 \User.$id
@@ -748,17 +734,15 @@ The important part is what did **not** disappear:
 User.table
 ```
 
-The model-backed, type-safe query surface remains first-class.
-
-There is no compatibility module named `SwifQL`. After `import SQL`, retained old `SwifQL*` symbol spellings may still exist as deprecated/renamed bridges where provided.
+`import SwifQL` is no longer supported. After `import SQL`, retained old `SwifQL*` symbol spellings may still exist as deprecated/renamed bridges where provided.
 
 For the complete v1 → v2 checklist and advanced compatibility details, see [MIGRATION.md](MIGRATION.md).
 
-For the complete 2.0.0 release overview, see [RELEASE_NOTES.md](RELEASE_NOTES.md).
+For current release details, see [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
 ## Contributing
 
-If you cannot find a function or SQL construct out of the box, check the existing source first — a lot of the library is intentionally built from small `SQLable` extensions.
+If you cannot find a function or SQL construct out of the box, check the existing source first — much of the library is built from small `SQLable` extensions.
 
 If something is genuinely missing, issues and pull requests are welcome ❤️
 
