@@ -70,6 +70,7 @@ Use authenticated `gh` CLI. For a stable release:
 
 - use `--verify-tag`;
 - use the independently reviewed release body;
+- choose the release-title emoji independently for that release so it reflects the release's primary meaning; do not copy the previous release's emoji by default, and reserve 🚀 for a genuine launch/breakthrough milestone rather than routine subsequent releases;
 - do not use draft or prerelease mode;
 - follow `PUBLIC_WRITING_STYLE.md`.
 
