@@ -9,6 +9,7 @@ DETAILED RESEARCH
 -> INDEPENDENT PLAN AUDIT
 -> NUMBERED SURGICAL TASKS WHEN NEEDED
 -> PRECISE IMPLEMENTATION
+-> MANAGED-SKILL IMPACT CHECK
 -> INDEPENDENT DIFF / SOURCE / GIT AUDIT
 -> NUMBERED CORRECTION WAVE IF NEEDED
 -> FINAL AUDIT
@@ -33,6 +34,7 @@ Detailed coordinator/executor roles and delegation rules are owned by `DEVELOPME
 - Executor reports are evidence inputs, never proof of repository state. Independent review inspects the actual files, status, diff, direct callers, generated SQL/native evidence, and relevant tests.
 - Audit findings become a new focused numbered correction wave rather than one giant correction prompt.
 - Stable documentation is synchronized only when the durable fact owned by that document changes. Transient execution history remains in `.artifacts/`.
+- Before final source/diff audit and commit readiness, every accepted query-surface wave must record a managed-skill impact verdict for each routed skill: `UPDATE_REQUIRED` or `NO_CHANGE`. Missing verdicts block closure; `UPDATE_REQUIRED` must be completed before the commit gate.
 - After meaningful research/design/implementation/correction/audit, perform the lazy public-content capture check owned by `PUBLIC_CONTENT_IDEAS.md`. If no genuinely useful README/docs/publication material appeared, do not open the bank. If the check is positive, append only to the relevant shard before leaving the context where the example/reasoning is fresh.
 - Accepted intermediate stable/source checkpoints may be committed when the maintainer explicitly authorizes the exact scope; later work treats that commit as the new baseline.
 - Git behavior, preservation, staging, commit, and push authorization are owned by `.agent/COMMIT_RULES.md`.

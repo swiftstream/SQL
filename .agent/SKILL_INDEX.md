@@ -20,6 +20,6 @@ The existing skill package directory/name identifiers retain their historical `s
 
 The three public skills are intended for downstream distribution through the external `swiftstream/skills` collection. Their placement under `.agent/skills/` is source ownership, not a requirement that downstream harnesses discover or install them from this repository-local path. The three contributor skills are repository-local procedures unless a later audited decision changes that classification.
 
-When a durable contract taught by a managed skill changes, review the affected skill before task closure. Change `SKILL.md` only when its guidance actually changes; do not create a parallel hand-maintained procedure copy elsewhere in the repository.
+When a durable contract taught by a managed skill changes, review the affected skill before task closure. Every accepted query-surface wave must record an explicit verdict for each routed managed skill: `UPDATE_REQUIRED` or `NO_CHANGE`. Missing verdicts block closure; required updates must land before the commit gate. Change `SKILL.md` only when its guidance actually changes; do not edit a skill merely to record implementation history.
 
 Create another skill only after repeated work demonstrates a stable, reusable procedure that does not belong in an architecture owner.

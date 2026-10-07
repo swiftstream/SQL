@@ -20,6 +20,7 @@ For non-trivial work, the stronger reasoning/review layer:
 - independently inspects actual source, diff, Git state, and validation after execution;
 - turns audit findings into focused correction task files;
 - synchronizes durable stable documentation after accepted work;
+- before final source/diff audit and commit readiness, records an explicit managed-skill impact verdict (`UPDATE_REQUIRED` or `NO_CHANGE`) for every skill routed by `SKILL_INDEX.md`; missing verdicts block closure and required updates must be completed first;
 - performs the lazy public-content capture check after meaningful work and appends only genuinely valuable README/docs/publication material to the relevant `PUBLIC_CONTENT_IDEAS.md` shard while the context is fresh;
 - keeps commit and push as separate explicit gates.
 
@@ -50,6 +51,7 @@ verify current repository state
 → numbered surgical task files
 → short coordinator prompt
 → autonomous sequential execution + append-only evidence
+→ managed-skill impact check
 → independent source/diff/Git audit
 → numbered correction wave if needed
 → independent re-audit
