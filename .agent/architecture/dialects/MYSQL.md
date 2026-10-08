@@ -86,6 +86,8 @@ EF01-A's dedicated `SQLArray` grammar namespace does not reuse that compatibilit
 
 EF01-B's structural `slice` operand likewise flows through the existing generic subscript renderer. Any MySQL output such as `[lower:upper]` or `[lower:upper:step]` is render-compatibility evidence only, not a native MySQL slice support claim, and must not be remapped to JSON or another function/operator family.
 
+EF01-C ships the shared `ANY(...)` / `All(...)` / `Some(...)` quantified-comparison family for MySQL's actual quantified-subquery grammar. Positive MySQL ownership is limited to quantified subqueries; there is no native PostgreSQL-style ARRAY family, and the DSL must not simulate array quantification through JSON, MEMBER OF, IN, EXISTS, or another semantic rewrite.
+
 The historical quote-wrapped behavior remains a verified compatibility fact for its existing path. A future MySQL audit must classify that behavior carefully before any redesign.
 
 ## MySQL-specific surface

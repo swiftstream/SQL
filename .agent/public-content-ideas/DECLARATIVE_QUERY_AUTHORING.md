@@ -817,10 +817,10 @@ Implemented on the 2.2.0 development line; not yet part of a published 2.2.0 rel
 
 ## Quantified comparisons read like SQL without fighting Swift.Any
 
-Status: architecture-approved
+Status: implemented in the SQL 2.2.0 development line (EF01-C)
 Good for: README | website docs | release notes | article | short post
 
-The maintainer-selected family is intentionally asymmetric. Swift makes bare UpperCamel `Any` and bare `Any.sql(...)` unusable, so SQL `ANY` becomes an exceptional exact-uppercase callable: `ANY(...)` / `ANY { ... }`. `All` and `Some` have no Swift naming conflict and therefore keep normal SwifQL UpperCamel callable style. Do not uppercase `ALL` / `SOME` just for visual symmetry, and do not lowercase `all` / `some` merely because `ANY` needs an exception.
+The shipped family is intentionally asymmetric. Swift makes bare UpperCamel `Any` and bare `Any.sql(...)` unusable, so SQL `ANY` is the exceptional exact-uppercase callable: `ANY(...)` / `ANY { ... }`. `All` and `Some` have no Swift naming conflict and therefore keep normal SQL UpperCamel callable style. Do not uppercase `ALL` / `SOME` just for visual symmetry, and do not lowercase `all` / `some` merely because `ANY` needs an exception.
 
 PostgreSQL ARRAY operand:
 
@@ -875,7 +875,7 @@ DuckDB v1.5.5 native validation confirms quantified comparison against subquerie
 
 ### Publication caveat
 
-Architecture-approved under DESIGN-026 but not yet implemented/shipped. The lowercase family and ARRAY spelling were compiler-probed across Swift 6.2.3, 6.3.3, and 6.4 before acceptance.
+Implemented by EF01-C commit `902b4ec3b885572094b3a5afaf051c9408f2d01d` under DESIGN-026. Validation 01 passed 792 tests / 68 suites on Swiftly 6.3.3, Xcode 26.6 / Swift 6.3.3, and Xcode 27 / Swift 6.4; the normal-import consumer passed all six call families alongside ordinary Swift `Any` and legacy `.any/.all`. Independent source/diff audit was CLEAN 125/125. This is implemented on the 2.2.0 development line and is not yet part of a published 2.2.0 release.
 
 ## Aggregate modifiers stay inside the SQL aggregate they belong to
 

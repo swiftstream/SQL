@@ -916,6 +916,8 @@ EF01-A now ships `SQLArray.subquery(...)` / `SQLArray.subquery { ... }` as the e
 
 EF01-B ships the structural `slice` operand through the existing generic subscript pipeline. Duck exact forms include `[lower:upper]`, `[:upper]`, `[lower:]`, `[:]`, and the positively validated stepped form `[lower:upper:step]`. Bounds remain ordinary expressions with source/bind order lower -> upper -> step; no list-slice helper or alternate function translation is introduced.
 
+EF01-C now ships the shared quantified-comparison surface `ANY(...)` / `ANY { ... }`, `All(...)` / `All { ... }`, and `Some(...)` / `Some { ... }`. It composes the native-positive DUCK-030 operands directly: subqueries, LIST values such as `list_value(...)`, fixed arrays through `array_value(...)`, `ARRAY(subquery)`, and row-valued quantified subqueries. Operand identity remains explicit, SOME remains SOME, and no PostgreSQL ARRAY-element spelling is translated into Duck LIST/fixed-ARRAY syntax.
+
 Ordered-set and hypothetical-set support is intentionally asymmetric:
 
 - `percentile_cont(...) WITHIN GROUP (ORDER BY ...)`, `percentile_disc(...)`, and `mode()` executed successfully;
