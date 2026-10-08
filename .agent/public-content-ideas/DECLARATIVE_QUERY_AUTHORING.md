@@ -757,6 +757,64 @@ The same design deliberately does **not** render PostgreSQL `ARRAY[...]` as Duck
 
 Implemented by EF01-A commit `48c375083c9b063114a413c90c7b66caa4f21ea4` under corrected DESIGN-026. The dedicated non-generic `SQLArray` namespace is required because the earlier constrained stdlib-`Array` namespace fails on supported Swift 6.3.3 lanes. The exact `SQLArray.items(...)` / `SQLArray.items { ... }` and `SQLArray.subquery(...)` / `SQLArray.subquery { ... }` forms pass normal-import validation on Swiftly 6.3.3, Xcode 26.6 / Swift 6.3.3, and Xcode 27 / Swift 6.4. Ordinary Swift `Array`, `PostgresArray`, and `PgArray` remain unaffected. Builder bodies stay as direct trailing closures, and the new exact constructors do not remap PostgreSQL `ARRAY[...]` to Duck LIST/fixed-ARRAY or MySQL JSON semantics.
 
+## Structural SQL slices stay inside the existing subscript grammar
+
+Status: implemented in the SQL 2.2.0 development line (EF01-B)
+Good for: README | website docs | release notes | article | short post
+
+### Why users should care
+
+SQL slicing is not a separate query feature. The lowercase structural `slice` value owns only the bracket interior, while the existing subscript implementation continues to own brackets, chaining, PostgreSQL base grouping, preparation, and bind collection.
+
+Exact forms:
+
+```swift
+Scores.$values[slice(2, 4)]
+Scores.$values[slice(through: 4)]
+Scores.$values[slice(from: 2)]
+Scores.$values[slice()]
+```
+
+```sql
+"scores"."values"[2:4]
+"scores"."values"[:4]
+"scores"."values"[2:]
+"scores"."values"[:]
+```
+
+DuckDB also has the positively validated stepped form:
+
+```swift
+Scores.$values[slice(2, 8, step: 2)]
+```
+
+```sql
+"scores"."values"[2:8:2]
+```
+
+General-expression bases reuse the existing PostgreSQL grouping rule rather than inventing slice-specific rendering:
+
+```swift
+Fn.arrayAgg(Score.$value)[slice(2, 4)]
+```
+
+```sql
+(array_agg("Score"."value"))[2:4]
+```
+
+Bounds remain ordinary SQL expressions and preserve bind order lower -> upper -> step. PostgreSQL/MySQL stepped output may be mechanically renderable, but that is not a support claim and the DSL does not translate it to another function or operator family.
+
+### Evidence / provenance
+
+- `.agent/architecture/DSL_DESIGN_AND_UX.md` DESIGN-026 / DESIGN-037
+- EF01-B implementation commit `2140017cacc3589e58d341d7b81bb786cd1fd87e`
+- Validation 01: 782 tests / 67 suites on all three current Mac lanes
+- independent source/diff audit: CLEAN 102/102
+
+### Publication caveat
+
+Implemented on the 2.2.0 development line; not yet part of a published 2.2.0 release.
+
 ## Quantified comparisons read like SQL without fighting Swift.Any
 
 Status: architecture-approved

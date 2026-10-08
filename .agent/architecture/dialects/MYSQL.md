@@ -84,6 +84,8 @@ The current MySQL dialect wraps the historical `SQLPartArray` array-output path 
 
 EF01-A's dedicated `SQLArray` grammar namespace does not reuse that compatibility path. Its exact `ARRAY[...]` / `ARRAY(subquery)` parts may mechanically prepare under `.mysql`, but that is not a claim of native MySQL array semantics and must not be translated to JSON or another MySQL construct.
 
+EF01-B's structural `slice` operand likewise flows through the existing generic subscript renderer. Any MySQL output such as `[lower:upper]` or `[lower:upper:step]` is render-compatibility evidence only, not a native MySQL slice support claim, and must not be remapped to JSON or another function/operator family.
+
 The historical quote-wrapped behavior remains a verified compatibility fact for its existing path. A future MySQL audit must classify that behavior carefully before any redesign.
 
 ## MySQL-specific surface

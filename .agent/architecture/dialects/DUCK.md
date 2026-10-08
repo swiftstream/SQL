@@ -914,6 +914,8 @@ This does **not** make PostgreSQL `ARRAY[...]`, Duck LIST literals, and Duck fix
 
 EF01-A now ships `SQLArray.subquery(...)` / `SQLArray.subquery { ... }` as the exact `ARRAY(subquery)` form covered by the positive Duck evidence above. `SQLArray.items(...)` / `SQLArray.items { ... }` remain exact `ARRAY[...]` grammar and may mechanically prepare under `.duck`, but this owner does not claim that spelling as Duck LIST/fixed-ARRAY support and it must not be remapped to `[...]`, `list_value(...)`, or `array_value(...)`.
 
+EF01-B ships the structural `slice` operand through the existing generic subscript pipeline. Duck exact forms include `[lower:upper]`, `[:upper]`, `[lower:]`, `[:]`, and the positively validated stepped form `[lower:upper:step]`. Bounds remain ordinary expressions with source/bind order lower -> upper -> step; no list-slice helper or alternate function translation is introduced.
+
 Ordered-set and hypothetical-set support is intentionally asymmetric:
 
 - `percentile_cont(...) WITHIN GROUP (ORDER BY ...)`, `percentile_disc(...)`, and `mode()` executed successfully;
