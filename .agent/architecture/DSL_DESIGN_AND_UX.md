@@ -2185,7 +2185,7 @@ Therefore bare UpperCamel `Any` is not a candidate for the final public API. Sub
 
 ### Next expression-design frontier
 
-Expression Frontier 01 is complete under DESIGN-025 and DESIGN-026. The next focused design pass owns JSON/JSONB operators and SQL/JSON paths, PostgreSQL ranges/multiranges, COLLATE, AT TIME ZONE, and remaining dialect/operator families. QUERY-RB-019 remains only an implementation/extensibility decision for the eventual generic custom-aggregate builder entry point and does not block the next expression frontier.
+Expression Frontier 01 is architecture-complete under DESIGN-025 and DESIGN-026. The next focused design pass owns JSON/JSONB operators and SQL/JSON paths, PostgreSQL ranges/multiranges, COLLATE, AT TIME ZONE, and remaining dialect/operator families. The former aggregate-extensibility question QUERY-RB-019 is subsequently closed by DESIGN-036 through `Fn.aggregate` and no longer remains an open design gate.
 
 ## DESIGN-025 - Aggregate argument grammar is structurally owned by the aggregate call
 
@@ -2466,7 +2466,7 @@ The eventual aggregate builder must:
 - preserve source-order binding through regular/direct arguments, aggregate-local ordering expressions, FILTER predicates, and later expression continuations;
 - keep query-level SELECT DISTINCT / DISTINCT ON ownership separate from aggregate DISTINCT;
 - preserve every established concise `Fn.*`, `Distinct`, `.filter`, and `.over` compatibility surface unless a separately approved defect correction changes one;
-- provide a narrow downstream/custom aggregate extension path without forcing built-in aggregate calls through a generic wrapper. Exact spelling of that generic extension entry remains `QUERY-RB-019`;
+- provide a narrow downstream/custom aggregate extension path without forcing built-in aggregate calls through a generic wrapper. DESIGN-036 subsequently closes that generic extension entry as `Fn.aggregate`;
 - validate support per exact aggregate/dialect rather than treating the existence of the builder grammar as a support claim for every function or database.
 
 ## DESIGN-026 - ARRAY constructors and quantified comparisons keep exact SQL identity
@@ -2475,14 +2475,14 @@ Expression Frontier 01 closes the public semantic design for SQL ARRAY construct
 
 Production implementation remains a later planned/audited wave. All constructs must lower into the existing parts/preparation/binding and structural-frame architecture rather than creating a second expression AST or renderer.
 
-### Overlapping Swift nominal types become grammar-role namespaces
+### Grammar-role namespaces preserve Swift nominal identities
 
-When an SQL concept collides with an existing normal Swift nominal type, do not shadow that type and do not fall back to a generic `.sql` escape if the SQL grammar has meaningful distinct forms. Preserve the real Swift type as a namespace and name each member for the grammar role it constructs.
+When an SQL concept overlaps a normal Swift nominal type, do not shadow that Swift type and do not fall back to a generic `.sql` escape when the SQL grammar has meaningful distinct forms. Reuse the real Swift nominal as a namespace only when that static-member lookup is compiler-stable on every supported toolchain. When generic inference makes that mechanism unusable, use a dedicated non-generic SQL grammar namespace and keep the role distinction in member names.
 
 For SQL ARRAY, the maintainer-selected target is:
 
 ```swift
-Array.items {
+SQLArray.items {
     1
     2
     User.$score
@@ -2498,13 +2498,13 @@ ARRAY[1, 2, "User"."score"]
 with concise form:
 
 ```swift
-Array.items(1, 2, User.$score)
+SQLArray.items(1, 2, User.$score)
 ```
 
 The separate ARRAY(subquery) grammar uses a separate role member:
 
 ```swift
-Array.subquery {
+SQLArray.subquery {
     Select { Order.$id }
     From { Order.table }
 }
@@ -2514,14 +2514,14 @@ rather than a labeled closure such as `Array.sql(subquery: { ... })`.
 
 This follows the general result-builder UX rule: when a closure is the primary semantic body, prefer a direct trailing closure. If a label exists only to distinguish grammar branches, move that distinction into the function/member name rather than producing `Something(label: { ... })` with stacked parentheses.
 
-Final cross-toolchain compiler evidence proves the required mechanism and exact spelling: a constrained extension of the real standard-library `Array`, `extension Array where Element == Never`, exposes standalone-safe `Array.items(...)` / `Array.items { ... }` and `Array.subquery(...)` / `Array.subquery { ... }` without disturbing ordinary `Array<Int>`, `Array(repeating:count:)`, sequence construction, inferred literals, or qualified `Swift.Array` source. All four forms coexist cleanly in one imported client across Swift 6.2.3, Xcode/Swiftly 6.3.3, and Swift 6.4. An unconstrained extension remains unsuitable because `Element` cannot be inferred.
+Fresh current-baseline compiler evidence supersedes the earlier constrained-`Array` mechanism. The required Swift 6.3.3 lanes still report `generic parameter 'Element' could not be inferred` for same-module `Array.items(...)`, while Swift 6.4 accepts it. The canonical namespace is therefore the dedicated non-generic `SQLArray`. Normal-import compiler evidence validates `SQLArray.items(...)`, `SQLArray.items { ... }`, `SQLArray.subquery(...)`, and `SQLArray.subquery { ... }` on Swift 6.3.3 and Swift 6.4 while ordinary Swift arrays and legacy `PostgresArray` / `PgArray` remain unaffected.
 
 Free SQL-constructor `Array(...)`, bare `Array { ... }`, `Array(elements: { ... })`, and generic `Array.sql...` forms are non-canonical under this rule.
 
 ### Dynamic ARRAY elements preserve source and bind order
 
 ```swift
-Array.items {
+SQLArray.items {
     first
 
     if let middle {
@@ -2553,7 +2553,7 @@ Control flow controls child presence only. It does not synthesize NULLs or any o
 An element builder with no surviving children renders an empty constructor:
 
 ```swift
-Array.items {}
+SQLArray.items {}
 ```
 
 ```sql
@@ -2564,7 +2564,7 @@ It does not disappear. PostgreSQL requires type context for an untyped empty ARR
 
 ```swift
 Cast(
-    Array.items {},
+    SQLArray.items {},
     .integerArray
 )
 ```
@@ -2580,13 +2580,13 @@ The ARRAY node must not infer a type from unrelated query context or inject a sy
 Preferred compositional form:
 
 ```swift
-Array.items {
-    Array.items {
+SQLArray.items {
+    SQLArray.items {
         1
         2
     }
 
-    Array.items {
+    SQLArray.items {
         3
         4
     }
@@ -2596,9 +2596,9 @@ Array.items {
 Concise shorthand:
 
 ```swift
-Array.items(
-    Array.items(1, 2),
-    Array.items(3, 4)
+SQLArray.items(
+    SQLArray.items(1, 2),
+    SQLArray.items(3, 4)
 )
 ```
 
@@ -2618,7 +2618,7 @@ Do not erase inner ARRAY constructors merely because PostgreSQL also accepts sho
 Builder-first nested-statement form:
 
 ```swift
-Array.subquery {
+SQLArray.subquery {
     Select {
         Order.$id
     }
@@ -2646,7 +2646,7 @@ ARRAY(
 An already-formed `SQLContent` / `SQLQuery` value uses:
 
 ```swift
-Array.subquery(orderIds)
+SQLArray.subquery(orderIds)
 ```
 
 No mandatory `Subquery(...)` wrapper is introduced. Separate grammar-role members keep `ARRAY[...]` and `ARRAY(subquery)` ownership unambiguous without labeled builder closures or rendered-token inspection.
@@ -2667,7 +2667,7 @@ targeting PostgreSQL/Duck collection syntax:
 "User"."scores"[2]
 ```
 
-The verified PostgreSQL requirement to parenthesize general expression bases, for example `(array_agg(...))[1]`, remains separate TECH_DEBT and must be corrected structurally rather than worked around by the declarative ARRAY API.
+PostgreSQL general-expression subscript grouping is already established behavior: general bases such as `array_agg(...)` are parenthesized structurally, while proven column/completed-subscript bases remain direct. ARRAY implementation must compose through that existing subscript boundary rather than work around or duplicate it.
 
 ### Slice is a lowercase structural subscript operand
 
@@ -2790,7 +2790,7 @@ Do not require module qualification merely to spell SQL ANY. This is a narrow la
 
 The naming rule is therefore:
 
-- when an SQL concept collides with a normal Swift nominal type, use that real type as a namespace and choose a member that names the concrete SQL grammar role;
+- when an SQL concept overlaps a normal Swift nominal type, reuse that real type as a namespace only when static-member lookup is compiler-stable on every supported lane; otherwise use a dedicated SQL grammar namespace and name members for the concrete grammar roles;
 - when a closure is the primary semantic body, prefer a direct trailing closure and avoid `Something(label: { ... })` if the grammar distinction can live in the callable/member name;
 - when an exact SQL keyword collides with a fundamental Swift language construct and neither ordinary UpperCamel spelling nor clean namespace-member lookup is possible, an exact uppercase SQL callable is permitted as an explicit exception;
 - do not propagate that exception to neighboring SQL names that have no Swift conflict.
@@ -2832,7 +2832,7 @@ PostgreSQL ARRAY example:
 
 ```swift
 User.$role == ANY(
-    Array.items {
+    SQLArray.items {
         Role.admin
         Role.moderator
     }
@@ -2842,7 +2842,7 @@ User.$role == ANY(
 Concise shorthand:
 
 ```swift
-User.$role == ANY(Array.items(.admin, .moderator))
+User.$role == ANY(SQLArray.items(.admin, .moderator))
 ```
 
 Prepared PostgreSQL:
@@ -2951,12 +2951,12 @@ Shared Swift semantic nodes are justified only where the SQL ownership is genuin
 The following former open decisions are resolved by DESIGN-026:
 
 - QUERY-RB-015: UpperCamel bare `Any` rejected by compiler evidence;
-- QUERY-RB-016: SQL ARRAY namespace uses compiler-validated grammar-role members on a constrained extension of the real Swift `Array`: `Array.items(...)` / `Array.items { ... }` for `ARRAY[...]`, and `Array.subquery(...)` / `Array.subquery { ... }` for `ARRAY(subquery)`;
+- QUERY-RB-016: SQL ARRAY namespace uses the compiler-validated dedicated non-generic `SQLArray` grammar namespace: `SQLArray.items(...)` / `SQLArray.items { ... }` for `ARRAY[...]`, and `SQLArray.subquery(...)` / `SQLArray.subquery { ... }` for `ARRAY(subquery)`; the earlier constrained stdlib-`Array` mechanism is rejected on the supported Swift 6.3.3 baseline;
 - QUERY-RB-017: no new misleading alias for collection `&&` / `||`; preserve boolean operators and use exact raw operator composition;
 - QUERY-RB-018: structural lowercase `slice(...)` owns bracket-slice syntax, with Duck-only step capability explicit;
 - QUERY-RB-020: bare UpperCamel `Any` and bare `Any.sql(...)` are compiler-rejected; compiler-validated public spelling is exceptional uppercase `ANY(...)` / `ANY { ... }`, while non-conflicting `All(...)` / `All { ... }` and `Some(...)` / `Some { ... }` retain normal SQL casing.
 
-QUERY-RB-019 remains an implementation/extensibility decision for the eventual generic custom-aggregate builder entry point. It does not block the accepted Expression Frontier 01 semantics or the start of Expression Frontier 02.
+QUERY-RB-019 is subsequently closed by DESIGN-036: `Fn.aggregate` is the narrow generic downstream/custom aggregate-call extension point.
 
 ## DESIGN-027 - JSON/SQL-JSON, exact binary operators, ranges, COLLATE, and time-zone expressions preserve grammar ownership
 
@@ -4728,7 +4728,7 @@ Column<String>(name: "name", type: .text)
 
 An unconstrained `extension Column` is not sufficient because bare `Column.definition(...)` leaves `Value` uninferred. An artificial public sentinel specialization would work but is rejected as unnecessary grammar coupling.
 
-This follows DESIGN-026's existing rule for overlapping nominal types: preserve the real nominal type as a namespace and name the concrete grammar role on it.
+This follows the compiler-validated nominal-namespace rule: reuse the real nominal type only when its constrained static-member lookup is stable on every supported toolchain, and name the concrete grammar role on it. DESIGN-026's SQL ARRAY correction demonstrates the fallback when that lookup is not stable: use a dedicated SQL grammar namespace instead.
 
 ### `Column.definition` is not a model/DDL column
 
@@ -5124,7 +5124,7 @@ Typed Record / Table-Function Frontier 06 is architecture-complete under DESIGN-
 
 QUERY-RB-014 is closed.
 
-Production implementation remains unauthorized. Only the aggregate-extensibility decision QUERY-RB-019 remains open before the declarative-query architecture can enter implementation-plan freeze.
+At this historical closure point production implementation remained unauthorized and aggregate extensibility was the final open design question. DESIGN-036 immediately below subsequently closes QUERY-RB-019 before implementation-plan freeze.
 
 ## DESIGN-036 - `Fn.aggregate` is the narrow generic aggregate-call extension point
 
