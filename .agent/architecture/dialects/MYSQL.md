@@ -80,11 +80,11 @@ Do not change this behavior during unrelated Duck/Swift 6 work.
 
 ### MYSQL-006 - Array behavior is historical compatibility surface
 
-The current MySQL dialect wraps SQL array output with single quotes.
+The current MySQL dialect wraps the historical `SQLPartArray` array-output path with single quotes.
 
-This is a verified historical implementation fact, not a claim that MySQL has PostgreSQL/Duck-style native array semantics.
+EF01-A's dedicated `SQLArray` grammar namespace does not reuse that compatibility path. Its exact `ARRAY[...]` / `ARRAY(subquery)` parts may mechanically prepare under `.mysql`, but that is not a claim of native MySQL array semantics and must not be translated to JSON or another MySQL construct.
 
-A future MySQL audit must classify this behavior carefully before any redesign.
+The historical quote-wrapped behavior remains a verified compatibility fact for its existing path. A future MySQL audit must classify that behavior carefully before any redesign.
 
 ## MySQL-specific surface
 

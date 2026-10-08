@@ -912,6 +912,8 @@ Typed empty LIST semantics matched quantified SQL expectations in the pinned run
 
 This does **not** make PostgreSQL `ARRAY[...]`, Duck LIST literals, and Duck fixed ARRAY constructors one portable constructor. The public DSL must preserve their exact SQL/type identities while allowing the same quantified-comparison semantic family to accept dialect-supported operand forms.
 
+EF01-A now ships `SQLArray.subquery(...)` / `SQLArray.subquery { ... }` as the exact `ARRAY(subquery)` form covered by the positive Duck evidence above. `SQLArray.items(...)` / `SQLArray.items { ... }` remain exact `ARRAY[...]` grammar and may mechanically prepare under `.duck`, but this owner does not claim that spelling as Duck LIST/fixed-ARRAY support and it must not be remapped to `[...]`, `list_value(...)`, or `array_value(...)`.
+
 Ordered-set and hypothetical-set support is intentionally asymmetric:
 
 - `percentile_cont(...) WITHIN GROUP (ORDER BY ...)`, `percentile_disc(...)`, and `mode()` executed successfully;

@@ -80,7 +80,9 @@ Do not silently change it during unrelated Duck/Swift 6 work. A future PostgreSQ
 
 The current dialect owns PostgreSQL array rendering and special empty-array rendering.
 
-Historical public helpers include `PostgresArray` and `PgArray`-style PostgreSQL-specific surface. These are compatibility surface and are not naming precedent for new dialect APIs.
+EF01-A also ships the exact SQL grammar namespace `SQLArray`. `SQLArray.items(...)` / `SQLArray.items { ... }` emit PostgreSQL `ARRAY[...]`, including exact empty `ARRAY[]`, while `SQLArray.subquery(...)` / `SQLArray.subquery { ... }` emit exact `ARRAY(subquery)`. This API composes ordinary SQL parts and deliberately does not reuse the historical dialect-polymorphic `SQLPartArray` path.
+
+Historical public helpers include `PostgresArray` and `PgArray`-style PostgreSQL-specific surface. These remain compatibility surface and are not naming precedent for new dialect APIs.
 
 ## PostgreSQL-specific surface
 

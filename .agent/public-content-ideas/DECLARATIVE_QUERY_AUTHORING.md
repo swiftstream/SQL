@@ -688,17 +688,17 @@ DESIGN-024 is architecture-approved target UX, not shipped implementation. Final
 
 ## Exact ARRAY authoring without a fake cross-database collection abstraction
 
-Status: architecture-approved
+Status: implemented in the SQL 2.2.0 development line (EF01-A)
 Good for: README | website docs | release notes | article
 
 ### Why users should care
 
-The declarative expression layer is being designed around the SQL construct the user actually writes rather than a generic “collection” abstraction that silently chooses different database features.
+The declarative expression layer uses the SQL construct the user actually writes rather than a generic “collection” abstraction that silently chooses different database features.
 
-For PostgreSQL, the preferred builder-first target is:
+For PostgreSQL, the builder-first form is:
 
 ```swift
-Array.items {
+SQLArray.items {
     1
     2
     User.$score
@@ -708,7 +708,7 @@ Array.items {
 with concise shorthand:
 
 ```swift
-Array.items(1, 2, User.$score)
+SQLArray.items(1, 2, User.$score)
 ```
 
 both targeting:
@@ -720,9 +720,9 @@ ARRAY[1, 2, "User"."score"]
 Nested constructors remain visibly compositional:
 
 ```swift
-Array.items {
-    Array.items { 1; 2 }
-    Array.items { 3; 4 }
+SQLArray.items {
+    SQLArray.items { 1; 2 }
+    SQLArray.items { 3; 4 }
 }
 ```
 
@@ -736,7 +736,7 @@ ARRAY[
 and a nested statement uses the real `ARRAY(subquery)` grammar rather than a synthetic `Subquery` wrapper:
 
 ```swift
-Array.subquery {
+SQLArray.subquery {
     Select { Order.$id }
     From { Order.table }
     Where { Order.$userId == User.$id }
@@ -755,7 +755,7 @@ The same design deliberately does **not** render PostgreSQL `ARRAY[...]` as Duck
 
 ### Publication caveat
 
-Architecture-approved under final DESIGN-026. The exact `Array.items(...)` / `Array.items { ... }` and `Array.subquery(...)` / `Array.subquery { ... }` forms are compiler-validated across Swift 6.2.3, Xcode/Swiftly 6.3.3, and Swift 6.4. The real standard-library `Array` remains the namespace; members name the concrete SQL grammar role instead of using a generic `.sql` escape. Builder bodies stay as direct trailing closures, avoiding `Something(label: { ... })` punctuation noise. Free SQL-constructor `Array(...)`, bare `Array { ... }`, `Array(elements: { ... })`, and generic `Array.sql...` forms are non-canonical.
+Implemented by EF01-A commit `48c375083c9b063114a413c90c7b66caa4f21ea4` under corrected DESIGN-026. The dedicated non-generic `SQLArray` namespace is required because the earlier constrained stdlib-`Array` namespace fails on supported Swift 6.3.3 lanes. The exact `SQLArray.items(...)` / `SQLArray.items { ... }` and `SQLArray.subquery(...)` / `SQLArray.subquery { ... }` forms pass normal-import validation on Swiftly 6.3.3, Xcode 26.6 / Swift 6.3.3, and Xcode 27 / Swift 6.4. Ordinary Swift `Array`, `PostgresArray`, and `PgArray` remain unaffected. Builder bodies stay as direct trailing closures, and the new exact constructors do not remap PostgreSQL `ARRAY[...]` to Duck LIST/fixed-ARRAY or MySQL JSON semantics.
 
 ## Quantified comparisons read like SQL without fighting Swift.Any
 
@@ -768,7 +768,7 @@ PostgreSQL ARRAY operand:
 
 ```swift
 User.$role == ANY(
-    Array.items {
+    SQLArray.items {
         Role.admin
         Role.moderator
     }
@@ -778,7 +778,7 @@ User.$role == ANY(
 Concise shorthand:
 
 ```swift
-User.$role == ANY(Array.items(.admin, .moderator))
+User.$role == ANY(SQLArray.items(.admin, .moderator))
 ```
 
 Prepared SQL:
