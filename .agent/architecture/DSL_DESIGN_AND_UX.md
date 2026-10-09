@@ -3061,7 +3061,6 @@ Passing(value, as: "name")
 Returning(.integer)
 Returning(.jsonb)
 Returning(.text, format: .json)
-Returning(.text, format: .jsonUTF8)
 
 NullOnEmpty()
 ErrorOnEmpty()
@@ -3129,7 +3128,7 @@ PostgreSQL SQL/JSON path operands for `JSON_EXISTS`, `JSON_QUERY`, and `JSON_VAL
 
 `Passing(value, as: name)` remains an ordinary bindable PostgreSQL SQL/JSON expression role. However, an unconstrained PASSING marker may infer as `text`, which can silently change numeric JSONPath comparison semantics. Implementation planning and native validation must preserve the intended parameter type rather than treating successful binding alone as semantic proof.
 
-RETURNING and option-node membership is owner-specific. In verified PostgreSQL grammar, JSON_QUERY admits tested FORMAT JSON forms while JSON_VALUE rejects FORMAT JSON. Duck same-name functions do not inherit PostgreSQL RETURNING/PASSING/ON EMPTY/ON ERROR grammar. MySQL JSON_VALUE owns its own RETURNING / ON EMPTY / ON ERROR grammar and no PostgreSQL PASSING clause.
+RETURNING and option-node membership is owner-specific. In verified PostgreSQL grammar, JSON_QUERY admits `RETURNING TEXT FORMAT JSON`, while `RETURNING TEXT FORMAT JSON ENCODING UTF8` is native-invalid with SQLSTATE `0A000` because encoded JSON output requires `BYTEA`. The verified `RETURNING BYTEA FORMAT JSON ENCODING UTF8` form is future evidence only and is deferred from EF02; EF02 `JSONReturningFormat` therefore contains only `.json`, and no silent `text -> BYTEA` translation is allowed. JSON_VALUE rejects FORMAT JSON entirely. Duck same-name functions do not inherit PostgreSQL RETURNING/PASSING/ON EMPTY/ON ERROR grammar. MySQL JSON_VALUE owns its own RETURNING / ON EMPTY / ON ERROR grammar and no PostgreSQL PASSING clause.
 
 Contextual literal encoding is a security boundary. Current PostgreSQL/MySQL `safeValue(String)` / `stringValue(_:)` is not accepted as the implementation mechanism for untrusted contextual String values until escaping correctness is proven. At minimum implementation validation must cover apostrophes, repeated/leading/trailing apostrophes, SQL-looking delimiter content, Unicode-adjacent apostrophes, `notBound` observation, omission from split values, and unchanged ordinary binding outside parser-restricted roles.
 
