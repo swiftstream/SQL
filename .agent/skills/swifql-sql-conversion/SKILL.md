@@ -169,6 +169,25 @@ If no verified declarative helper exists but the fluent/core API supports the co
 
 If no typed/core representation exists, keep only the unsupported **static structure** in the existing raw structural escape hatch, for example `SQL.raw("...")` or an existing query's `.raw("...")`, and clearly label that boundary.
 
+For resolved versions that expose aggregate argument builders, convert aggregate-local DISTINCT and ORDER BY structurally instead of treating the whole aggregate call as raw SQL. For example:
+
+```sql
+array_agg(DISTINCT value ORDER BY value DESC)
+```
+
+maps to:
+
+```swift
+Fn.arrayAgg {
+    Distinct {
+        Path.Column("value")
+    }
+    OrderBy(Path.Column("value"), .desc)
+}
+```
+
+Keep aggregate-local `OrderBy` outside the `Distinct { ... }` body. Ordinary arguments remain normal `SQLable` inputs, so runtime values keep their normal binding behavior. Existing concise aggregate overloads remain valid; use the builder form when the SQL grammar actually needs multiple aggregate arguments, DISTINCT ownership, local ordering, conditionals, loops, or other builder composition. Verify availability in the resolved package before choosing this representation.
+
 Do not invent a DSL symbol.
 
 ### What to return

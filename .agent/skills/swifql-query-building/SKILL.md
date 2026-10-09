@@ -47,4 +47,19 @@ Use direct `SQL.<fluent>` for fluent construction and `SQL { ... }` for declarat
 
 The runtime `email` must remain a value/bind input. Do not rewrite it into raw SQL merely to reproduce a desired string.
 
+For package versions that expose aggregate argument builders, keep aggregate-local grammar inside the function call rather than falling back to raw SQL. The ordinary argument body accepts normal `SQLable` expressions, including existential values such as `SQL.asterisk`. Use `Distinct { ... }` for aggregate DISTINCT ownership, and keep aggregate-local `OrderBy(...)` as a sibling after the ordinary arguments or after `Distinct`, never inside the `Distinct { ... }` body:
+
+```swift
+let value: any SQLable = Path.Column("value")
+
+let aggregate = Fn.arrayAgg {
+    Distinct {
+        value
+    }
+    OrderBy(value, .desc)
+}
+```
+
+Existing concise aggregate overloads remain valid. `Fn.count()` renders `count(*)`; `Fn.count { SQL.asterisk }` also renders `count(*)`; an empty builder body `Fn.count {}` renders `count()`. Verify these spellings against the resolved package version before using them.
+
 When translating SQL to the DSL, preserve statement structure first, then verify the prepared output and bind order for the target dialect. If the installed version does not expose a clean API for an uncommon construct, inspect that version's source/tests and use only APIs that actually exist rather than guessing a newer or dialect-specific helper.

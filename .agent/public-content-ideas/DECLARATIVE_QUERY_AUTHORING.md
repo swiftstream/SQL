@@ -879,7 +879,7 @@ Implemented by EF01-C commit `902b4ec3b885572094b3a5afaf051c9408f2d01d` under DE
 
 ## Aggregate modifiers stay inside the SQL aggregate they belong to
 
-Status: architecture-approved
+Status: implemented in source (local commit `50dfa502c6bc3e4c4b458d1c3e948b9bf74fe832`, not yet pushed/released)
 Good for: README | website docs | release notes | article | short post
 
 ### Why users should care
@@ -936,7 +936,7 @@ WITHIN GROUP (
 
 ### Publication caveat
 
-DESIGN-025 is architecture-approved target UX, not implemented/shipped result-builder source. Dialect capability remains exact: PostgreSQL and Duck differ in which aggregate modifiers may be combined with window `OVER`, and MySQL aggregate-local ordering is function-specific rather than a universal PostgreSQL-style aggregate grammar.
+Implemented by EF01-D commit `50dfa502c6bc3e4c4b458d1c3e948b9bf74fe832` under DESIGN-025 and DESIGN-036. Correction 02 validation passed 807 tests / 69 suites on Swiftly 6.3.3, Xcode 26.6 / Swift 6.3.3, and Xcode 27 / Swift 6.4; all four local compile-negative grammar fixtures rejected on both Swift 6.3.3 and Swift 6.4, the external normal-import consumer passed all three lanes, the six-of-six managed-skill gate passed with five required updates and one no-change verdict, and the independent source/diff/evidence audit was CLEAN 105/105. This is implemented on the 2.2.0 development line and is not yet part of a published 2.2.0 release. Dialect capability remains exact: PostgreSQL and Duck differ in which aggregate modifiers may be combined with window `OVER`, and MySQL aggregate-local ordering is function-specific rather than a universal PostgreSQL-style aggregate grammar.
 
 ## Sibling `JOIN` matches nested `JOIN` (dual form)
 

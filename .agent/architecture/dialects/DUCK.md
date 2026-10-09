@@ -918,6 +918,8 @@ EF01-B ships the structural `slice` operand through the existing generic subscri
 
 EF01-C now ships the shared quantified-comparison surface `ANY(...)` / `ANY { ... }`, `All(...)` / `All { ... }`, and `Some(...)` / `Some { ... }`. It composes the native-positive DUCK-030 operands directly: subqueries, LIST values such as `list_value(...)`, fixed arrays through `array_value(...)`, `ARRAY(subquery)`, and row-valued quantified subqueries. Operand identity remains explicit, SOME remains SOME, and no PostgreSQL ARRAY-element spelling is translated into Duck LIST/fixed-ARRAY syntax.
 
+EF01-D now ships the shared aggregate-argument builder surface and generic `Fn.aggregate` extension point through ordinary SQL-part composition. The native-positive `array_agg(DISTINCT x ORDER BY x DESC)` shape can therefore be expressed structurally without a Duck-specific wrapper, while the pinned runtime's binder rule still applies: with aggregate DISTINCT, an ORDER BY expression not present in the DISTINCT argument list is database-rejected. Mechanical rendering of another aggregate/modifier combination is not a Duck support claim.
+
 Ordered-set and hypothetical-set support is intentionally asymmetric:
 
 - `percentile_cont(...) WITHIN GROUP (ORDER BY ...)`, `percentile_disc(...)`, and `mode()` executed successfully;

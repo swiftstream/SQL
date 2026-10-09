@@ -88,6 +88,8 @@ EF01-B's structural `slice` operand likewise flows through the existing generic 
 
 EF01-C ships the shared `ANY(...)` / `All(...)` / `Some(...)` quantified-comparison family for MySQL's actual quantified-subquery grammar. Positive MySQL ownership is limited to quantified subqueries; there is no native PostgreSQL-style ARRAY family, and the DSL must not simulate array quantification through JSON, MEMBER OF, IN, EXISTS, or another semantic rewrite.
 
+EF01-D ships the shared aggregate-argument builder surface and generic `Fn.aggregate` extension point through ordinary SQL-part composition. This is a structural composition capability, not a claim that MySQL accepts PostgreSQL-style aggregate-local ordering for every aggregate identity. MySQL aggregate-local ordering remains function-specific; callers must use only grammar supported by the selected MySQL function, and the DSL must not translate unsupported aggregate syntax into a different function, JSON construct, or semantic rewrite.
+
 The historical quote-wrapped behavior remains a verified compatibility fact for its existing path. A future MySQL audit must classify that behavior carefully before any redesign.
 
 ## MySQL-specific surface
