@@ -20,6 +20,12 @@ extension Fn {
         build(.arrayAgg, body: aggregateExpression.parts)
     }
 
+    public static func arrayAgg(
+        @AggregateArgumentBuilder _ body: () -> AggregateArguments
+    ) -> SQLable {
+        aggregate(.arrayAgg, body)
+    }
+
     @available(*, deprecated, renamed: "arrayAgg(_:)")
     public static func array_agg(_ aggregateExpression: SQLable) -> SQLable {
         arrayAgg(aggregateExpression)

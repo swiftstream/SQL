@@ -462,6 +462,12 @@ extension Fn {
         return build(.stringAgg, body: parts)
     }
 
+    public static func stringAgg(
+        @AggregateArgumentBuilder _ body: () -> AggregateArguments
+    ) -> SQLable {
+        aggregate(.stringAgg, body)
+    }
+
     @available(*, deprecated, renamed: "stringAgg(_:_:)")
     public static func string_agg(_ string: SQLable, _ separator: SQLable) -> SQLable {
         stringAgg(string, separator)

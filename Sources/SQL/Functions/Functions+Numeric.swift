@@ -41,6 +41,12 @@ extension Fn {
     public static func avg(_ quantity: SQLable) -> SQLable {
         build(.avg, body: quantity.parts)
     }
+
+    public static func avg(
+        @AggregateArgumentBuilder _ body: () -> AggregateArguments
+    ) -> SQLable {
+        aggregate(.avg, body)
+    }
     
     /// Returns the smallest integer value that is greater than or equal to a number
     /// [Learn more →](https://www.techonthenet.com/postgresql/functions/ceil.php)
@@ -58,6 +64,12 @@ extension Fn {
     /// [Learn more →](https://www.techonthenet.com/postgresql/functions/count.php)
     public static func count(_ expression: SQLable) -> SQLable {
         build(.count, body: expression.parts)
+    }
+
+    public static func count(
+        @AggregateArgumentBuilder _ body: () -> AggregateArguments
+    ) -> SQLable {
+        aggregate(.count, body)
     }
     
     /// Used for integer division where n is divided by m and an integer value is returned
@@ -105,11 +117,23 @@ extension Fn {
     public static func max(_ aggregateExpression: SQLable) -> SQLable {
         build(.max, body: aggregateExpression.parts)
     }
+
+    public static func max(
+        @AggregateArgumentBuilder _ body: () -> AggregateArguments
+    ) -> SQLable {
+        aggregate(.max, body)
+    }
     
     /// Returns the minimum value of an expression
     /// [Learn more →](https://www.techonthenet.com/postgresql/functions/min.php)
     public static func min(_ aggregateExpression: SQLable) -> SQLable {
         build(.min, body: aggregateExpression.parts)
+    }
+
+    public static func min(
+        @AggregateArgumentBuilder _ body: () -> AggregateArguments
+    ) -> SQLable {
+        aggregate(.min, body)
     }
     
     /// Returns the remainder of n divided by m
@@ -179,5 +203,11 @@ extension Fn {
     /// [Learn more →](https://www.techonthenet.com/postgresql/functions/sum.php)
     public static func sum(_ aggregateExpression: SQLable) -> SQLable {
         build(.sum, body: aggregateExpression.parts)
+    }
+
+    public static func sum(
+        @AggregateArgumentBuilder _ body: () -> AggregateArguments
+    ) -> SQLable {
+        aggregate(.sum, body)
     }
 }

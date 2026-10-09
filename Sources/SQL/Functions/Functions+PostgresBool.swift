@@ -22,6 +22,12 @@ extension Fn {
         build(.boolAnd, body: aggregateExpression.parts)
     }
 
+    public static func boolAnd(
+        @AggregateArgumentBuilder _ body: () -> AggregateArguments
+    ) -> SQLable {
+        aggregate(.boolAnd, body)
+    }
+
     @available(*, deprecated, renamed: "boolAnd(_:)")
     public static func bool_and(_ aggregateExpression: SQLable) -> SQLable {
         boolAnd(aggregateExpression)
@@ -29,6 +35,12 @@ extension Fn {
 
     public static func boolOr(_ aggregateExpression: SQLable) -> SQLable {
         build(.boolOr, body: aggregateExpression.parts)
+    }
+
+    public static func boolOr(
+        @AggregateArgumentBuilder _ body: () -> AggregateArguments
+    ) -> SQLable {
+        aggregate(.boolOr, body)
     }
 
     @available(*, deprecated, renamed: "boolOr(_:)")
