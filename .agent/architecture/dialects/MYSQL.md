@@ -102,17 +102,21 @@ Historical snake_case function names remain compatibility aliases under the esta
 
 Do not add `MySQL...` wrappers around ordinary SQL function calls merely because current support is MySQL-specific.
 
-### MYSQL-009 - EF02 JSON_VALUE path/default roles are parser-restricted and literal-safe
+### MYSQL-009 - EF02 JSON_VALUE path/default roles are parser-restricted but have different safe policies
 
 MySQL 8.4.11 native validation establishes exact `JSON_VALUE(document, path)`. Exact `JSON_EXISTS(document, path)` and `JSON_QUERY(document, path)` identities are absent; do not substitute differently named MySQL JSON functions.
 
-The JSON_VALUE path operand is parser-literal grammar in the verified server. A parameter marker and tested expression forms are rejected at PREPARE/parse time. A runtime Swift String path therefore requires dialect-owned contextual parser-literal rendering rather than ordinary binding.
+The JSON_VALUE path operand is parser-literal grammar in the verified server. Parameter markers and tested expression forms such as CONCAT, CAST, and variables are rejected at PREPARE/parse time. However, the mandatory B0 matrix proves there is no safe mode-independent literal representation for an arbitrary runtime Swift `String` path across both the default MySQL `sql_mode` and `NO_BACKSLASH_ESCAPES`: apostrophe doubling breaks on backslash-bearing input under default escaping, conventional backslash escaping fails under `NO_BACKSLASH_ESCAPES`, and mode-independent hex forms are parser-invalid in PATH.
 
-That contextual rendering is authorized only after implementation provides dialect-correct escaping-safe literal encoding. The current inherited MySQL `safeValue(String)` / `stringValue(_:)` only quote-wraps and does not escape embedded apostrophes, so it is not accepted as the security mechanism. Apostrophe-containing JSON keys must remain one escaped literal payload; apostrophe doubling is native-positive and does not depend on backslash-escape mode.
+The built-in SQL 2.2 policy is therefore fail-closed. A direct runtime Swift `String` path remains ordinary bound data, stays present in prepared split values, is not consumed as `notBound`, and is not support-claimed as a native dynamic MySQL path ingress. Native MySQL rejection of that marker is the required negative behavior in both tested modes. Do not inspect live session `sql_mode`, add hidden connection-state dependencies to preparation, guess an escape mode, or auto-literalize the runtime path.
 
-JSON_VALUE DEFAULT is also parser-restricted in the tested capability boundary: literal DEFAULT is positive, while parameter markers, function expressions, arithmetic expressions, and user variables are negative. Direct runtime defaults therefore require the same contextual literal-safety contract. Unsupported structural forms remain unclaimed.
+A caller may still provide a fixed explicit structural/static path, for example `SQL.raw("'$.name'")`, under the existing raw SQL structure boundary. That is caller-owned SQL structure, not a safe dynamic path API, and runtime/untrusted values must not be interpolated into it. Fixed structural path is eligible for positive native validation of the exact JSON_VALUE owner/options grammar.
+
+JSON_VALUE DEFAULT is a separate parser-restricted grammar role and must not share one String encoder with PATH. B0 proves `_utf8mb4 X'<UPPERCASE_UTF8_HEX>'` eligible for the tested direct String DEFAULT role: exact Swift UTF-8 bytes are emitted only as hexadecimal digits, no input String byte is emitted directly as SQL text, and the representation is independent of the two tested `sql_mode` states. This evidence is role-specific and does not authorize the same representation in PATH or a generic arbitrary-`Encodable` literalizer. Structural DEFAULT expressions remain structural.
 
 MySQL JSON_VALUE owns its own RETURNING / ON EMPTY / ON ERROR grammar. PostgreSQL PASSING is unsupported, and PostgreSQL FORMAT JSON ownership must not be projected onto MySQL.
+
+The accepted Wave B0 terminal is `MYSQL_CONTEXTUAL_STRING_LITERAL_POLICY_BLOCKED`. It is durable architecture evidence, not a future requirement to rerun B0 until it passes. Remaining EF02 implementation must use the corrected Plan 03 lineage: fixed structural path for positive MySQL JSON_VALUE native tests, bound runtime String path as a native-negative security case, and role-specific DEFAULT validation.
 
 ## Future expansion
 
