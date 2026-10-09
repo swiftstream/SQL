@@ -991,3 +991,13 @@ Later typed waves do not retroactively block that closure: INSTALL/LOAD, CREATE 
 Do not introduce a premature generic `name := expression` public abstraction in the current Duck wave. STRUCT/UNION value constructors, macro defaults/named calls, or other features that strictly require a reusable first-class `:=` abstraction are deferred unless they can be represented cleanly through an already-established exact API without inventing a generic named-argument layer.
 
 Do not conflate SQL `name := expression` with table-function `name = value` options. The future generic `:=` design remains explicit technical/API debt, not an implementation shortcut for this closure.
+
+### DUCK-031 - EF02 JSON exact identities keep Duck path semantics and bound paths
+
+DuckDB v1.5.5 native validation establishes exact `json_value` / `JSON_VALUE` and `json_exists` / `JSON_EXISTS` identities. Their tested path slots accept bound String paths, including reuse of one prepared statement with different paths.
+
+Exact `JSON_QUERY` is absent. Do not map that missing identity to `json_extract`, `json_extract_string`, or another function.
+
+The same function spelling does not import PostgreSQL SQL/JSON option grammar. Duck `JSONValue` / `JSONExists` do not thereby gain PostgreSQL PASSING, RETURNING, ON EMPTY, ON ERROR, wrapper, or quote clauses.
+
+Duck path values remain ordinary bindable values in the verified forms. Do not inline Duck paths merely because MySQL JSON_VALUE uses parser-literal path grammar.

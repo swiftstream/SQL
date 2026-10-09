@@ -3022,16 +3022,22 @@ JSON_VALUE(
     $1
     PASSING $2 AS "limit", $3 AS "offset"
     RETURNING INTEGER
-    DEFAULT $4 ON EMPTY
+    DEFAULT 0 ON EMPTY
     ERROR ON ERROR
 )
 ```
 
-with bound values:
+with prepared bound values:
 
 ```text
-[path, limit, offset, 0]
+[path, limit, offset]
 ```
+
+The direct runtime `DefaultOnEmpty(0)` value is not an ordinary PostgreSQL bind slot. PostgreSQL 18.6 rejects a bare parameter marker, including a cast/coercion outer node around that marker, in SQL/JSON DEFAULT grammar. A direct runtime DEFAULT value therefore enters a dedicated contextual parser-restricted grammar role and is represented as a parser constant only through a dialect-correct escaping-safe literal mechanism. It must not be raw-interpolated and it must not appear in `SQLPrepared.splitted.values` once safely consumed.
+
+This contextual rule applies only to the direct runtime DEFAULT value. An explicit structural DEFAULT expression remains structural: PostgreSQL natively accepts non-aggregate function/operator expressions that may themselves contain ordinary bound child values. The implementation must not blindly inline every unsafe descendant under a DEFAULT subtree.
+
+Current PostgreSQL/MySQL `safeValue(String)` / `stringValue(_:)` is **not** accepted as proof of safe contextual runtime String literal encoding: the current inherited String formatter wraps apostrophes but does not escape embedded apostrophes. EF02 implementation planning must select and validate an actually dialect-correct escaping-safe mechanism before contextual String inlining can ship.
 
 Direct `Passing(...)` children coalesce structurally into one SQL PASSING clause in source order. Runtime control flow controls the presence of individual bindings only; it must not emit repeated PASSING keywords or reconstruct clauses by scanning previous tokens.
 
@@ -3108,6 +3114,24 @@ Therefore the same public SQL identity may exist where truthful while optional b
 `JSONExists` is shared only where the exact SQL identity exists. Do not map it to a differently named MySQL path-existence function.
 
 `JSONQuery` is not claimed for a dialect until its exact same construct and grammar have been independently verified.
+
+### Native SQL/JSON policy is dialect-owned and capability-exact
+
+The EF02 native policy probe fixes the first supported identity/capability matrix:
+
+- PostgreSQL 18.6: `JSONValue`, `JSONExists`, and `JSONQuery` exact identities exist;
+- DuckDB 1.5.5: `JSONValue` / `json_value` and `JSONExists` / `json_exists` exact identities exist; `JSONQuery` does not;
+- MySQL 8.4.11: `JSONValue` exists; exact `JSONExists` and `JSONQuery` do not.
+
+Do not substitute a differently named function merely to simulate a missing identity.
+
+PostgreSQL SQL/JSON path operands for `JSON_EXISTS`, `JSON_QUERY`, and `JSON_VALUE` are bindable. PostgreSQL `@?`, `@@`, and ordinary `jsonb_path_*` operands require `jsonpath` type context when a client declares the parameter as text; explicit `::jsonpath` is the verified generic-string form. Duck tested JSON path slots remain bound. MySQL `JSON_VALUE` path is parser-literal grammar: a runtime String path may be inlined only through a dialect-correct escaping-safe contextual literal mechanism.
+
+`Passing(value, as: name)` remains an ordinary bindable PostgreSQL SQL/JSON expression role. However, an unconstrained PASSING marker may infer as `text`, which can silently change numeric JSONPath comparison semantics. Implementation planning and native validation must preserve the intended parameter type rather than treating successful binding alone as semantic proof.
+
+RETURNING and option-node membership is owner-specific. In verified PostgreSQL grammar, JSON_QUERY admits tested FORMAT JSON forms while JSON_VALUE rejects FORMAT JSON. Duck same-name functions do not inherit PostgreSQL RETURNING/PASSING/ON EMPTY/ON ERROR grammar. MySQL JSON_VALUE owns its own RETURNING / ON EMPTY / ON ERROR grammar and no PostgreSQL PASSING clause.
+
+Contextual literal encoding is a security boundary. Current PostgreSQL/MySQL `safeValue(String)` / `stringValue(_:)` is not accepted as the implementation mechanism for untrusted contextual String values until escaping correctness is proven. At minimum implementation validation must cover apostrophes, repeated/leading/trailing apostrophes, SQL-looking delimiter content, Unicode-adjacent apostrophes, `notBound` observation, omission from split values, and unchanged ordinary binding outside parser-restricted roles.
 
 ### Exact binary operator authoring is a generic expression category
 

@@ -176,3 +176,21 @@ EF01-C ships exact quantified-comparison callables `ANY(...)` / `ANY { ... }`, `
 EF01-D ships shared aggregate-argument builders for `arrayAgg`, `avg`, `count`, `max`, `min`, `sum`, `stringAgg`, `boolAnd`, and `boolOr`, plus the generic downstream `Fn.aggregate` extension point. Plain aggregate `Distinct { ... }` and aggregate-local `OrderBy(...)` stay inside the function call; `DISTINCT ON`, `WITHIN GROUP`, `FILTER`, and `OVER` retain their separate ownership. The builder lowers through ordinary SQL parts and existing PostgreSQL preparation, so bind ordering remains argument source order followed by aggregate-local ordering expressions.
 
 Grouping changes only PostgreSQL delimiter policy. Child expressions remain on the central preparation/observation path, preserving base-before-index/slice evaluation and lower-to-upper-to-step bind ordering. Duck, MySQL render-compatibility behavior, the default dialect, and downstream custom dialect subclasses retain their established direct grouping unless they own a separate dialect rule.
+
+## Verified SQL/JSON EF02 boundary
+
+### POSTGRES-012 - SQL/JSON paths, PASSING, DEFAULT, and RETURNING have distinct grammar roles
+
+PostgreSQL 18.6 native validation establishes exact `JSON_VALUE`, `JSON_EXISTS`, and `JSON_QUERY` identities.
+
+Their SQL/JSON path operands are bindable, including declared-text parameters. This is distinct from `@?`, `@@`, and ordinary `jsonb_path_*`, where a parameter declared as text requires `jsonpath` type context; explicit `::jsonpath` is the verified generic-string form.
+
+`PASSING value AS name` is a genuine bindable expression role and multiple entries coalesce comma-separated. An unconstrained PASSING marker may infer as `text`; numeric JSONPath comparisons can therefore silently differ from intended numeric semantics. Implementation must preserve the intended parameter type and must not fix this by inlining PASSING values.
+
+SQL/JSON DEFAULT is not an ordinary bind slot. PostgreSQL rejects a bare parameter marker and a cast/coercion outer node around that marker with SQLSTATE 42804. Native-positive outer forms include a constant, a non-aggregate function expression, and an operator expression; function/operator expressions may themselves contain bound children.
+
+A direct runtime DEFAULT value therefore uses a dedicated contextual parser-restricted role. If represented inline, it must use dialect-correct escaping-safe literal encoding, be observed as `notBound`, and be omitted from split values. The current inherited PostgreSQL `safeValue(String)` / `stringValue(_:)` does not escape embedded apostrophes and is not accepted as the security mechanism for this role.
+
+Do not blindly inline every unsafe descendant beneath DEFAULT: explicit structural function/operator expressions may legitimately keep bound child values.
+
+Verified option ownership is also narrower than name reuse: PostgreSQL JSON_QUERY admits tested `RETURNING ... FORMAT JSON` forms, while PostgreSQL JSON_VALUE rejects FORMAT JSON. Owner-specific builders must encode those subsets exactly.

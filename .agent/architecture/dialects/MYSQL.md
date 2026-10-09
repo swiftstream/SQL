@@ -102,6 +102,18 @@ Historical snake_case function names remain compatibility aliases under the esta
 
 Do not add `MySQL...` wrappers around ordinary SQL function calls merely because current support is MySQL-specific.
 
+### MYSQL-009 - EF02 JSON_VALUE path/default roles are parser-restricted and literal-safe
+
+MySQL 8.4.11 native validation establishes exact `JSON_VALUE(document, path)`. Exact `JSON_EXISTS(document, path)` and `JSON_QUERY(document, path)` identities are absent; do not substitute differently named MySQL JSON functions.
+
+The JSON_VALUE path operand is parser-literal grammar in the verified server. A parameter marker and tested expression forms are rejected at PREPARE/parse time. A runtime Swift String path therefore requires dialect-owned contextual parser-literal rendering rather than ordinary binding.
+
+That contextual rendering is authorized only after implementation provides dialect-correct escaping-safe literal encoding. The current inherited MySQL `safeValue(String)` / `stringValue(_:)` only quote-wraps and does not escape embedded apostrophes, so it is not accepted as the security mechanism. Apostrophe-containing JSON keys must remain one escaped literal payload; apostrophe doubling is native-positive and does not depend on backslash-escape mode.
+
+JSON_VALUE DEFAULT is also parser-restricted in the tested capability boundary: literal DEFAULT is positive, while parameter markers, function expressions, arithmetic expressions, and user variables are negative. Direct runtime defaults therefore require the same contextual literal-safety contract. Unsupported structural forms remain unclaimed.
+
+MySQL JSON_VALUE owns its own RETURNING / ON EMPTY / ON ERROR grammar. PostgreSQL PASSING is unsupported, and PostgreSQL FORMAT JSON ownership must not be projected onto MySQL.
+
 ## Future expansion
 
 ### MYSQL-008 - Required future mega-audit
