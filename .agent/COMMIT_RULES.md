@@ -29,12 +29,19 @@ Rules:
 
 ## Git safety
 
+### Maintainer autopilot authorization
+
+- PRIMARY GPT-5.6 Sol using CodexMCP2 is permanently authorized to stage and create local commits for an unambiguous, bounded, already-reviewed logical change without asking for per-commit confirmation.
+- This standing authorization does not extend to push, tag, release publication, amend, rebase, merge, history rewrite, reset, restore, clean, stash, or unrelated user work.
+- Push and tag always require separate explicit maintainer authorization.
+- Secondary/Luna does not inherit this standing commit authority merely because PRIMARY is operating on autopilot.
+
 - Check and record Git status before every mutating phase.
 - After mutation, check status again and review the exact diff and changed-path set.
 - Preserve unrelated staged, unstaged, and untracked user work.
 - If an approved target already contains user edits, inspect its baseline diff and preserve those edits surgically.
 - Never seek a clean working tree by destroying, restoring, or deleting user work.
-- Do not stage, unstage, commit, amend, push, reset, restore, checkout user changes, clean, stash, rebase, merge, or rewrite history unless the maintainer explicitly authorizes that exact operation and scope.
+- Outside the standing PRIMARY autopilot authorization above, do not stage, unstage, commit, amend, push, reset, restore, checkout user changes, clean, stash, rebase, merge, or rewrite history unless the maintainer explicitly authorizes that exact operation and scope.
 - When a commit is explicitly authorized, include only the approved logical change and verify its exact path set before and after committing.
 - Every implementation task declares its exact allowed mutation scope and forbidden paths.
 - An unexpected conflicting edit in an approved target is a stop condition, not permission to overwrite it.
