@@ -104,6 +104,22 @@ class MySQLDialect: SQLDialect {
         return "CAST(\(stringValue(mysqlDateTimeInput(value))) AS DATETIME\(precision))"
     }
     
+    /// MySQL 8.4.11 rejects every mode-independent literal form in the
+    /// `JSON_VALUE` path grammar, so a runtime path value stays an ordinary bind
+    /// and fails closed natively. Only the separate `JSON_VALUE DEFAULT` role has
+    /// a proven representation, and no session state is consulted for either.
+    override func inlineUnsafeValue(
+        _ value: Encodable,
+        context: SQLRenderContext
+    ) -> String? {
+        guard let scope = SQLJSONRenderScope.resolve(context.currentScope),
+              scope.role == .directRuntimeDefaultValue,
+              scope.owner == .jsonValue else {
+            return nil
+        }
+        return SQLJSONDirectDefaultValue.mysqlJSONValueLiteral(value)
+    }
+
     override func bindKey(_ i: Int) -> String { "?" }
     
     override var arrayStart: String { "'" }

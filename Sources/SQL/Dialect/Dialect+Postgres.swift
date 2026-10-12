@@ -185,6 +185,20 @@ class PostgreSQLDialect: SQLDialect {
         "INTERVAL \(super.intervalValue(value))"
     }
     
+    /// PostgreSQL SQL/JSON path operands are bindable, so the path role keeps
+    /// ordinary binding. Only the direct runtime DEFAULT role is parser-restricted
+    /// grammar, and only admitted value categories become parser constants.
+    override func inlineUnsafeValue(
+        _ value: Encodable,
+        context: SQLRenderContext
+    ) -> String? {
+        guard let scope = SQLJSONRenderScope.resolve(context.currentScope),
+              scope.role == .directRuntimeDefaultValue else {
+            return nil
+        }
+        return SQLJSONDirectDefaultValue.postgresLiteral(value)
+    }
+
     // returns $1 $2 $3 binding keys for PostgreSQL
     override func bindKey(_ i: Int) -> String { "$\(i)" }
     
