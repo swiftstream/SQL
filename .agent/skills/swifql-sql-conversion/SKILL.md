@@ -117,6 +117,32 @@ Never move runtime data into `SQL.raw(...)` merely to reproduce the original SQL
 
 A literal embedded in the source SQL may legitimately become a Swift value and therefore a bind. Preserve semantics, not necessarily the original quoting bytes.
 
+### Exact operators and SQL/JSON
+
+When the installed version exposes the exact grouped binary-operator primitive, map a fixed vendor operator directly instead of reconstructing the whole expression as raw SQL. For example, PostgreSQL JSON-path match syntax can be represented as:
+
+```swift
+let expression = lhs.op(.custom("@?"), rhs)
+```
+
+The operator token is fixed SQL structure. Runtime values used by either operand continue through normal SQLable preparation and binding.
+
+For SQL/JSON, choose the owner and options from the target dialect's verified capability rather than translating by name resemblance:
+
+- PostgreSQL supports `JSONExists`, `JSONValue`, and `JSONQuery`, including PostgreSQL-owned option grammar such as `Passing(...)`;
+- DuckDB supports `JSONExists` and `JSONValue` with bound paths, but not PostgreSQL SQL/JSON options or `JSONQuery`;
+- MySQL supports `JSONValue` / `JSON_VALUE` in the verified SQL 2.2 surface.
+
+On MySQL 8.4, a runtime Swift `String` path remains a bind value and is rejected by the native parser in that path position. Do not "fix" the conversion by interpolating runtime path data into raw SQL. If the original SQL contains a genuinely fixed trusted path, it may remain explicit structure:
+
+```swift
+let value = JSONValue(document, SQL.raw("'$.name'"))
+```
+
+This is a static structural boundary, not a bind-aware raw API. SQL/JSON DEFAULT behavior is owner- and dialect-specific and must not be generalized into arbitrary runtime literalization.
+
+For PostgreSQL range/multirange SQL, prefer the installed exact PostgreSQL helpers such as `Fn.isEmpty(...)`, `Fn.rangeMerge(...)`, `Fn.rangeAgg { ... }`, and grouped `.op(.custom(...), ...)` forms when source/tests verify the requested construct. Do not project those APIs as portable MySQL or DuckDB range support.
+
 ## 5. Choose declarative, fluent, or raw structural output
 
 Prefer the declarative form when the installed package exposes the verified construct. For SQL 2.1+, fixed clauses should normally use the concise spelling:

@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.2.0
+
+- adds exact `SQLArray` constructors, structural slices, quantified `ANY` / `ALL` / `SOME` comparisons, and aggregate argument builders
+- adds grouped exact binary operator composition through `.op(.custom(...), rhs)` plus `COLLATE` / `AT TIME ZONE` expression continuations and PostgreSQL `AT LOCAL`
+- adds first-class SQL/JSON owners with truthful dialect boundaries: PostgreSQL `JSONExists` / `JSONValue` / `JSONQuery`, DuckDB `JSONExists` / `JSONValue`, and MySQL `JSONValue`
+- keeps PostgreSQL and DuckDB runtime JSON paths bound. MySQL runtime Swift `String` paths also remain bound but are native-negative because MySQL 8.4 requires parser-literal path grammar; fixed trusted paths can remain explicit static SQL structure
+- adds PostgreSQL range/multirange functions, grouped symbolic operators, aggregate helpers, and exact multirange/polymorphic type identities
+- fixes `Fn.count()` to render `count(*)`, joins multiple aggregate `FILTER` predicates with `AND`, preserves PostgreSQL `TABLESAMPLE` argument grammar, and groups PostgreSQL general-expression subscript bases correctly
+- keeps normal SQL 2.1 source compatible and retains the Swift 6.3+ requirement
+- see [RELEASE_NOTES.md](RELEASE_NOTES.md) for examples and dialect-specific boundaries
+
 ## 2.1.0
 
 - adds concise declarative `From(...)` for one or more fixed sources, completing the stable DESIGN-020 FROM authoring shape

@@ -28,7 +28,7 @@ Requires Swift 6.3 or newer.
 ```swift
 .package(
     url: "https://github.com/SwiftStream/SQL",
-    from: "2.1.0"
+    from: "2.2.0"
 )
 ```
 
@@ -681,27 +681,132 @@ let activeCount =
         => "active_count"
 ```
 
-## PostgreSQL JSON and arrays
+## Arrays, quantified comparisons, and aggregate arguments
 
-PostgreSQL-specific helpers remain available when you actually want PostgreSQL-specific SQL.
-
-JSON object:
+SQL ARRAY values are composable expressions:
 
 ```swift
-let json = PgJsonObject()
-    .field(key: "id", value: \User.$id)
-    .field(key: "email", value: \User.$email)
+let values = SQLArray.items(1, 2, Path.Column("score"))
 ```
 
-Arrays:
+PostgreSQL gives:
+
+```sql
+ARRAY[1, 2, "score"]
+```
+
+Slices keep bracket grammar structural:
 
 ```swift
-PgArray()
-PgArray(1, 2, 3)
-PgArray() => .textArray
+let sliceExpression = Path.Column("scores")[slice(2, 4)]
 ```
 
-The project also supports JSON paths, nested values, array/list operations, and other dialect-aware SQL families.
+```sql
+"scores"[2:4]
+```
+
+Quantified comparisons keep their exact SQL identity:
+
+```swift
+let predicate =
+    Path.Column("score") == ANY(SQLArray.items(1, 2, 3))
+```
+
+```sql
+"score" = ANY (ARRAY[1, 2, 3])
+```
+
+Aggregate-local ordering stays inside the aggregate call:
+
+```swift
+let values = Fn.arrayAgg {
+    Path.Column("value")
+    OrderBy {
+        OrderByItem.desc(Path.Column("createdAt"))
+        OrderByItem.asc(Path.Column("id"))
+    }
+}
+```
+
+PostgreSQL gives:
+
+```sql
+array_agg("value" ORDER BY "createdAt" DESC, "id" ASC)
+```
+
+## Exact operators and postfix continuations
+
+For an exact binary SQL operator that does not have a useful Swift operator spelling, use `.op(.custom(...), ...)`:
+
+```swift
+let expression = Path.Column("lhs")
+    .op(.custom("@?"), Path.Column("rhs"))
+```
+
+```sql
+("lhs" @? "rhs")
+```
+
+The whole expression is grouped. The operator token is SQL structure, while normal value operands keep their usual preparation and binding behavior.
+
+Expression continuations also include `Collate(...)`, `AtTimeZone(...)`, and PostgreSQL `AtLocal()`. `AT TIME ZONE` is validated for PostgreSQL and DuckDB, while `AT LOCAL` is PostgreSQL-specific. Runtime timezone values remain bindable.
+
+## SQL/JSON by dialect
+
+SQL/JSON owners are intentionally capability-scoped:
+
+| Dialect | Verified owners |
+| --- | --- |
+| PostgreSQL | `JSONExists`, `JSONValue`, `JSONQuery` |
+| DuckDB | `JSONExists`, `JSONValue` |
+| MySQL 8.4 | `JSONValue` / `JSON_VALUE` |
+
+PostgreSQL owns option grammar such as `Passing(...)`, `Returning(...)`, and the supported `ON EMPTY` / `ON ERROR` forms:
+
+```swift
+let value = JSONValue(Path.Column("payload"), "$.p") {
+    Passing(2, as: "limit")
+    Returning(.integer)
+    DefaultOnEmpty(0)
+    ErrorOnError()
+}
+```
+
+PostgreSQL and DuckDB keep runtime paths on the normal bind path.
+
+MySQL's native `JSON_VALUE` path grammar is different: a runtime Swift `String` path remains bound, but MySQL 8.4 rejects a parameter marker in that parser-literal position. SQL does not turn runtime path bytes into SQL text automatically.
+
+For a genuinely fixed trusted MySQL path, make that structure explicit:
+
+```swift
+let value = JSONValue(
+    Path.Column("payload"),
+    SQL.raw("'$.name'")
+)
+```
+
+That `SQL.raw` fragment is caller-owned static SQL, not runtime interpolation.
+
+## PostgreSQL ranges and multiranges
+
+Range and multirange helpers are PostgreSQL-specific. For example:
+
+```swift
+let empty = Fn.isEmpty(SQL.raw("int4range(1, 5)"))
+
+let merged = Fn.rangeMerge(
+    SQL.raw("int4range(1, 3)"),
+    SQL.raw("int4range(5, 8)")
+)
+```
+
+Special symbolic range operators use the same grouped exact-operator API:
+
+```swift
+let overlaps = lhs.op(.custom("&&"), rhs)
+```
+
+PostgreSQL multirange type identities such as `Type.int4MultiRange` are available directly. These APIs do not imply MySQL or DuckDB range portability.
 
 ## More SQL
 

@@ -1,3 +1,288 @@
+# SQL 2.2.0
+
+SQL 2.2.0 expands exact expression authoring, adds first-class SQL/JSON owners, and adds PostgreSQL range/multirange helpers while keeping the existing composition, preparation, and binding model.
+
+Install with:
+
+```swift
+.package(
+    url: "https://github.com/SwiftStream/SQL",
+    from: "2.2.0"
+)
+```
+
+## SQL ARRAY values and slices
+
+Build SQL ARRAY expressions directly:
+
+```swift
+let values = SQLArray.items(1, 2, Path.Column("score"))
+```
+
+PostgreSQL gives:
+
+```sql
+ARRAY[1, 2, "score"]
+```
+
+The builder form supports normal Swift control flow while preserving source order:
+
+```swift
+let values = SQLArray.items {
+    first
+
+    if let middle {
+        middle
+    }
+
+    for value in tail {
+        value
+    }
+}
+```
+
+Subquery ARRAY grammar has its own form:
+
+```swift
+let ids = SQLArray.subquery {
+    Select { Path.Column("id") }
+    From { Path.Table("orders") }
+}
+```
+
+Slices stay structural:
+
+```swift
+let middle = Path.Column("scores")[slice(2, 4)]
+```
+
+```sql
+"scores"[2:4]
+```
+
+DuckDB also has the validated stepped slice form `slice(2, 8, step: 2)`. PostgreSQL support is limited to its validated slice grammar.
+
+## Quantified comparisons
+
+Exact `ANY`, `ALL`, and `SOME` comparisons compose with explicit operands:
+
+```swift
+let predicate =
+    Path.Column("score") == ANY(SQLArray.items(1, 2, 3))
+```
+
+PostgreSQL gives:
+
+```sql
+"score" = ANY (ARRAY[1, 2, 3])
+```
+
+Subquery forms are available too:
+
+```swift
+let predicate = Path.Column("score") > All {
+    Select { Path.Column("threshold") }
+    From { Path.Table("limits") }
+}
+```
+
+`ANY(...)` uses the uppercase SQL spelling because Swift already owns `Any`. `All(...)` and `Some(...)` keep normal callable Swift names.
+
+## Aggregate argument builders
+
+Aggregate-local arguments, `DISTINCT`, and ordering can stay inside the aggregate call:
+
+```swift
+let values = Fn.arrayAgg {
+    Path.Column("value")
+    OrderBy {
+        OrderByItem.desc(Path.Column("createdAt"))
+        OrderByItem.asc(Path.Column("id"))
+    }
+}
+```
+
+PostgreSQL gives:
+
+```sql
+array_agg("value" ORDER BY "createdAt" DESC, "id" ASC)
+```
+
+Existing concise aggregate overloads remain available. Downstream extensions can use the same public aggregate builder through `Fn.aggregate`.
+
+## Exact operators and postfix continuations
+
+For a fixed binary SQL operator that does not have a useful Swift operator spelling:
+
+```swift
+let expression = Path.Column("lhs")
+    .op(.custom("@?"), Path.Column("rhs"))
+```
+
+PostgreSQL gives:
+
+```sql
+("lhs" @? "rhs")
+```
+
+The complete expression is grouped. The operator token is caller-chosen SQL structure, while ordinary value operands keep normal binding.
+
+Expression continuations also include `Collate(...)` and `AtTimeZone(...)`. PostgreSQL additionally supports `AtLocal()`.
+
+`AT TIME ZONE` is validated for PostgreSQL and DuckDB, and runtime timezone values stay bindable. `AT LOCAL` is PostgreSQL-specific.
+
+## SQL/JSON
+
+SQL 2.2.0 adds first-class SQL/JSON owners with dialect-specific capability boundaries.
+
+| Dialect | Verified owners |
+| --- | --- |
+| PostgreSQL | `JSONExists`, `JSONValue`, `JSONQuery` |
+| DuckDB | `JSONExists`, `JSONValue` |
+| MySQL 8.4 | `JSONValue` / `JSON_VALUE` |
+
+### PostgreSQL
+
+PostgreSQL paths remain bindable, and PostgreSQL owns option grammar such as `Passing(...)`, `Returning(...)`, and the supported `ON EMPTY` / `ON ERROR` forms:
+
+```swift
+let value = JSONValue(Path.Column("payload"), "$.p") {
+    Passing(2, as: "limit")
+    Returning(.integer)
+    DefaultOnEmpty(0)
+    ErrorOnError()
+}
+```
+
+`PASSING` is PostgreSQL-specific. PostgreSQL `JSONQuery` also exposes only the verified owner-specific returning/format forms.
+
+### DuckDB
+
+DuckDB supports `JSONExists` and `JSONValue` with bound paths:
+
+```swift
+let exists = JSONExists(document, path)
+let value = JSONValue(document, path)
+```
+
+DuckDB does not gain PostgreSQL `PASSING` / returning / empty / error option grammar, and this release does not claim DuckDB `JSONQuery`.
+
+### MySQL
+
+The verified MySQL owner is `JSONValue` / `JSON_VALUE`.
+
+A runtime Swift `String` path stays on the normal bind path:
+
+```swift
+let value = JSONValue(document, runtimePath)
+```
+
+MySQL 8.4 requires parser-literal path grammar and rejects a parameter marker in that position. SQL therefore does not move runtime path bytes into generated SQL text automatically.
+
+For a fixed trusted path that your source code owns as SQL structure:
+
+```swift
+let value = JSONValue(
+    document,
+    SQL.raw("'$.name'")
+)
+```
+
+That raw fragment is static SQL structure. It is not runtime path interpolation.
+
+MySQL `JSON_VALUE` has its own supported `RETURNING` / `ON EMPTY` / `ON ERROR` grammar. This release does not claim MySQL `JSONExists`, `JSONQuery`, or `PASSING`.
+
+## PostgreSQL ranges and multiranges
+
+PostgreSQL range and multirange support uses exact SQL function/operator identities instead of introducing a second range model.
+
+For example:
+
+```swift
+let empty = Fn.isEmpty(SQL.raw("int4range(1, 5)"))
+
+let merged = Fn.rangeMerge(
+    SQL.raw("int4range(1, 3)"),
+    SQL.raw("int4range(5, 8)")
+)
+```
+
+which render as:
+
+```sql
+isempty(int4range(1, 5))
+range_merge(int4range(1, 3), int4range(5, 8))
+```
+
+Aggregate range helpers use the same aggregate argument machinery:
+
+```swift
+let ranges = Fn.rangeAgg {
+    SQL.raw("period")
+    OrderBy(SQL.raw("sort_key"), .asc)
+}
+```
+
+Specialized symbolic operators use the grouped exact-operator API:
+
+```swift
+let overlaps = lhs.op(.custom("&&"), rhs)
+```
+
+Multirange and polymorphic type identities include `Type.int4MultiRange` and the related PostgreSQL `Type.anyCompatible*` family.
+
+These range/multirange APIs are PostgreSQL-specific.
+
+## Cross-dialect correctness fixes
+
+Several established APIs now render the SQL their source spelling implies.
+
+### `Fn.count()` counts all rows
+
+```swift
+Fn.count()
+```
+
+renders:
+
+```sql
+count(*)
+```
+
+### Multiple aggregate FILTER predicates use `AND`
+
+```swift
+Fn.count().filter(where: firstPredicate, secondPredicate)
+```
+
+Multiple predicates now form one ordered boolean expression joined with `AND`. Native `FILTER` support is covered for PostgreSQL and DuckDB. MySQL rendering remains compatibility output only; this does not claim native MySQL `FILTER` support.
+
+### PostgreSQL `TABLESAMPLE` keeps PostgreSQL argument grammar
+
+PostgreSQL rendering no longer inherits DuckDB `PERCENT` / `ROWS` tokens:
+
+```sql
+TABLESAMPLE system(10)
+TABLESAMPLE system(30) REPEATABLE (40)
+```
+
+### PostgreSQL general-expression subscripts are grouped
+
+General expression bases are parenthesized where PostgreSQL requires it:
+
+```sql
+(array_agg("score"))[1]
+(array_agg($1))[$2]
+```
+
+Direct column references and already-completed subscripts remain direct.
+
+## Migration and requirements
+
+SQL 2.2.0 is additive for normal SQL 2.1 source. Existing declarative and fluent query code does not need a source migration to adopt the new expression families.
+
+Swift 6.3 or newer remains required.
+
 # SQL 2.1.0
 
 SQL 2.1.0 completes the concise side of the declarative query DSL. Simple fixed clauses no longer need closure syntax just to hold one or a few values, while the existing result-builder forms remain first-class for conditions, loops, and richer clause-local composition.

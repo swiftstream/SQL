@@ -17,6 +17,28 @@ Use this workflow for downstream code that consumes the canonical `SQL` module.
 7. Use `.plain` to inspect rendered SQL with values formatted inline. Use `.splitted` for driver-facing SQL plus the ordered bind values.
 8. Stop after construction and preparation. SQL builds SQL; database execution belongs to a driver or an integration layer such as Bridges.
 
+For exact symbolic binary SQL, use the installed version's grouped operator escape when available instead of concatenating a raw expression:
+
+```swift
+let predicate = lhs.op(.custom("@?"), rhs)
+```
+
+The token is deliberate SQL structure and the right-hand side keeps its ordinary SQLable preparation and binding behavior. The `@?` token is PostgreSQL syntax; the `.op` composition primitive itself is generic.
+
+For SQL/JSON, verify the owner against the target dialect rather than assuming that matching function names are portable. In SQL 2.2, the validated boundary is:
+
+- PostgreSQL: `JSONExists`, `JSONValue`, and `JSONQuery`, with PostgreSQL-owned option grammar such as `Passing(...)`;
+- DuckDB: `JSONExists` and `JSONValue` with bound paths, without PostgreSQL option grammar;
+- MySQL: `JSONValue` / `JSON_VALUE` only.
+
+Runtime paths remain data. On MySQL 8.4, a runtime Swift `String` path stays bound but the native JSON_VALUE grammar rejects that parameter position. Do not turn runtime path bytes into SQL text to work around it. A fixed trusted path can be supplied explicitly as SQL structure when that is genuinely what the application owns:
+
+```swift
+let value = JSONValue(document, SQL.raw("'$.name'"))
+```
+
+That raw fragment is static caller-owned structure, not runtime interpolation. SQL/JSON option and direct `DefaultOnEmpty` behavior is owner- and dialect-specific; do not generalize it into an arbitrary value-literalization rule.
+
 For civil and interval data, choose the semantic type that matches the value:
 
 - `PureDate` for a timezone-free civil date;

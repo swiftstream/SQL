@@ -18,6 +18,14 @@ Use this workflow when a consuming package or application needs reusable SQL com
 8. Return composed results to the ordinary `SQLable` preparation pipeline. Do not add a second renderer, formatter, placeholder system, or bind collector.
 9. Validate representative target-dialect output and the exact bind-value order.
 
+For a downstream exact binary operator helper, prefer the installed version's public grouped operator primitive instead of hand-building a raw binary expression:
+
+```swift
+let expression = lhs.op(.custom("@?"), rhs)
+```
+
+Here `@?` is a fixed PostgreSQL operator token chosen by the extension author. The `.op` primitive itself is generic, groups the complete binary expression, and keeps `rhs` on the ordinary SQLable preparation/bind path. Do not accept an untrusted runtime operator token, interpolate the RHS into `SQL.raw`, invent punctuation-specific public constants for portability, or construct the internal SELECT postfix-request state directly.
+
 A custom scalar function with a runtime argument can stay on the normal value path:
 
 ```swift
