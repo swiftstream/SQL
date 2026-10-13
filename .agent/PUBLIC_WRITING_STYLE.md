@@ -195,6 +195,103 @@ The title does not need to enumerate every feature. It should read like a mainta
 
 Historical SwifQL releases may be consulted for maintainer tone and example shape, but never as technical authority for current APIs.
 
+## Swift Stream social release announcements
+
+After a verified GitHub Release, prepare two short social announcements: English for Discord and Russian for Telegram.
+
+These are not shortened copies of the GitHub Release body. They are channel-native maintainer posts whose job is to make the most important user-visible change immediately understandable and give readers one canonical link for the full release.
+
+### Shared approach
+
+Start from the release's strongest practical value.
+
+Choose only the few changes most likely to make a user care about the release. For a substantial feature release, usually two to four points are enough. For a focused fix release, one concrete sentence may be enough.
+
+Prefer:
+
+- the project name and exact version immediately;
+- one clear hook or primary improvement;
+- short concrete feature/fix statements;
+- inline API names only when they make the change clearer;
+- the canonical GitHub Release URL;
+- contributor credit when a release materially comes from a community report or contribution.
+
+Do not:
+
+- reproduce the full changelog or release notes;
+- enumerate every minor addition;
+- include validation/test statistics;
+- include internal planning, implementation, audit, evidence, or workflow terminology;
+- use generic corporate excitement such as `We are thrilled to announce`;
+- invent a slogan;
+- make the Discord and Telegram posts literal translations of one another.
+
+Keep the tone recognizably maintainer-written: direct, compact, practical, and allowed to be enthusiastic when the change deserves it.
+
+Do not repeat the project name or version in the opening sentence when the heading already contains them. Start the body directly with the value, for example `Big expression-building update:` or `Расширяем работу с выражениями:`.
+
+Mention migration, compatibility, or required user action only when the release actually contains a breaking change, mandatory migration, configuration change, workaround, or other action the reader needs to take. Do not add reassuring boilerplate such as `No migration required` when nothing needs to be done.
+
+End with the canonical GitHub Release URL as a bare link. Do not introduce it with labels such as `Full release:`, `Full release notes:`, `Полный релиз:`, or `Полный список изменений:`.
+
+If the release has a breaking change or requires user action, say the action plainly in the social post. Do not hide an important migration instruction behind the link.
+
+### Discord — English
+
+Use concise developer English.
+
+When a dedicated project channel exists, begin with the channel context followed by the release/version, for example:
+
+`#sql **Released SQL 2.2.0**`
+
+For a feature release:
+
+1. name the release;
+2. state the main value in one short sentence;
+3. use a compact bullet list only when several changes deserve equal weight;
+4. finish with the GitHub Release link.
+
+Prefer one screenful over a mini-blog post.
+
+Good Discord copy is often denser than Telegram copy. Inline code such as `JSONValue`, `ANY`, or `Fn.arrayAgg` is useful when the API name itself communicates the feature. Avoid large code blocks unless a single tiny example is the whole point of the release.
+
+Emoji may be used sparingly to carry the maintainer tone or the release theme. Do not decorate every bullet.
+
+### Telegram — Russian
+
+Use natural Russian maintainer voice rather than a literal translation of the English post.
+
+Start with the release emoji before the bold heading:
+
+`🧩 **Релиз SQL v2.2.0**`
+
+Do not place the release emoji at the end of the Telegram heading.
+
+Then explain the practical changes in short paragraphs or a compact list. Telegram may be slightly more conversational than Discord and may briefly explain why a change matters.
+
+Prefer wording such as:
+
+- `Добавлено...`
+- `Теперь можно...`
+- `Исправлено...`
+- `Если вы используете..., то...`
+
+For a release with several meaningful features, two to four short bullets are appropriate. For a small fix, keep it to one or two sentences.
+
+If users must change configuration or source, give the actionable instruction directly in the post.
+
+Finish with the canonical GitHub Release link when readers may want the complete details.
+
+Blank lines are useful for readability. Avoid turning the post into formal release notes.
+
+### Fidelity
+
+Both social posts must be generated from already accepted release truth.
+
+They may simplify, prioritize, and omit details, but must not broaden support claims, erase dialect/platform limitations that matter to the highlighted feature, or advertise unreleased work.
+
+When a concise social sentence would become misleading without a caveat, either include the caveat in one short sentence or choose a different release highlight.
+
 ## Accuracy rules
 
 Before publishing an example:

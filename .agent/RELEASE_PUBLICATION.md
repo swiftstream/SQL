@@ -66,7 +66,7 @@ Do not substitute a local path, branch/revision fallback, or local mirror for th
 
 Create the GitHub Release only after branch CI, tag identity, tag CI, and remote exact consumer PASS.
 
-Use authenticated `gh` CLI. For a stable release:
+For a stable release:
 
 - use `--verify-tag`;
 - use the independently reviewed release body;
@@ -74,7 +74,7 @@ Use authenticated `gh` CLI. For a stable release:
 - do not use draft or prerelease mode;
 - follow `PUBLIC_WRITING_STYLE.md`.
 
-Read it back with `gh` and independently verify through GitHub:
+Read the published release back independently and verify:
 
 - exact tag and title;
 - body matches the reviewed release body;
@@ -83,6 +83,27 @@ Read it back with `gh` and independently verify through GitHub:
 - tag still resolves to `RELEASE_SHA`.
 
 A GitHub Release-page failure never authorizes changing the stable tag.
+
+## Social announcements
+
+After the GitHub Release is successfully published and independently verified, prepare two Swift Stream social-release announcements:
+
+- one English post for the relevant Discord channel;
+- one Russian post for the Swift Stream Telegram channel.
+
+Treat these as post-release communication, not as a substitute for the GitHub Release or full release notes.
+
+Both drafts must:
+
+- describe only shipped, verified user-visible behavior;
+- use the published release version and canonical GitHub Release link;
+- follow the social-announcement rules in `PUBLIC_WRITING_STYLE.md`;
+- avoid internal planning, audit, execution, evidence, and implementation-history terminology;
+- be reviewed by the maintainer before social publication.
+
+The two posts are platform-specific drafts, not literal translations of one another. Keep each one native to the language and channel.
+
+A release is publication-complete when the GitHub Release is verified. Social announcements are the required immediate follow-up communication step and may be published only after their wording is accepted.
 
 ## Release point
 
