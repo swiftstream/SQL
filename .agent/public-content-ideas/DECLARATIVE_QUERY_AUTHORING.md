@@ -755,7 +755,7 @@ The same design deliberately does **not** render PostgreSQL `ARRAY[...]` as Duck
 
 ### Publication caveat
 
-Implemented by EF01-A commit `48c375083c9b063114a413c90c7b66caa4f21ea4` under corrected DESIGN-026. The dedicated non-generic `SQLArray` namespace is required because the earlier constrained stdlib-`Array` namespace fails on supported Swift 6.3.3 lanes. The exact `SQLArray.items(...)` / `SQLArray.items { ... }` and `SQLArray.subquery(...)` / `SQLArray.subquery { ... }` forms pass normal-import validation on Swiftly 6.3.3, Xcode 26.6 / Swift 6.3.3, and Xcode 27 / Swift 6.4. Ordinary Swift `Array`, `PostgresArray`, and `PgArray` remain unaffected. Builder bodies stay as direct trailing closures, and the new exact constructors do not remap PostgreSQL `ARRAY[...]` to Duck LIST/fixed-ARRAY or MySQL JSON semantics.
+Implemented by EF01-A commit `aa6920f5cb794304418747337b89e7e6a2ae53e4` under corrected DESIGN-026. The dedicated non-generic `SQLArray` namespace is required because the earlier constrained stdlib-`Array` namespace fails on supported Swift 6.3.3 lanes. The exact `SQLArray.items(...)` / `SQLArray.items { ... }` and `SQLArray.subquery(...)` / `SQLArray.subquery { ... }` forms pass normal-import validation on Swiftly 6.3.3, Xcode 26.6 / Swift 6.3.3, and Xcode 27 / Swift 6.4. Ordinary Swift `Array`, `PostgresArray`, and `PgArray` remain unaffected. Builder bodies stay as direct trailing closures, and the new exact constructors do not remap PostgreSQL `ARRAY[...]` to Duck LIST/fixed-ARRAY or MySQL JSON semantics.
 
 ## Structural SQL slices stay inside the existing subscript grammar
 
@@ -807,7 +807,7 @@ Bounds remain ordinary SQL expressions and preserve bind order lower -> upper ->
 ### Evidence / provenance
 
 - `.agent/architecture/DSL_DESIGN_AND_UX.md` DESIGN-026 / DESIGN-037
-- EF01-B implementation commit `2140017cacc3589e58d341d7b81bb786cd1fd87e`
+- EF01-B implementation commit `aa0189107cd79cd6fa82f4b36d29f7c60885e4c7`
 - Validation 01: 782 tests / 67 suites on all three current Mac lanes
 - independent source/diff audit: CLEAN 102/102
 
@@ -875,11 +875,11 @@ DuckDB v1.5.5 native validation confirms quantified comparison against subquerie
 
 ### Publication caveat
 
-Implemented by EF01-C commit `902b4ec3b885572094b3a5afaf051c9408f2d01d` under DESIGN-026. Validation 01 passed 792 tests / 68 suites on Swiftly 6.3.3, Xcode 26.6 / Swift 6.3.3, and Xcode 27 / Swift 6.4; the normal-import consumer passed all six call families alongside ordinary Swift `Any` and legacy `.any/.all`. Independent source/diff audit was CLEAN 125/125. This is implemented on the 2.2.0 development line and is not yet part of a published 2.2.0 release.
+Implemented by EF01-C commit `00081fd2e8494a82179d0b2eac3d86d1ef8b7660` under DESIGN-026. Validation 01 passed 792 tests / 68 suites on Swiftly 6.3.3, Xcode 26.6 / Swift 6.3.3, and Xcode 27 / Swift 6.4; the normal-import consumer passed all six call families alongside ordinary Swift `Any` and legacy `.any/.all`. Independent source/diff audit was CLEAN 125/125. This is implemented on the 2.2.0 development line and is not yet part of a published 2.2.0 release.
 
 ## Aggregate modifiers stay inside the SQL aggregate they belong to
 
-Status: implemented in source (local commit `50dfa502c6bc3e4c4b458d1c3e948b9bf74fe832`, not yet pushed/released)
+Status: implemented in source (local commit `4940af0490728d3818f5368235575077cb175a3b`, not yet pushed/released)
 Good for: README | website docs | release notes | article | short post
 
 ### Why users should care
@@ -936,7 +936,7 @@ WITHIN GROUP (
 
 ### Publication caveat
 
-Implemented by EF01-D commit `50dfa502c6bc3e4c4b458d1c3e948b9bf74fe832` under DESIGN-025 and DESIGN-036. Correction 02 validation passed 807 tests / 69 suites on Swiftly 6.3.3, Xcode 26.6 / Swift 6.3.3, and Xcode 27 / Swift 6.4; all four local compile-negative grammar fixtures rejected on both Swift 6.3.3 and Swift 6.4, the external normal-import consumer passed all three lanes, the six-of-six managed-skill gate passed with five required updates and one no-change verdict, and the independent source/diff/evidence audit was CLEAN 105/105. This is implemented on the 2.2.0 development line and is not yet part of a published 2.2.0 release. Dialect capability remains exact: PostgreSQL and Duck differ in which aggregate modifiers may be combined with window `OVER`, and MySQL aggregate-local ordering is function-specific rather than a universal PostgreSQL-style aggregate grammar.
+Implemented by EF01-D commit `4940af0490728d3818f5368235575077cb175a3b` under DESIGN-025 and DESIGN-036. Correction 02 validation passed 807 tests / 69 suites on Swiftly 6.3.3, Xcode 26.6 / Swift 6.3.3, and Xcode 27 / Swift 6.4; all four local compile-negative grammar fixtures rejected on both Swift 6.3.3 and Swift 6.4, the external normal-import consumer passed all three lanes, the six-of-six managed-skill gate passed with five required updates and one no-change verdict, and the independent source/diff/evidence audit was CLEAN 105/105. This is implemented on the 2.2.0 development line and is not yet part of a published 2.2.0 release. Dialect capability remains exact: PostgreSQL and Duck differ in which aggregate modifiers may be combined with window `OVER`, and MySQL aggregate-local ordering is function-specific rather than a universal PostgreSQL-style aggregate grammar.
 
 ## Sibling `JOIN` matches nested `JOIN` (dual form)
 
