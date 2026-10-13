@@ -410,6 +410,26 @@ public struct Type: Equatable, Sendable {
     /// Range of date
     public static let daterange: Type = .init("daterange")
     public static let daterangeArray: Type = .init("daterange[]")
+
+    // MARK: Postgres Built-in Multirange Types
+
+    /// Multirange of integer
+    public static let int4MultiRange: Type = .init("int4multirange")
+
+    /// Multirange of bigint
+    public static let int8MultiRange: Type = .init("int8multirange")
+
+    /// Multirange of numeric
+    public static let numMultiRange: Type = .init("nummultirange")
+
+    /// Multirange of timestamp without time zone
+    public static let tsMultiRange: Type = .init("tsmultirange")
+
+    /// Multirange of timestamp with time zone
+    public static let tsTZMultiRange: Type = .init("tstzmultirange")
+
+    /// Multirange of date
+    public static let dateMultiRange: Type = .init("datemultirange")
     
     // MARK: Object Identifier Types
     
@@ -518,6 +538,24 @@ public struct Type: Equatable, Sendable {
     
     /// Indicates that a function accepts any range data type (see Section 37.2.5 and Section 8.17).
     public static let anyrange: Type = .init("anyrange")
+
+    /// Indicates that a function accepts any multirange data type.
+    public static let anyMultiRange: Type = .init("anymultirange")
+
+    /// Indicates that a function accepts any compatible data type.
+    public static let anyCompatible: Type = .init("anycompatible")
+
+    /// Indicates that a function accepts any compatible array data type.
+    public static let anyCompatibleArray: Type = .init("anycompatiblearray")
+
+    /// Indicates that a function accepts any compatible non-array data type.
+    public static let anyCompatibleNonArray: Type = .init("anycompatiblenonarray")
+
+    /// Indicates that a function accepts any compatible range data type.
+    public static let anyCompatibleRange: Type = .init("anycompatiblerange")
+
+    /// Indicates that a function accepts any compatible multirange data type.
+    public static let anyCompatibleMultiRange: Type = .init("anycompatiblemultirange")
     
     /// Indicates that a function accepts or returns a null-terminated C string.
     public static let cstring: Type = .init("cstring")
