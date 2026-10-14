@@ -18,15 +18,24 @@ extension AnyTable {
     }
     
     public static func column(_ paths: String...) -> Path.SchemaWithTableAndColumn {
-        Path.Schema((Self.self as? Schemable.Type)?.schemaName).table(tableName).column(paths)
+        Path.Schema((Self.self as? Schemable.Type)?.schema.name).table(tableName).column(paths)
     }
     
     public static func inSchema(_ name: String) -> Schema<Self> {
         .init(name)
     }
-    
+
+    @_disfavoredOverload
+    public static func inSchema(_ schema: DB.Schema) -> Schema<Self> {
+        .init(schema)
+    }
+
     public static func inSchema(_ schema: Schemable.Type) -> Schema<Self> {
-        .init(schema.schemaName)
+        let resolvedSchema = schema.schema
+        guard let catalogable = schema as? Catalogable.Type else {
+            return .init(resolvedSchema)
+        }
+        return .init(resolvedSchema.inCatalog(catalogable.catalog))
     }
 }
 
@@ -43,7 +52,7 @@ public protocol Table: AnyTable, ColumnRoot {
 extension Table {
     public static subscript<V>(dynamicMember keyPath: KeyPath<Self, V>) -> SQLable {
         guard let k = keyPath as? Keypathable else { return "<keyPath should conform to Keypathable>" }
-        let schema: String? = (Self.self as? Schemable.Type)?.schemaName
+        let schema: String? = (Self.self as? Schemable.Type)?.schema.name
         return SQLPartKeyPath(schema: schema, table: Self.tableName, paths: k.paths)
     }
 }

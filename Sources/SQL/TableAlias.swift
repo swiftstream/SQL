@@ -70,7 +70,7 @@ public class GenericTableAlias<M: Decodable>: SQLable, AnyGenericTableAlias {
     
     public init(_ alias: String, schema: String?) {
         self.alias = alias
-        self.schema = schema ?? (Model.self as? Schemable.Type)?.schemaName
+        self.schema = schema ?? (Model.self as? Schemable.Type)?.schema.name
     }
     
     public func column(_ paths: String...) -> Path.TableWithColumn {
@@ -119,7 +119,7 @@ public class AliasedKeyPath<K, T, V> where K: KeyPath<T, V>, T: Table, V: Column
 }
 
 extension AliasedKeyPath: SQLKeyPathable {
-    public var schema: String? { (AModel.self as? Schemable.Type)?.schemaName }
+    public var schema: String? { (AModel.self as? Schemable.Type)?.schema.name }
     public var table: String? { alias }
     public var paths: [String] { kp.paths }
 }

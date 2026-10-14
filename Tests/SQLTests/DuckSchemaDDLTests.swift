@@ -2,7 +2,7 @@ import Testing
 @testable import SQL
 
 private struct Task22Schema: Schemable {
-    static var schemaName: String { "task22_schema" }
+    static var schema: DB.Schema { "task22_schema" }
 }
 
 @Suite("Duck schema DDL")

@@ -23,7 +23,7 @@ extension KeyPath: KeyPathLastPath where Root: Table, Value: ColumnRepresentable
 
 extension KeyPath: Keypathable where Root: Table, Value: ColumnRepresentable {
     public var schema: String? {
-        (Root.self as? Schemable.Type)?.schemaName
+        (Root.self as? Schemable.Type)?.schema.name
     }
     
     public var table: String {

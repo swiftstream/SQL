@@ -3,7 +3,7 @@ import Testing
 
 private struct Task22IndexTable: Table, Schemable {
     static var tableName: String { "task22_events" }
-    static var schemaName: String { "task22_schema" }
+    static var schema: DB.Schema { "task22_schema" }
 
     init() {}
 }

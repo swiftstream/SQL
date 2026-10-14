@@ -21,7 +21,7 @@ public class CreateTableBuilder<T: Table>: SQLable {
     var schemaName: String?
     
     public init (schema: Schemable.Type? = nil) {
-        self.schemaName = schema?.schemaName ?? (T.self as? Schemable.Type)?.schemaName
+        self.schemaName = schema?.schema.name ?? (T.self as? Schemable.Type)?.schema.name
     }
     
     public init (schema: String) {

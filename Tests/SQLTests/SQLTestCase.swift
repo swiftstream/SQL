@@ -23,7 +23,7 @@ extension SwifQLTests {
 }
 
 struct DeletedSchema: Schemable {
-    static var schemaName: String { "deleted" }
+    static var schema: DB.Schema { "deleted" }
 }
 
 enum GearboxType: String, SwifQLEnum {
@@ -32,6 +32,7 @@ enum GearboxType: String, SwifQLEnum {
 
 struct SchemableCarBrands: Table, Schemable {
     static var tableName: String { "CarBrands" }
+    static var schema: DB.Schema { "public" }
     
     @Column("id")
     var id: UUID

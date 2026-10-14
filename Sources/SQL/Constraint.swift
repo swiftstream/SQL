@@ -44,7 +44,7 @@ public struct Constraint {
     public static func references<T: Table>(_ table: T.Type, onDelete: ReferentialAction? = nil, onUpdate: ReferentialAction? = nil) -> Constraint {
         var schemaName: String?
         if let schemable = table as? Schemable.Type {
-            schemaName = schemable.schemaName
+            schemaName = schemable.schema.name
         }
         return references(schemaName, table.tableName, onDelete: onDelete, onUpdate: onUpdate)
     }

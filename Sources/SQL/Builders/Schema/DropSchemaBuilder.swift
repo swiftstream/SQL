@@ -11,7 +11,7 @@ public class DropSchemaBuilder<Schema: Schemable>: SQLable {
         if shouldCheckIfExists {
             query = query.if.exists
         }
-        query = query[any: Path.Schema(Schema.schemaName)]
+        query = query[any: Path.Schema(Schema.schema.name)]
         return query.parts
     }
     

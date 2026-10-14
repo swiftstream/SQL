@@ -16,7 +16,7 @@ extension Decodable {
             tableName = String(describing: Self.self)
         }
         if let schema = Self.self as? Schemable.Type {
-            return Path.SchemaWithTable(schema: schema.schemaName, table: tableName)
+            return Path.SchemaWithTable(schema: schema.schema.name, table: tableName)
         } else {
             return Path.Table(tableName)
         }

@@ -3,14 +3,14 @@ import Testing
 
 private struct Task21Table: Table, Schemable {
     static var tableName: String { "task21_table" }
-    static var schemaName: String { "ddl_schema" }
+    static var schema: DB.Schema { "ddl_schema" }
 
     init() {}
 }
 
 private struct Task21Parent: Table, Schemable {
     static var tableName: String { "task21_parent" }
-    static var schemaName: String { "ddl_schema" }
+    static var schema: DB.Schema { "ddl_schema" }
 
     init() {}
 }

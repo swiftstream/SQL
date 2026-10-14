@@ -8,7 +8,7 @@
 public class UpdateSchemaRenameBuilder<Schema: Schemable>: SQLable {
     public var parts: [SQLPart] {
         var query = SQL.alter.schema
-        query = query[any: Path.Schema(Schema.schemaName)]
+        query = query[any: Path.Schema(Schema.schema.name)]
         query = query.rename.to
         query = query[any: Path.Schema(newName)]
         return query.parts

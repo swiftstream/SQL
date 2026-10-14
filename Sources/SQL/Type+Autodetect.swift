@@ -125,7 +125,7 @@ extension Type {
         case is AnyOptionalEnum.Type:
             guard let t = type as? AnyOptionalEnum.Type else { fallthrough }
             if let st = type as? Schemable.Type {
-                return .custom(st.schemaName + "." + t.name)
+                return .custom(st.schema.name + "." + t.name)
             } else {
                 return .custom(t.name)
             }
@@ -133,7 +133,7 @@ extension Type {
         case is AnyOptionalEnumArray.Type:
             guard let t = type as? AnyOptionalEnumArray.Type else { fallthrough }
             if let st = type as? Schemable.Type {
-                return .customArray(st.schemaName + "." + t.name)
+                return .customArray(st.schema.name + "." + t.name)
             } else {
                 return .customArray(t.name)
             }
@@ -141,7 +141,7 @@ extension Type {
         case is AnySQLEnum.Type:
             guard let t = type as? AnySQLEnum.Type else { fallthrough }
             if let st = type as? Schemable.Type {
-                return .custom(st.schemaName + "." + t.name)
+                return .custom(st.schema.name + "." + t.name)
             } else {
                 return .custom(t.name)
             }
@@ -149,7 +149,7 @@ extension Type {
         case is _AnySQLEnumArray.Type:
             guard let t = type as? _AnySQLEnumArray.Type else { fallthrough }
             if let st = t.elementType as? Schemable.Type {
-                return .customArray(st.schemaName + "." + t.name)
+                return .customArray(st.schema.name + "." + t.name)
             } else {
                 return .customArray(t.name)
             }
