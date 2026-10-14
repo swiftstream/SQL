@@ -6,12 +6,11 @@ Load this file for SQL 3 planning, implementation, migration, or audit work. Do 
 
 ## Status
 
-- Current stable release: SQL 2.1.0.
-- Active release objective: finish SQL 2.2.0.
-- Next planned release after 2.2.0: SQL 3.0.0.
+- Current stable release: SQL 2.2.0.
+- Active development objective: SQL 3.0.0 production implementation.
 - No standalone SQL 2.3.0 is planned.
 - SQL 3 design is accepted and independently audited.
-- SQL 3 production implementation has not started.
+- SQL 3 production implementation starts from the accepted foundation sequence below; current source remains the SQL 2.2 baseline until each reviewed implementation checkpoint lands.
 - Bind-aware `SQL.raw` remains open work and moves to a separately bounded SQL 3 wave.
 
 ## Compatibility posture

@@ -2,19 +2,17 @@
 
 This file contains only approved current work. Ideas, unresolved choices, verified debt, and completed history belong in their separate owners.
 
-## Current: SQL 2.1.0 published / 2.x continuation
+## Current: SQL 3.0.0 foundation implementation
 
-SQL `2.1.0` is now the current stable release. Its immutable release commit is `1099bb8f62d2b6bacddfc6617318ddf4cfc7511e` (`📖 Document SQL operator interoperability`), published under annotated tag `2.1.0` (tag object `6752880aca784b882562a14abc52fb6600bf7588`) with GitHub Release `🚀 SQL 2.1.0` at `https://github.com/swiftstream/SQL/releases/tag/2.1.0`. The tag permanently peels to the release commit and must never be moved, deleted, recreated, or force-updated.
+SQL `2.2.0` is the current stable release. Its immutable release commit is `8567f99216bec49952bbe735959c34d5cce445c1`, published under annotated tag `2.2.0` (tag object `055e9090eaa5d9ce2944ae23d28ddff794fa3225`) with GitHub Release `🧩 SQL 2.2.0`. Exact branch/tag CI and a fresh public exact-version SwiftPM consumer passed before publication. Later `master` governance commits do not redefine that release point.
 
-The release contains Declarative Concise Parity plus the Operator Overload Preference compatibility fix. The concise implementation is commit `ddbd9d491c78fee7da4572be446517f3af888e15` (`✨ Add SQL 2.1 declarative concise parity`). The operator fix is commit `8f01cf3edff04746b08a26b3aeb6f2672cab7629` (`🐛 Preserve ordinary Swift operator preference`) and adds exactly eight `@_disfavoredOverload` attributes for broad SQLable `+ - * / > < >= <=` overloads while leaving `==` / `!=`, Bool/SQLable equality, custom SQL operators, signatures, and bodies unchanged.
+SQL 3.0.0 is now the active development objective. Its accepted design is owned by `.agent/architecture/SQL_3.md` and has already passed final PRIMARY acceptance plus independent audit. No standalone SQL 2.3.0 is planned.
 
-Final release closure is complete: the full package passed 756 tests / 65 suites on all three required local toolchain lanes; exact branch CI and exact tag CI passed for the release SHA; a fresh public SwiftPM consumer resolved `.package(url: "https://github.com/SwiftStream/SQL", exact: "2.1.0")` to the exact release SHA and passed resolve/build/run plus operator/DSL/null-equality/bind-order assertions; and the GitHub Release was created from the frozen reviewed body and independently read back. The historical pre-fix release candidate `48cc01b89f60cd39de90f34e5cbd33b1aa7f8952` remains historical evidence only and is not a release authority.
+The current implementation entry is the first accepted SQL 3 sequence item: DB value/capability/type-state foundation. Keep this wave separate from later qualified key-path/dialect integration. The foundation must establish the accepted `DB.Catalog` / `DB.Schema` values, required `Schemable.schema: DB.Schema`, additive `Catalogable: Schemable`, typed `Catalog<T>` foundation, and the minimum DB structural type-state needed by the accepted design while preserving unrelated SQL 2.2 behavior.
 
-No SQL 2.1.0 publication task remains active. Future compatible 2.x fixes/additions require a new explicit objective and normal research/audit/validation lifecycle; later `master` commits do not redefine the immutable 2.1.0 release point.
+Do not begin the second SQL 3 sequence item until the foundation implementation is validated, independently source/diff-audited, and committed. Bind-aware `SQL.raw` remains a separate bounded SQL 3 wave and is not part of the foundation.
 
-General 2.x policy remains: bug fixes belong in patch releases, additive/backward-compatible features in minor releases, and source-breaking public API changes in a later major unless a separately reviewed SemVer exception applies. Keep stable authority, README/migration/release material, source-owned skills, and downstream compatibility evidence synchronized with each accepted 2.x wave.
-
-Publication of skills in the independent `SwiftStream/skills` project remains outside this repository's release objective.
+Publication of skills in the independent `SwiftStream/skills` project remains outside this repository's SQL 3 implementation objective.
 
 ## Completed declarative query authoring lineage retained for context
 
@@ -74,7 +72,7 @@ DateTime
 Interval
 ```
 
-The shared-value capability passed its source, binding/rendering, external-consumer, cross-platform, documentation, immutable-validation, and independent root-audit gates before publication. It remains available from `2.0.0-beta.6.0.0`; `2.0.0-beta.6.0.1` remains its toolchain/CI hotfix, and `2.0.0-beta.6.1.0` introduced the accepted Declarative DDL authoring capability. The current stable line is `2.1.0`.
+The shared-value capability passed its source, binding/rendering, external-consumer, cross-platform, documentation, immutable-validation, and independent root-audit gates before publication. It remains available from `2.0.0-beta.6.0.0`; `2.0.0-beta.6.0.1` remains its toolchain/CI hotfix, and `2.0.0-beta.6.1.0` introduced the accepted Declarative DDL authoring capability. The current stable line is `2.2.0`.
 
 Publication closes the SwifQL work for this capability. Any future SwifQL mutation requires a new explicit maintainer objective and exact task scope; the completed shared-value lineage does not authorize unrelated refactors, Bridges/PostgresBridge modernization, macros, migrations, Table decoding, or wider cross-dialect abstractions.
 
@@ -138,4 +136,4 @@ Task 29 stable documentation, migration guidance, release notes, final audit, re
 
 The approved first Duck closure covers ordinary application/analytics/schema SQL including views and the validated catalog/file-function surface. Administration/runtime families such as INSTALL/LOAD, secrets, broad PRAGMA/configuration, checkpoint/vacuum/analyze administration, variables, export/import, SHOW/DESCRIBE/SUMMARIZE convenience, extension-specific SQL universes, and the generic SQL `name := expression` abstraction remain deferred.
 
-The active objective is final SQL 2.2.0 release closure. EF01 is closed. EF02 is implementation/validation/audit/guidance-complete on product candidate `d97dae600bb7df41a55c797b8ac054e80288cadf`: Wave A is closed; Wave B is committed as `993327e7e4fc04d7c2becfa9167b7787f05d7dbd`; Wave C is committed as `988154b0872c1402fec5fe1699de150bd4377a07`; whole-EF02 validation is PRIMARY-accepted; the independent Wave E package is closed through 150/150 technical PASS plus CLEAN 30/30 authority correction; all six managed skills are classified with the three required updates applied; and README/RELEASE_NOTES/CHANGELOG guidance is synchronized while MIGRATION correctly remains unchanged. Next work is final 2.2 release validation and publication closure, not new EF02 implementation. The SQL 3 design is already final-primary accepted and independently audited, but implementation remains deferred until 2.2 closes; load `architecture/SQL_3.md` only for SQL 3 work. No standalone SQL 2.3.0 is planned, and TECH_DEBT item 12 moves to a separately bounded SQL 3 wave.
+SQL 2.2.0 release closure is complete and immutable. EF01/EF02, managed-skill updates, release validation, exact branch/tag CI, public exact-version consumer validation, GitHub Release publication, and post-publication governance are closed. The active objective is SQL 3.0.0 production implementation under `architecture/SQL_3.md`, beginning with the DB value/capability/type-state foundation. No standalone SQL 2.3.0 is planned, and TECH_DEBT item 12 remains a separately bounded SQL 3 wave.
