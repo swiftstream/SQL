@@ -255,7 +255,7 @@ Prefer one screenful over a mini-blog post.
 
 Good Discord copy is often denser than Telegram copy. Inline code such as `JSONValue`, `ANY`, or `Fn.arrayAgg` is useful when the API name itself communicates the feature. Avoid large code blocks unless a single tiny example is the whole point of the release.
 
-Emoji may be used sparingly to carry the maintainer tone or the release theme. Do not decorate every bullet.
+Do not use emoji in English Discord release announcements.
 
 ### Telegram — Russian
 
@@ -269,11 +269,17 @@ Do not place the release emoji at the end of the Telegram heading.
 
 Then explain the practical changes in short paragraphs or a compact list. Telegram may be slightly more conversational than Discord and may briefly explain why a change matters.
 
+The opening value sentence may use an active first-person-plural maintainer voice when it sounds natural, for example `Расширяем работу с выражениями:` or `Делаем декларативные запросы короче:`.
+
+After that opening, describe additional fixes or secondary changes impersonally rather than switching back to `мы`. Prefer `Плюс поправлено...` and `Заодно исправлено...`, not `Плюс поправили...` or `Заодно исправили...`.
+
 Prefer wording such as:
 
 - `Добавлено...`
 - `Теперь можно...`
 - `Исправлено...`
+- `Плюс поправлено...`
+- `Заодно исправлено...`
 - `Если вы используете..., то...`
 
 For a release with several meaningful features, two to four short bullets are appropriate. For a small fix, keep it to one or two sentences.
