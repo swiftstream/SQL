@@ -2,15 +2,17 @@
 
 This file contains only approved current work. Ideas, unresolved choices, verified debt, and completed history belong in their separate owners.
 
-## Current: SQL 3.0.0 foundation implementation
+## Current: SQL 3.0.0 qualified key-path and dialect integration
 
-SQL `2.2.0` is the current stable release. Its immutable release commit is `8567f99216bec49952bbe735959c34d5cce445c1`, published under annotated tag `2.2.0` (tag object `055e9090eaa5d9ce2944ae23d28ddff794fa3225`) with GitHub Release `🧩 SQL 2.2.0`. Exact branch/tag CI and a fresh public exact-version SwiftPM consumer passed before publication. Later `master` governance commits do not redefine that release point.
+SQL `2.2.0` is the current stable release. Its immutable release commit is `8567f99216bec49952bbe735959c34d5cce445c1`, published under annotated tag `2.2.0` (tag object `055e9090eaa5d9ce2944ae23d28ddff794fa3225`) with GitHub Release `🧩 SQL 2.2.0`. Exact branch/tag CI and a fresh public exact-version SwiftPM consumer passed before publication. Later `master` development commits do not redefine that release point.
 
-SQL 3.0.0 is now the active development objective. Its accepted design is owned by `.agent/architecture/SQL_3.md` and has already passed final PRIMARY acceptance plus independent audit. No standalone SQL 2.3.0 is planned.
+SQL 3.0.0 is the active development objective. Its accepted design is owned by `.agent/architecture/SQL_3.md` and has already passed final PRIMARY acceptance plus independent audit. No standalone SQL 2.3.0 is planned.
 
-The current implementation entry is the first accepted SQL 3 sequence item: DB value/capability/type-state foundation. Keep this wave separate from later qualified key-path/dialect integration. The foundation must establish the accepted `DB.Catalog` / `DB.Schema` values, required `Schemable.schema: DB.Schema`, additive `Catalogable: Schemable`, typed `Catalog<T>` foundation, and the minimum DB structural type-state needed by the accepted design while preserving unrelated SQL 2.2 behavior.
+Sequence item 1, the DB value/capability/type-state foundation, is implemented, validated across the accepted Swift 6.3.3/6.4 matrix, independently source/diff/API/type-state/evidence audited CLEAN 90/90, and committed as `58c2c775d040afc2af11e5663ece90b6a8e101d8` (`🪚 Add SQL 3 database namespace foundation`).
 
-Do not begin the second SQL 3 sequence item until the foundation implementation is validated, independently source/diff-audited, and committed. Bind-aware `SQL.raw` remains a separate bounded SQL 3 wave and is not part of the foundation.
+The current implementation entry is sequence item 2: atomic qualified key-path parts and built-in dialect integration. Scope must follow `.agent/architecture/SQL_3.md`: one semantic `SQLPartKeyPath` carrying optional catalog/schema/table plus paths/asText; additive `SQLKeyPathable.catalog` defaulting to `nil`; no catalog requirement on higher-level `Keypathable`; preserved dialect-specific PostgreSQL/Duck/MySQL traversal semantics; additive source-compatible dialect context/catalog hooks only where required; and no model/manual/FKP migration work from sequence item 3 unless the accepted item-2 contract explicitly needs a narrowly shared primitive.
+
+Bind-aware `SQL.raw` remains a separate bounded SQL 3 wave and is not implicitly part of sequence item 2.
 
 Publication of skills in the independent `SwiftStream/skills` project remains outside this repository's SQL 3 implementation objective.
 
