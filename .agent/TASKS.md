@@ -2,7 +2,7 @@
 
 This file contains only approved current work. Ideas, unresolved choices, verified debt, and completed history belong in their separate owners.
 
-## Current: SQL 3.0.0 qualified key-path and dialect integration
+## Current: SQL 3.0.0 model and structural namespace integration
 
 SQL `2.2.0` is the current stable release. Its immutable release commit is `8567f99216bec49952bbe735959c34d5cce445c1`, published under annotated tag `2.2.0` (tag object `055e9090eaa5d9ce2944ae23d28ddff794fa3225`) with GitHub Release `🧩 SQL 2.2.0`. Exact branch/tag CI and a fresh public exact-version SwiftPM consumer passed before publication. Later `master` development commits do not redefine that release point.
 
@@ -10,9 +10,11 @@ SQL 3.0.0 is the active development objective. Its accepted design is owned by `
 
 Sequence item 1, the DB value/capability/type-state foundation, is implemented, validated across the accepted Swift 6.3.3/6.4 matrix, independently source/diff/API/type-state/evidence audited CLEAN 90/90, and committed as `58c2c775d040afc2af11e5663ece90b6a8e101d8` (`🪚 Add SQL 3 database namespace foundation`).
 
-The current implementation entry is sequence item 2: atomic qualified key-path parts and built-in dialect integration. Scope must follow `.agent/architecture/SQL_3.md`: one semantic `SQLPartKeyPath` carrying optional catalog/schema/table plus paths/asText; additive `SQLKeyPathable.catalog` defaulting to `nil`; no catalog requirement on higher-level `Keypathable`; preserved dialect-specific PostgreSQL/Duck/MySQL traversal semantics; additive source-compatible dialect context/catalog hooks only where required; and no model/manual/FKP migration work from sequence item 3 unless the accepted item-2 contract explicitly needs a narrowly shared primitive.
+Sequence item 2 is implemented, validated, independently reviewed, and committed. Qualified columns now lower to one `SQLPartKeyPath` carrying optional catalog/schema/table plus ordered paths/asText. `SQLKeyPathable.catalog` defaults to `nil` for existing conformers. PostgreSQL/Duck traversal and MySQL terminal-path rendering remain distinct, and existing custom dialect hooks remain source-compatible. The three Swift 6.3.3/6.4 lanes passed focused, normal-import consumer, and full-package validation. The final census provenance finding was corrected and independently closed under the maintainer-delegated local review workflow.
 
-Bind-aware `SQL.raw` remains a separate bounded SQL 3 wave and is not implicitly part of sequence item 2.
+The current frontier is sequence item 3: model/Decodable qualification, typed `FormattedKeyPath`/manual key-path parity, alias source/reference ownership, the canonical `DB.*` structural namespace migration, and concrete migration material. Follow `.agent/architecture/SQL_3.md` and preserve the accepted capability and dialect boundaries.
+
+Bind-aware `SQL.raw` remains a separate bounded SQL 3 wave and is not implicitly part of sequence item 3.
 
 Publication of skills in the independent `SwiftStream/skills` project remains outside this repository's SQL 3 implementation objective.
 
