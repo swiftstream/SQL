@@ -34,6 +34,23 @@ struct JsonTests: SwifQLTests {
             .mysql("events.field")
         )
     }
+
+    @Test("Catalog-qualified JSON key path keeps dialect rendering")
+    func catalogQualifiedKeyPathDialectOutput() {
+        let keyPath = SQLableParts(parts: SQLPartKeyPath(
+            catalog: "warehouse",
+            schema: "analytics",
+            table: "events",
+            paths: ["payload", "field"],
+            asText: true
+        ))
+
+        check(
+            keyPath,
+            .psql(#""warehouse"."analytics"."events"."payload"->>'field'"#),
+            .mysql("warehouse.analytics.events.field")
+        )
+    }
     
     @Test("Test Jsonb Extract Path")
     func jsonbExtractPath() {

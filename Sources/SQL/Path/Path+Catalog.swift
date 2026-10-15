@@ -109,11 +109,7 @@ extension Path.CatalogWithSchemaAndTable: SQLable {
 
 extension Path.CatalogWithSchemaAndTableAndColumn: SQLable {
     public var parts: [SQLPart] {
-        [
-            SQLPartCatalog(catalog),
-            SQLPartOperator.period,
-            SQLPartKeyPath(schema: schema, table: table, paths: paths)
-        ]
+        [SQLPartKeyPath(catalog: catalog, schema: schema, table: table, paths: paths)]
     }
 }
 

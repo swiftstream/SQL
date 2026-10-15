@@ -377,4 +377,55 @@ struct DuckPivotTests {
                 == "SELECT cities.country FROM cities GROUP BY cities.country ORDER BY cities.country DESC"
         )
     }
+
+    @Test("Catalog-qualified one-segment paths omit qualification in every PIVOT scope")
+    func catalogQualifiedKeyPathIsUnqualifiedInAllPivotScopes() {
+        let query = SwifQL
+            .pivot(cities)
+            .on(
+                Path.Catalog("warehouse").schema("analytics").table("events").column("year"),
+                in: 2000
+            )
+            .using(Path.Catalog("warehouse").schema("analytics").table("events").column("population"))
+            .groupBy(Path.Catalog("warehouse").schema("analytics").table("events").column("country"))
+            .orderBy(.desc(Path.Catalog("warehouse").schema("analytics").table("events").column("country")))
+
+        #expect(
+            query.prepare(.duck).plain
+                == #"PIVOT "cities" ON "year" IN (2000) USING "population" GROUP BY "country" ORDER BY "country" DESC"#
+        )
+    }
+
+    @Test("Catalog-qualified text key paths retain traversal and grouping in PIVOT ON")
+    func catalogQualifiedTextKeyPathRetainsDuckTraversalAndGrouping() {
+        let keyPath = SQLPartKeyPath(
+            catalog: "warehouse",
+            schema: "analytics",
+            table: "events",
+            paths: ["payload", "field"],
+            asText: true
+        )
+        let query = SwifQL.pivot(cities).on(SwifQLableParts(parts: keyPath))
+
+        #expect(
+            query.prepare(.duck).plain
+                == #"PIVOT "cities" ON ("payload"->>'field')"#
+        )
+    }
+
+    @Test("Unscoped catalog-qualified text key paths retain qualification and grouping")
+    func unscopedCatalogQualifiedTextKeyPathKeepsQualificationAndGrouping() {
+        let keyPath = SQLPartKeyPath(
+            catalog: "warehouse",
+            schema: "analytics",
+            table: "events",
+            paths: ["payload", "field"],
+            asText: true
+        )
+
+        #expect(
+            SwifQL.select(SwifQLableParts(parts: keyPath)).prepare(.duck).plain
+                == #"SELECT ("warehouse"."analytics"."events"."payload"->>'field')"#
+        )
+    }
 }

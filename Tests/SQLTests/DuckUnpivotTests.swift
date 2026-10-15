@@ -365,4 +365,36 @@ struct DuckUnpivotTests {
         #expect(SwifQLClauseOwner.simplifiedUnpivot.renderScope(for: .on) != .simplifiedUnpivotOrderBy)
         #expect(SwifQLRenderScope.simplifiedUnpivotOrderBy != .simplifiedPivotOrderBy)
     }
+
+    @Test("Catalog-qualified text key paths are unqualified only in UNPIVOT ORDER BY")
+    func catalogQualifiedKeyPathIsUnqualifiedInOrderByScope() {
+        let keyPath = SwifQLableParts(parts: SQLPartKeyPath(
+            catalog: "warehouse",
+            schema: "analytics",
+            table: "events",
+            paths: ["payload", "field"],
+            asText: true
+        ))
+        let scoped = base().orderBy(.asc(keyPath))
+
+        #expect(
+            scoped.prepare(.duck).plain
+                == #"UNPIVOT "monthly_sales" ON "monthly_sales"."Jan", "monthly_sales"."Feb" INTO NAME "month" VALUE "sales" ORDER BY ("payload"->>'field') ASC"#
+        )
+
+        let ordinary = SwifQL
+            .select(keyPath)
+            .from(sales)
+            .orderBy(.asc(keyPath))
+        #expect(
+            ordinary.prepare(.duck).plain
+                == #"SELECT ("warehouse"."analytics"."events"."payload"->>'field') FROM "monthly_sales" ORDER BY ("warehouse"."analytics"."events"."payload"->>'field') ASC"#
+        )
+
+        let nested = SwifQL.select(scoped).orderBy(.asc(keyPath))
+        #expect(
+            nested.prepare(.duck).plain
+                == #"SELECT UNPIVOT "monthly_sales" ON "monthly_sales"."Jan", "monthly_sales"."Feb" INTO NAME "month" VALUE "sales" ORDER BY ("payload"->>'field') ASC ORDER BY ("warehouse"."analytics"."events"."payload"->>'field') ASC"#
+        )
+    }
 }

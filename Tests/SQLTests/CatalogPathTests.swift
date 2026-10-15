@@ -45,15 +45,17 @@ struct CatalogPathTests: SwifQLTests {
 
         #expect(helperPath.prepare(.duck).plain == oneChain.prepare(.duck).plain)
         #expect(copied.prepare(.duck).plain == oneChain.prepare(.duck).plain)
-        #expect(copied.parts.count == 3)
-        #expect(copied.parts.first is SwifQLPartCatalog)
-        #expect((copied.parts.first as? SwifQLPartCatalog)?.name == "analytics")
-        #expect(copied.parts[1] is SwifQLPartOperator)
+        #expect(copied.parts.count == 1)
 
-        let suffix = copied.parts[2] as? SwifQLPartKeyPath
-        #expect(suffix?.schema == "main")
-        #expect(suffix?.table == "events")
-        #expect(suffix?.paths == ["id"])
+        let keyPath = copied.parts.first as? SwifQLPartKeyPath
+        #expect(keyPath?.catalog == "analytics")
+        #expect(keyPath?.schema == "main")
+        #expect(keyPath?.table == "events")
+        #expect(keyPath?.paths == ["id"])
+
+        #expect(oneChain.prepare(.psql).plain == #""analytics"."main"."events"."id""#)
+        #expect(oneChain.prepare(.duck).plain == #""analytics"."main"."events"."id""#)
+        #expect(oneChain.prepare(.mysql).plain == "analytics.main.events.id")
     }
 
     @Test("Catalog parts and final key paths remain publicly inspectable")

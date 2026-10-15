@@ -8,15 +8,17 @@
 import Foundation
 
 public struct SQLPartKeyPath: SQLKeyPathable {
+    public var catalog: String?
     public var schema: String?
     public var table: String?
     public var paths: [String]
     public var asText: Bool
     // FIXME: instead of `asText` here create some protocol for path which will support `asText` for each part of path
-    public init (schema: String? = nil, table: String? = nil, paths: String..., asText: Bool = false) {
-        self.init(schema: schema, table: table, paths: paths, asText: asText)
+    public init (catalog: String? = nil, schema: String? = nil, table: String? = nil, paths: String..., asText: Bool = false) {
+        self.init(catalog: catalog, schema: schema, table: table, paths: paths, asText: asText)
     }
-    public init (schema: String? = nil, table: String? = nil, paths: [String], asText: Bool = false) {
+    public init (catalog: String? = nil, schema: String? = nil, table: String? = nil, paths: [String], asText: Bool = false) {
+        self.catalog = catalog
         self.schema = schema
         self.table = table
         self.paths = paths

@@ -127,7 +127,13 @@ class PostgreSQLDialect: SQLDialect {
     
     override func keyPath(_ keyPath: SQLPartKeyPath) -> String {
         var result = ""
+        if let catalog = keyPath.catalog {
+            result.append(catalogName(catalog))
+        }
         if let schema = keyPath.schema {
+            if result.count > 0 {
+                result.append(".")
+            }
             result.append(schemaName(schema))
         }
         if let table = keyPath.table {

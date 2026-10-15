@@ -48,9 +48,14 @@ public struct SQLableParts: SQLable {
 public protocol SQLPart {}
 
 public protocol SQLKeyPathable: SQLPart {
+    var catalog: String? { get }
     var schema: String? { get }
     var table: String? { get }
     var paths: [String] { get }
+}
+
+public extension SQLKeyPathable {
+    var catalog: String? { nil }
 }
 
 extension SQLable {
