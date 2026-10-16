@@ -60,7 +60,7 @@ private final class OwnerDerivedOrderByScopeDialect: SQLDialect {
 
 @Suite("Duck simplified UNPIVOT")
 struct DuckUnpivotTests {
-    private let sales = Path.Table("monthly_sales")
+    private let sales = DB.Table("monthly_sales")
 
     private func base() -> SwifQLable {
         SwifQL.unpivot(sales)
@@ -226,8 +226,8 @@ struct DuckUnpivotTests {
 
     @Test("INTO identifiers are structural and remain bind-free when quoted")
     func intoIdentifiers() {
-        let query = SwifQL.unpivot(Path.Table("special_data"))
-            .on(Path.Column("select"), Path.Column("имя"), Path.Column("a\"b"))
+        let query = SwifQL.unpivot(DB.Table("special_data"))
+            .on(DB.Column("select"), DB.Column("имя"), DB.Column("a\"b"))
             .into(name: "ключ", values: "значение", "a\"b")
         let prepared = query.prepare(.duck)
 
@@ -337,10 +337,10 @@ struct DuckUnpivotTests {
     func downstreamParentheses() {
         let query = base()
         let unparenthesized = SwifQL
-            .select(Path.Column("month"))
+            .select(DB.Column("month"))
             .from(query)
         let parenthesized = SwifQL
-            .select(Path.Column("month"))
+            .select(DB.Column("month"))
             .from(|(query)|)
 
         #expect(

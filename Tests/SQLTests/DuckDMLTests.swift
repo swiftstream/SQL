@@ -3,10 +3,10 @@ import Testing
 
 @Suite("Duck ordinary DML")
 struct DuckDMLTests: SwifQLTests {
-    private let events = Path.Table("events")
-    private let source = Path.Table("event_source")
+    private let events = DB.Table("events")
+    private let source = DB.Table("event_source")
 
-    private func insertValues(_ table: Path.Table) -> SwifQLable {
+    private func insertValues(_ table: DB.Table) -> SwifQLable {
         SwifQL
             .insertInto(table, fields: "id", "name")
             .values
@@ -211,22 +211,22 @@ struct DuckDMLTests: SwifQLTests {
             .conflict(events.column("id"))
             .do
             .nothing
-        let excluded = Path.Table("EXCLUDED")
-        let assignments = (Path.Column("value") == excluded.column("value")) ~ (
+        let excluded = DB.Table("EXCLUDED")
+        let assignments = (DB.Column("value") == excluded.column("value")) ~ (
             SwifQLableParts(parts: SwifQLPartOperator.comma, SwifQLPartOperator.space) ~
-            (Path.Column("gate") == excluded.column("gate"))
+            (DB.Column("gate") == excluded.column("gate"))
         )
         let doUpdate = SwifQL
-            .insertInto(Path.Table("conflict_actions"), fields: "id", "value", "gate")
+            .insertInto(DB.Table("conflict_actions"), fields: "id", "value", "gate")
             .values
             .values(1, "updated", 3)
             .on
-            .conflict(Path.Table("conflict_actions").column("id"))
+            .conflict(DB.Table("conflict_actions").column("id"))
             .do
             .update
             .set(assignments)
             .where(excluded.column("gate") > 2)
-            .returning(Path.Column("id"), Path.Column("value"), Path.Column("gate"))
+            .returning(DB.Column("id"), DB.Column("value"), DB.Column("gate"))
 
         #expect(
             noTargetDoNothing.prepare(.duck).plain ==
@@ -348,7 +348,7 @@ struct DuckDMLTests: SwifQLTests {
         let subquery = SwifQL
             .delete(from: events)
             .using(doomed)
-            .where(events.column("id") == Path.Table("doomed").column("id"))
+            .where(events.column("id") == DB.Table("doomed").column("id"))
         let prepared = subquery.prepare(.duck).splitted
 
         #expect(
@@ -362,7 +362,7 @@ struct DuckDMLTests: SwifQLTests {
         let multiple = SwifQL
             .delete(from: events)
             .using(multipleSources)
-            .where(events.column("id") == Path.Table("doomed").column("id"))
+            .where(events.column("id") == DB.Table("doomed").column("id"))
             .returning.asterisk
         #expect(
             multiple.prepare(.duck).splitted.query ==
@@ -423,7 +423,7 @@ struct DuckDMLTests: SwifQLTests {
 
     @Test("TRUNCATE preserves exact table qualification and bind-free output")
     func truncateComposition() {
-        let query = SwifQL.truncate(Path.Schema("analytics").table("events"))
+        let query = SwifQL.truncate(DB.Schema("analytics").table("events"))
 
         check(
             query,

@@ -17,8 +17,8 @@ extension AnyTable {
         String(describing: Self.self)
     }
     
-    public static func column(_ paths: String...) -> Path.SchemaWithTableAndColumn {
-        Path.Schema((Self.self as? Schemable.Type)?.schema.name).table(tableName).column(paths)
+    public static func column(_ paths: String...) -> FormattedKeyPath {
+        FormattedKeyPath(table: tableName, schema: ModelQualification.resolve(Self.self), paths: paths)
     }
     
     public static func inSchema(_ name: String) -> Schema<Self> {
@@ -52,8 +52,13 @@ public protocol Table: AnyTable, ColumnRoot {
 extension Table {
     public static subscript<V>(dynamicMember keyPath: KeyPath<Self, V>) -> SQLable {
         guard let k = keyPath as? Keypathable else { return "<keyPath should conform to Keypathable>" }
-        let schema: String? = (Self.self as? Schemable.Type)?.schema.name
-        return SQLPartKeyPath(schema: schema, table: Self.tableName, paths: k.paths)
+        let schema = ModelQualification.resolve(Self.self)
+        return SQLPartKeyPath(
+            catalog: schema?.catalog?.name,
+            schema: schema?.name,
+            table: Self.tableName,
+            paths: k.paths
+        )
     }
 }
 

@@ -15,7 +15,7 @@ private struct Design037RootSuffixUniversalPath: SwifQLable, SwifQLUniversalKeyP
     typealias ARoot = Design037RootSuffixUniversalPath
 
     var parts: [SwifQLPart] {
-        Select { Path.Column("root_column") }.as("probe_suffix").parts
+        Select { DB.Column("root_column") }.as("probe_suffix").parts
     }
 
     var path: String { "status" }
@@ -47,10 +47,10 @@ private final class Design037StructuralSuffixScopeDialect: SQLDialect {
 
 @Suite("DESIGN-037 global root-suffix compatibility")
 struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
-    private var root: any SwifQLable { Select { Path.Column("id") }.as("suffix") }
+    private var root: any SwifQLable { Select { DB.Column("id") }.as("suffix") }
 
     private var base: any SwifQLable {
-        Select { Path.Column("root_column") }.as("probe_suffix")
+        Select { DB.Column("root_column") }.as("probe_suffix")
     }
 
     private func verify(_ cases: [(String, any SwifQLable)]) {
@@ -68,10 +68,10 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
 
     @Test("Multi-fragment roots keep an aliased statement suffix before later clauses")
     func multiFragmentRootLowering() {
-        let stored: any SwifQLable = Select { Path.Column("id") }.as("x")
+        let stored: any SwifQLable = Select { DB.Column("id") }.as("x")
         let single = SwifQL { stored }
         let limited = SwifQL { stored; Limit(1) }
-        let filtered = SwifQL { stored; Where { Path.Column("status") == "later" } }
+        let filtered = SwifQL { stored; Where { DB.Column("status") == "later" } }
 
         #expect(single.prepare(.psql).plain == #"SELECT "id" as "x""#)
         #expect(limited.prepare(.psql).plain == #"SELECT "id" as "x" LIMIT 1"#)
@@ -83,16 +83,16 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
             .duck(#"SELECT "id" as "x" LIMIT 1"#)
         )
 
-        let statementAndClause = SwifQL { Select { Path.Column("id") }; Limit(1) }
-        let ordinaryFragmentAndClause = SwifQL { Path.Column("id"); Limit(1) }
+        let statementAndClause = SwifQL { Select { DB.Column("id") }; Limit(1) }
+        let ordinaryFragmentAndClause = SwifQL { DB.Column("id"); Limit(1) }
         #expect(statementAndClause.prepare(.psql).plain == #"SELECT "id" LIMIT 1"#)
         #expect(ordinaryFragmentAndClause.prepare(.psql).plain == #""id" LIMIT 1"#)
     }
 
     @Test("Root lowering preserves set-result suffixes and empty-fragment order")
     func rootFragmentSequence() {
-        let first: any SwifQLable = Select { Path.Column("id") }.as("left")
-        let second: any SwifQLable = Select { Path.Column("name") }.as("right")
+        let first: any SwifQLable = Select { DB.Column("id") }.as("left")
+        let second: any SwifQLable = Select { DB.Column("name") }.as("right")
         let empty: any SwifQLable = SwifQLableParts(parts: [])
         let setResult: any SwifQLable = Union([first, second]).as("combined")
         let singleSetRoot = SwifQL { setResult }
@@ -105,12 +105,12 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
     @Test("Root lowering keeps statement, suffix, and later bind order")
     func rootBindOrder() {
         let stored: any SwifQLable = SwifQL {
-            Select { Path.Column("id") }
-            Where { Path.Column("inside") == "statement-bind" }
-        }.as(Path.Column("suffixTag") == "suffix-bind")
+            Select { DB.Column("id") }
+            Where { DB.Column("inside") == "statement-bind" }
+        }.as(DB.Column("suffixTag") == "suffix-bind")
         let query = SwifQL {
             stored
-            Where { Path.Column("outside") == "continuation-bind" }
+            Where { DB.Column("outside") == "continuation-bind" }
         }
         let prepared = query.prepare(.psql)
         let singlePrepared = SwifQL { stored }.prepare(.psql)
@@ -124,26 +124,26 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
     @Test("Closure JOIN nests the root frame and keeps the suffix outside it")
     func closureJoinEmbedding() {
         let stored: any SwifQLable = SwifQL {
-            Select { Path.Column("id") }
-            Where { Path.Column("inside") == "join-statement" }
-        }.as(Path.Column("sourceTag") == "join-suffix")
+            Select { DB.Column("id") }
+            Where { DB.Column("inside") == "join-statement" }
+        }.as(DB.Column("sourceTag") == "join-suffix")
         let query = From {
-            Path.Table("Outer")
+            DB.Table("Outer")
             Join(.inner) { stored }
-            On(Path.Column("enabled") == "join-on")
+            On(DB.Column("enabled") == "join-on")
         }
         let prepared = query.prepare(.psql)
 
         #expect(prepared.splitted.query == #"FROM "Outer" INNER JOIN (SELECT "id" WHERE "inside" = $1) as "sourceTag" = $2 ON "enabled" = $3"#)
         #expect(prepared.splitted.values.map { String(describing: $0) } == ["join-statement", "join-suffix", "join-on"])
 
-        let left: any SwifQLable = Select { Path.Column("id") }.as("left")
-        let right: any SwifQLable = Select { Path.Column("name") }.as("right")
+        let left: any SwifQLable = Select { DB.Column("id") }.as("left")
+        let right: any SwifQLable = Select { DB.Column("name") }.as("right")
         let setResult: any SwifQLable = Union([left, right]).as("combined")
         let setJoin = From {
-            Path.Table("Outer")
+            DB.Table("Outer")
             Join(.inner) { setResult }
-            On(Path.Column("enabled") == "set-join-on")
+            On(DB.Column("enabled") == "set-join-on")
         }.prepare(.psql)
         #expect(setJoin.splitted.query == #"FROM "Outer" INNER JOIN ((SELECT "id") as "left" UNION (SELECT "name") as "right") as "combined" ON "enabled" = $1"#)
         #expect(setJoin.splitted.values.map { String(describing: $0) } == ["set-join-on"])
@@ -152,13 +152,13 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
     @Test("Union initializers and binary set operations keep both operands' suffixes")
     func setOperationOperands() {
         let left: any SwifQLable = SwifQL {
-            Select { Path.Column("id") }
-            Where { Path.Column("side") == "left-statement" }
-        }.as(Path.Column("leftTag") == "left-suffix")
+            Select { DB.Column("id") }
+            Where { DB.Column("side") == "left-statement" }
+        }.as(DB.Column("leftTag") == "left-suffix")
         let right: any SwifQLable = SwifQL {
-            Select { Path.Column("name") }
-            Where { Path.Column("side") == "right-statement" }
-        }.as(Path.Column("rightTag") == "right-suffix")
+            Select { DB.Column("name") }
+            Where { DB.Column("side") == "right-statement" }
+        }.as(DB.Column("rightTag") == "right-suffix")
 
         let union = Union([left, right]).prepare(.psql)
         #expect(union.splitted.query == #"(SELECT "id" WHERE "side" = $1) as "leftTag" = $2 UNION (SELECT "name" WHERE "side" = $3) as "rightTag" = $4"#)
@@ -176,20 +176,20 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
     @Test("WITH keeps suffix-bearing statement values within its query boundary")
     func withInitializerEmbedding() {
         let query: any SwifQLable = SwifQL {
-            Select { Path.Column("id") }
-            Where { Path.Column("inside") == "cte-statement" }
-        }.as(Path.Column("queryTag") == "cte-suffix")
-        let cte = With(Path.Table("cte"), query).prepare(.psql)
+            Select { DB.Column("id") }
+            Where { DB.Column("inside") == "cte-statement" }
+        }.as(DB.Column("queryTag") == "cte-suffix")
+        let cte = With(DB.Table("cte"), query).prepare(.psql)
 
         #expect(cte.splitted.query == #""cte" as ((SELECT "id" WHERE "inside" = $1) as "queryTag" = $2)"#)
         #expect(cte.splitted.values.map { String(describing: $0) } == ["cte-statement", "cte-suffix"])
-        #expect(With(Path.Table("plain_cte"), Select { Path.Column("id") }).prepare(.psql).plain == #""plain_cte" as (SELECT "id")"#)
+        #expect(With(DB.Table("plain_cte"), Select { DB.Column("id") }).prepare(.psql).plain == #""plain_cte" as (SELECT "id")"#)
     }
 
     @Test("Fluent WITH continuation follows a stored root suffix")
     func withContinuationAfterSuffix() {
-        let stored: any SwifQLable = Select { Path.Column("id") }.as("root")
-        let continued = stored.with(With(Path.Table("cte"), Select { Path.Column("value") }))
+        let stored: any SwifQLable = Select { DB.Column("id") }.as("root")
+        let continued = stored.with(With(DB.Table("cte"), Select { DB.Column("value") }))
 
         #expect(continued.prepare(.psql).plain == #"SELECT "id" as "root" WITH "cte" as (SELECT "value")"#)
         #expect(From { continued }.prepare(.psql).plain == #"FROM (SELECT "id") as "root" WITH "cte" as (SELECT "value")"#)
@@ -197,24 +197,24 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
 
     @Test("Nested statement and set-result values keep chained suffix ownership")
     func nestedAndChainedSuffixes() {
-        let statement: any SwifQLable = Select { Path.Column("id") }.as("first").as("second")
-        let idQuery: any SwifQLable = Select { Path.Column("id") }
-        let nameQuery: any SwifQLable = Select { Path.Column("name") }
+        let statement: any SwifQLable = Select { DB.Column("id") }.as("first").as("second")
+        let idQuery: any SwifQLable = Select { DB.Column("id") }
+        let nameQuery: any SwifQLable = Select { DB.Column("name") }
         let setResult: any SwifQLable = Union([idQuery, nameQuery]).as("combined").as("final")
 
         #expect(From { statement }.prepare(.psql).plain == #"FROM (SELECT "id") as "first" as "second""#)
         #expect(Select { statement }.prepare(.psql).plain == #"SELECT (SELECT "id") as "first" as "second""#)
         #expect(From { setResult }.prepare(.psql).plain == #"FROM ((SELECT "id") UNION (SELECT "name")) as "combined" as "final""#)
         #expect(Select { setResult }.prepare(.psql).plain == #"SELECT ((SELECT "id") UNION (SELECT "name")) as "combined" as "final""#)
-        #expect(With(Path.Table("cte"), setResult).prepare(.psql).plain == #""cte" as (((SELECT "id") UNION (SELECT "name")) as "combined" as "final")"#)
+        #expect(With(DB.Table("cte"), setResult).prepare(.psql).plain == #""cte" as (((SELECT "id") UNION (SELECT "name")) as "combined" as "final")"#)
     }
 
     @Test("Structural continuations keep prior suffixes before continuation parts")
     func structuralContinuationOrder() {
-        let stored: any SwifQLable = Select { Path.Column("id") }.as("root").as("chained")
+        let stored: any SwifQLable = Select { DB.Column("id") }.as("root").as("chained")
         let ordered = stored
-            .groupBy(Path.Column("category"))
-            .orderBy(.desc(Path.Column("category")))
+            .groupBy(DB.Column("category"))
+            .orderBy(.desc(DB.Column("category")))
         let appended = stored.structurallyAppending(
             SwifQLableParts(parts: [SwifQLPartOperator.space, SwifQLPartOperator.custom("TAIL")])
         )
@@ -230,14 +230,14 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
         #expect(emptyAppend.prepare(.psql).plain == stored.prepare(.psql).plain)
         #expect(adjacentAppend.prepare(.psql).plain == #"SELECT "id" as "root" as "chained"TAIL"#)
 
-        let bareRoot = Select { Path.Column("id") }.structurallyAppending(
+        let bareRoot = Select { DB.Column("id") }.structurallyAppending(
             SwifQLableParts(parts: [SwifQLPartOperator.space, SwifQLPartOperator.custom("TAIL")])
         )
         #expect(bareRoot.prepare(.psql).plain == #"SELECT "id" TAIL"#)
 
-        let boundSuffix: any SwifQLable = Select { Path.Column("id") }
-            .as(Path.Column("suffixTag") == "suffix-bind")
-        let boundWhere = Where { Path.Column("status") == "continuation-bind" }
+        let boundSuffix: any SwifQLable = Select { DB.Column("id") }
+            .as(DB.Column("suffixTag") == "suffix-bind")
+        let boundWhere = Where { DB.Column("status") == "continuation-bind" }
         let boundContinuation = boundSuffix.structurallyAppending(
             SwifQLableParts(parts: [SwifQLPartOperator.space] + boundWhere.parts)
         ).prepare(.psql)
@@ -247,8 +247,8 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
 
     @Test("Set-result continuation keeps its suffix and complete operand parts")
     func setResultContinuation() {
-        let left: any SwifQLable = Select { Path.Column("id") }.as("left")
-        let right: any SwifQLable = Select { Path.Column("name") }.as("right")
+        let left: any SwifQLable = Select { DB.Column("id") }.as("left")
+        let right: any SwifQLable = Select { DB.Column("name") }.as("right")
         let stored = Union([left, right]).as("combined")
         let appended = stored.structurallyAppending(
             SwifQLableParts(parts: [SwifQLPartOperator.space, SwifQLPartOperator.custom("TAIL")])
@@ -256,9 +256,9 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
         let fluentUnion = left.union
         let rootUnion = SwifQL { fluentUnion; right }
 
-        let plainUnion = Select { Path.Column("plain") }.union
-        let singleAliasUnion = Select { Path.Column("single") }.as("one").union
-        let chainedAliasUnion = Select { Path.Column("chained") }.as("one").as("two").union
+        let plainUnion = Select { DB.Column("plain") }.union
+        let singleAliasUnion = Select { DB.Column("single") }.as("one").union
+        let chainedAliasUnion = Select { DB.Column("chained") }.as("one").as("two").union
 
         #expect(appended.prepare(.psql).plain == #"(SELECT "id") as "left" UNION (SELECT "name") as "right" as "combined" TAIL"#)
         #expect(From { stored }.prepare(.psql).plain == #"FROM ((SELECT "id") as "left" UNION (SELECT "name") as "right") as "combined""#)
@@ -271,55 +271,55 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
 
     @Test("Core fluent clause methods preserve a pre-existing suffix")
     func fluentClauseContinuation() {
-        let stored: any SwifQLable = Select { Path.Column("id") }.as("root")
+        let stored: any SwifQLable = Select { DB.Column("id") }.as("root")
         #expect(stored.limit(2).prepare(.psql).plain == #"SELECT "id" as "root" LIMIT 2"#)
         #expect(stored.offset(3).prepare(.psql).plain == #"SELECT "id" as "root" OFFSET 3"#)
-        #expect(stored.where(Path.Column("status") == "active").prepare(.psql).plain == #"SELECT "id" as "root" WHERE "status" = 'active'"#)
-        #expect(stored.having(Path.Column("count") > 1).prepare(.psql).plain == #"SELECT "id" as "root" HAVING "count" > 1"#)
-        #expect(stored.qualify(Path.Column("rank") > 1).prepare(.psql).plain == #"SELECT "id" as "root" QUALIFY "rank" > 1"#)
-        #expect(stored.select(Path.Column("name")).prepare(.psql).plain == #"SELECT "id" as "root" SELECT "name""#)
-        #expect(stored.from(Path.Table("source")).prepare(.psql).plain == #"SELECT "id" as "root" FROM "source""#)
-        let legacyJoin = stored.join(.inner, Path.Table("source"), on: Path.Column("enabled") == "legacy-join").prepare(.psql)
+        #expect(stored.where(DB.Column("status") == "active").prepare(.psql).plain == #"SELECT "id" as "root" WHERE "status" = 'active'"#)
+        #expect(stored.having(DB.Column("count") > 1).prepare(.psql).plain == #"SELECT "id" as "root" HAVING "count" > 1"#)
+        #expect(stored.qualify(DB.Column("rank") > 1).prepare(.psql).plain == #"SELECT "id" as "root" QUALIFY "rank" > 1"#)
+        #expect(stored.select(DB.Column("name")).prepare(.psql).plain == #"SELECT "id" as "root" SELECT "name""#)
+        #expect(stored.from(DB.Table("source")).prepare(.psql).plain == #"SELECT "id" as "root" FROM "source""#)
+        let legacyJoin = stored.join(.inner, DB.Table("source"), on: DB.Column("enabled") == "legacy-join").prepare(.psql)
         #expect(legacyJoin.splitted.query == #"SELECT "id" as "root" INNER JOIN "source" ON "enabled" = $1"#)
         #expect(legacyJoin.splitted.values.map { String(describing: $0) } == ["legacy-join"])
         #expect(From { stored.limit(2) }.prepare(.psql).plain == #"FROM (SELECT "id") as "root" LIMIT 2"#)
-        #expect(From { stored.where(Path.Column("status") == "active") }.prepare(.psql).plain == #"FROM (SELECT "id") as "root" WHERE "status" = 'active'"#)
+        #expect(From { stored.where(DB.Column("status") == "active") }.prepare(.psql).plain == #"FROM (SELECT "id") as "root" WHERE "status" = 'active'"#)
     }
 
     @Test("DISTINCT, RETURNING, and WINDOW fluents preserve a pre-existing suffix")
     func additionalLegacyClauseContinuations() {
-        let stored: any SwifQLable = Select { Path.Column("id") }.as("root")
+        let stored: any SwifQLable = Select { DB.Column("id") }.as("root")
 
         #expect(stored.distinct.prepare(.psql).plain == #"SELECT "id" as "root" DISTINCT"#)
         #expect(stored.returning.prepare(.psql).plain == #"SELECT "id" as "root" RETURNING"#)
-        #expect(stored.returning(Path.Column("result")).prepare(.psql).plain == #"SELECT "id" as "root" RETURNING "result""#)
-        #expect(stored.returning([Path.Column("result")]).prepare(.psql).plain == #"SELECT "id" as "root" RETURNING "result""#)
-        #expect(stored.window(Path.Column("w")).prepare(.psql).plain == #"SELECT "id" as "root" WINDOW "w""#)
+        #expect(stored.returning(DB.Column("result")).prepare(.psql).plain == #"SELECT "id" as "root" RETURNING "result""#)
+        #expect(stored.returning([DB.Column("result")]).prepare(.psql).plain == #"SELECT "id" as "root" RETURNING "result""#)
+        #expect(stored.window(DB.Column("w")).prepare(.psql).plain == #"SELECT "id" as "root" WINDOW "w""#)
         #expect(From { stored.distinct }.prepare(.psql).plain == #"FROM (SELECT "id") as "root" DISTINCT"#)
-        #expect(From { stored.returning(Path.Column("result")) }.prepare(.psql).plain == #"FROM (SELECT "id") as "root" RETURNING "result""#)
+        #expect(From { stored.returning(DB.Column("result")) }.prepare(.psql).plain == #"FROM (SELECT "id") as "root" RETURNING "result""#)
     }
 
     @Test("EXISTS and USING SAMPLE continuations preserve a pre-existing suffix")
     func additionalSelectClauseContinuations() {
-        let stored: any SwifQLable = Select { Path.Column("id") }.as("root")
+        let stored: any SwifQLable = Select { DB.Column("id") }.as("root")
 
-        #expect(stored.whereExists(Path.Table("present")).prepare(.psql).plain == #"SELECT "id" as "root" WHERE EXISTS ("present")"#)
-        #expect(stored.whereNotExists(Path.Table("missing")).prepare(.psql).plain == #"SELECT "id" as "root" WHERE NOT EXISTS ("missing")"#)
-        let subquery: any SwifQLable = Select { Path.Column("present") }.as("nested")
+        #expect(stored.whereExists(DB.Table("present")).prepare(.psql).plain == #"SELECT "id" as "root" WHERE EXISTS ("present")"#)
+        #expect(stored.whereNotExists(DB.Table("missing")).prepare(.psql).plain == #"SELECT "id" as "root" WHERE NOT EXISTS ("missing")"#)
+        let subquery: any SwifQLable = Select { DB.Column("present") }.as("nested")
         #expect(stored.whereExists(subquery).prepare(.psql).plain == #"SELECT "id" as "root" WHERE EXISTS (SELECT "present" as "nested")"#)
         #expect(stored.usingSample(Sample(SampleSize(rows: 10))).prepare(.duck).plain == #"SELECT "id" as "root" USING SAMPLE 10"#)
-        #expect(From { stored.whereExists(Path.Table("present")) }.prepare(.psql).plain == #"FROM (SELECT "id") as "root" WHERE EXISTS ("present")"#)
+        #expect(From { stored.whereExists(DB.Table("present")) }.prepare(.psql).plain == #"FROM (SELECT "id") as "root" WHERE EXISTS ("present")"#)
     }
 
     @Test("PIVOT continuations retain root owner metadata after an alias suffix")
     func pivotOwnerAndScope() {
-        let stored: any SwifQLable = Select { Path.Column("id") }.as("root")
-        let pivot = stored.pivot(Path.Table("source"))
+        let stored: any SwifQLable = Select { DB.Column("id") }.as("root")
+        let pivot = stored.pivot(DB.Table("source"))
         let continued = pivot
-            .on(Path.Column("period"), in: "p1")
-            .using(Fn.sum(Path.Column("amount")))
-            .groupBy(Path.Column("category"))
-            .orderBy(.asc(Path.Column("category")))
+            .on(DB.Column("period"), in: "p1")
+            .using(Fn.sum(DB.Column("amount")))
+            .groupBy(DB.Column("category"))
+            .orderBy(.asc(DB.Column("category")))
         let rendered = continued.prepare(Design037StructuralSuffixScopeDialect()).plain
 
         #expect(pivot.structuralOwner(for: .on) == .simplifiedPivot)
@@ -336,11 +336,11 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
 
     @Test("UNPIVOT continuations retain root owner metadata after an alias suffix")
     func unpivotOwnerAndScope() {
-        let stored: any SwifQLable = Select { Path.Column("id") }.as("root")
-        let unpivot = stored.unpivot(Path.Table("source"))
-            .on(Path.Column("jan"), Path.Column("feb"))
-            .into(name: Path.Column("month"), value: Path.Column("amount"))
-        let ordered = unpivot.orderBy(.asc(Path.Column("month")))
+        let stored: any SwifQLable = Select { DB.Column("id") }.as("root")
+        let unpivot = stored.unpivot(DB.Table("source"))
+            .on(DB.Column("jan"), DB.Column("feb"))
+            .into(name: DB.Column("month"), value: DB.Column("amount"))
+        let ordered = unpivot.orderBy(.asc(DB.Column("month")))
         let rendered = ordered.prepare(Design037StructuralSuffixScopeDialect()).plain
 
         #expect(unpivot.structuralOwner(for: .orderBy) == .simplifiedUnpivot)
@@ -351,13 +351,13 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
 
     @Test("Literal tilde overloads preserve suffix order and literal spacing")
     func literalTildeComposition() {
-        let stored: any SwifQLable = Select { Path.Column("id") }.as("root")
+        let stored: any SwifQLable = Select { DB.Column("id") }.as("root")
         let part = stored ~ SwifQLPartOperator.custom("TAIL")
         let value = stored ~ SwifQLableParts(parts: [SwifQLPartOperator.custom("TAIL")])
-        let nextRoot: any SwifQLable = Select { Path.Column("name") }.as("next")
+        let nextRoot: any SwifQLable = Select { DB.Column("name") }.as("next")
         let rootPair = stored ~ nextRoot
-        let nonRoot = Path.Column("base") ~ Path.Column("tail")
-        let bindBearing = stored ~ (Path.Column("tail") == "tilde-bind")
+        let nonRoot = DB.Column("base") ~ DB.Column("tail")
+        let bindBearing = stored ~ (DB.Column("tail") == "tilde-bind")
 
         #expect(part.prepare(.psql).plain == #"SELECT "id" as "root"TAIL"#)
         #expect(value.prepare(.psql).plain == part.prepare(.psql).plain)
@@ -369,19 +369,19 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
 
     @Test("DML, MERGE, DDL, COPY, ATTACH, type, sequence, index, and macro declarations")
     func targetSpecificContinuations() {
-        let target = Path.Table("target")
-        let source = Path.Table("source")
-        let value = Path.Column("value")
+        let target = DB.Table("target")
+        let source = DB.Table("source")
+        let value = DB.Column("value")
         let cases: [(String, any SwifQLable)] = [
             ("attach", base.attach("memory", options: [])),
-            ("detach", base.detach(Path.Catalog("analytics"))),
-            ("use catalog", base.use(Path.Catalog("analytics"))),
-            ("use schema", base.use(Path.Schema("main"))),
-            ("use catalog-schema", base.use(Path.Catalog("analytics").schema("main"))),
-            ("copy to", base.copy(target, to: Path.Table("file"), options: [])),
+            ("detach", base.detach(DB.Catalog("analytics"))),
+            ("use catalog", base.use(DB.Catalog("analytics"))),
+            ("use schema", base.use(DB.Schema("main"))),
+            ("use catalog-schema", base.use(DB.Catalog("analytics").schema("main"))),
+            ("copy to", base.copy(target, to: DB.Table("file"), options: [])),
             ("copy from", base.copy(target, from: source, options: [])),
-            ("copy query", base.copy(query: Select { value }, to: Path.Table("file"), options: [])),
-            ("copy database", base.copy(fromDatabase: Path.Catalog("source"), to: Path.Catalog("destination"), options: [])),
+            ("copy query", base.copy(query: Select { value }, to: DB.Table("file"), options: [])),
+            ("copy database", base.copy(fromDatabase: DB.Catalog("source"), to: DB.Catalog("destination"), options: [])),
             ("table definitions", base.tableDefinitions([value])),
             ("truncate", base.truncate(target)),
             ("index items", base.indexItems([.column("id")])),
@@ -421,9 +421,9 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
 
     @Test("Core fluent, DML clause, and transaction declaration continuations")
     func fluentContinuations() {
-        let value = Path.Column("value")
-        let predicate: any SwifQLable = Path.Column("ready") == true
-        let table = Path.Table("target")
+        let value = DB.Column("value")
+        let predicate: any SwifQLable = DB.Column("ready") == true
+        let table = DB.Table("target")
         let sample = Sample(SampleSize(rows: 10))
         let tableSample = TableSample(SampleSize(rows: 20))
         let cases: [(String, any SwifQLable)] = [
@@ -463,7 +463,7 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
             ("insert keyword", base.insert),
             ("into keyword", base.into),
             ("new columns", base.newColumns([NewColumn("id", .int)])),
-            ("fields", base.fields([Path.Column("id")])),
+            ("fields", base.fields([DB.Column("id")])),
             ("table target", base[table: table]),
             ("interval keyword", base.interval),
             ("interval value", base.interval("one day")),
@@ -515,7 +515,7 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
             ("value argument", base.value(value)),
             ("values keyword", base.values),
             ("values items", base.values([value])),
-            ("values array", base.values(array: [[value], [Path.Column("other")]])),
+            ("values array", base.values(array: [[value], [DB.Column("other")]])),
             ("where keyword", base.where),
             ("where predicate", base.where(predicate)),
             ("where exists", base.whereExists(table)),
@@ -532,8 +532,8 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
 
     @Test("Expression and whole-value fluent declarations")
     func wholeValueTransforms() {
-        let value = Path.Column("value")
-        let predicate: any SwifQLable = Path.Column("ready") == true
+        let value = DB.Column("value")
+        let predicate: any SwifQLable = DB.Column("ready") == true
         let cases: [(String, any SwifQLable)] = [
             ("and expression", base.and(predicate)),
             ("any keyword", base.any),
@@ -547,7 +547,7 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
             ("exists keyword", base.exists),
             ("exists predicate", base.exists(Select { value })),
             ("ilike", base.iLike("pattern")),
-            ("in", base.in([Path.Column("one"), Path.Column("two")])),
+            ("in", base.in([DB.Column("one"), DB.Column("two")])),
             ("is not null", base.isNotNull),
             ("is null", base.isNull),
             ("not keyword", base.not),
@@ -555,7 +555,7 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
             ("not between", base.notBetween(value)),
             ("not exists", base.notExists(Select { value })),
             ("not ilike", base.notILike("pattern")),
-            ("not in", base.notIn([Path.Column("one"), Path.Column("two")])),
+            ("not in", base.notIn([DB.Column("one"), DB.Column("two")])),
             ("over keyword", base.over),
             ("over query", base.over(Select { value })),
             ("overlaps keyword", base.overlaps),
@@ -571,7 +571,7 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
 
     @Test("Global postfix, infix, and prefix operators retain the complete current value")
     func globalOperators() {
-        let value = Path.Column("rhs")
+        let value = DB.Column("rhs")
         let cases: [(String, any SwifQLable)] = [
             ("cast operator", base => Type.text),
             ("plus", base + value),
@@ -641,67 +641,67 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
 
     @Test("Binds keep source order across continuation and whole-value paths")
     func bindOrder() {
-        let boundBase: any SwifQLable = Select { Path.Column("id") }
-            .as(Path.Column("suffix_tag") == "suffix-bind")
-        let inserted = boundBase.insertInto(Path.Table("target"))
-            .values([Path.Column("payload") == "insert-bind"])
+        let boundBase: any SwifQLable = Select { DB.Column("id") }
+            .as(DB.Column("suffix_tag") == "suffix-bind")
+        let inserted = boundBase.insertInto(DB.Table("target"))
+            .values([DB.Column("payload") == "insert-bind"])
         let insert = inserted.prepare(.psql).splitted
         #expect(insert.values.map { String(describing: $0) } == ["suffix-bind", "insert-bind"])
 
-        let updated = boundBase.update([Path.Table("target")])
-            .set(Path.Column("id") == "set-bind")
-            .where(Path.Column("id") == "where-bind")
+        let updated = boundBase.update([DB.Table("target")])
+            .set(DB.Column("id") == "set-bind")
+            .where(DB.Column("id") == "where-bind")
         let update = updated.prepare(.psql).splitted
         #expect(update.values.map { String(describing: $0) } == ["suffix-bind", "set-bind", "where-bind"])
 
-        let deleted = boundBase.delete(from: Path.Table("target"))
-            .where(Path.Column("id") == "delete-bind")
+        let deleted = boundBase.delete(from: DB.Table("target"))
+            .where(DB.Column("id") == "delete-bind")
         let delete = deleted.prepare(.psql).splitted
         #expect(delete.values.map { String(describing: $0) } == ["suffix-bind", "delete-bind"])
 
-        let merged = boundBase.merge(into: Path.Table("target"))
-            .using(Path.Table("source"))
-            .on(Path.Column("id") == "merge-on-bind")
-            .when.matched.then.update.set(Path.Column("id") == "merge-set-bind")
+        let merged = boundBase.merge(into: DB.Table("target"))
+            .using(DB.Table("source"))
+            .on(DB.Column("id") == "merge-on-bind")
+            .when.matched.then.update.set(DB.Column("id") == "merge-set-bind")
         let merge = merged.prepare(.duck).splitted
         #expect(merge.values.map { String(describing: $0) } == ["suffix-bind", "merge-on-bind", "merge-set-bind"])
 
         let attached = boundBase.attach(
             "memory",
-            options: [.compress(Path.Column("codec") == "attach-bind")]
+            options: [.compress(DB.Column("codec") == "attach-bind")]
         )
         let attach = attached.prepare(.duck).splitted
         #expect(attach.values.map { String(describing: $0) } == ["suffix-bind", "attach-bind"])
 
-        let transformed = (boundBase + (Path.Column("rhs") == "expression-bind")).prepare(.psql).splitted
+        let transformed = (boundBase + (DB.Column("rhs") == "expression-bind")).prepare(.psql).splitted
         #expect(transformed.values.map { String(describing: $0) } == ["suffix-bind", "expression-bind"])
     }
 
     @Test("DML continuation retains sibling suffix during embedding")
     func dml() {
-        let insert = root.insert.into[table: Path.Table("Target")].newColumns(NewColumn("id", .int)).values(7)
+        let insert = root.insert.into[table: DB.Table("Target")].newColumns(NewColumn("id", .int)).values(7)
         let actual = From { insert }.prepare(.psql).plain
         #expect(actual == #"FROM (SELECT "id") as "suffix" INSERT INTO "Target" ("id" int) (7)"#, "actual=\(actual)")
     }
 
     @Test("DML SET and WHERE continuations retain sibling suffix")
     func updateSetWhere() {
-        let query = root.update(Path.Table("Target")).set(Path.Column("id") == 7).where(Path.Column("id") == 9)
+        let query = root.update(DB.Table("Target")).set(DB.Column("id") == 7).where(DB.Column("id") == 9)
         let actual = From { query }.prepare(.psql).plain
         #expect(actual == #"FROM (SELECT "id") as "suffix" UPDATE "Target" SET "id" = 7 WHERE "id" = 9"#, "actual=\(actual)")
     }
 
     @Test("DML delete and truncate continuations retain sibling suffix")
     func deleteTruncate() {
-        let deleted = root.delete(from: Path.Table("Target"))
-        let truncated = root.truncate(Path.Table("Target"))
+        let deleted = root.delete(from: DB.Table("Target"))
+        let truncated = root.truncate(DB.Table("Target"))
         #expect(From { deleted }.prepare(.psql).plain == #"FROM (SELECT "id") as "suffix" DELETE FROM "Target""#)
         #expect(From { truncated }.prepare(.psql).plain == #"FROM (SELECT "id") as "suffix" TRUNCATE "Target""#)
     }
 
     @Test("MERGE continuation retains sibling suffix")
     func merge() {
-        let query = root.merge(into: Path.Table("Target")).using(Path.Table("Source")).on(Path.Column("id") == Path.Column("otherId")).when.matched.then.update.set(Path.Column("id") == 8).mergeAction
+        let query = root.merge(into: DB.Table("Target")).using(DB.Table("Source")).on(DB.Column("id") == DB.Column("otherId")).when.matched.then.update.set(DB.Column("id") == 8).mergeAction
         let actual = From { query }.prepare(.psql).plain
         #expect(actual == #"FROM (SELECT "id") as "suffix" MERGE INTO "Target" USING "Source" ON "id" = "otherId" WHEN MATCHED THEN UPDATE SET "id" = 8 merge_action"#, "actual=\(actual)")
     }
@@ -709,7 +709,7 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
     @Test("DDL statement helpers retain sibling suffix")
     func ddl() {
         let attached = root.attach("memory", options: [])
-        let indexed = root.indexItems(IndexItem.expression(Path.Column("id")))
+        let indexed = root.indexItems(IndexItem.expression(DB.Column("id")))
         let created = root.type(.text)
         #expect(From { attached }.prepare(.psql).plain.hasPrefix(#"FROM (SELECT "id") as "suffix" ATTACH"#))
         #expect(From { indexed }.prepare(.psql).plain == #"FROM (SELECT "id") as "suffix" (("id"))"#)
@@ -718,11 +718,11 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
 
     @Test("Expression operations retain sibling suffix and operand order")
     func expressions() {
-        let arithmetic = root + Path.Column("other")
+        let arithmetic = root + DB.Column("other")
         let predicate = root == "bound"
-        let inExpr = root.in(Path.Column("one"), Path.Column("two"))
+        let inExpr = root.in(DB.Column("one"), DB.Column("two"))
         let nullExpr = root.isNull
-        let notBetween = root.notBetween(Path.Column("range"))
+        let notBetween = root.notBetween(DB.Column("range"))
         let likeExpr = root.like("pattern")
         let actual = [arithmetic, predicate, inExpr, nullExpr, notBetween, likeExpr].map { value in From { value }.prepare(.psql).plain }
         let expected = [
@@ -743,28 +743,28 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
     }
     @Test("Forwarding overloads and labeled subscripts preserve root suffixes")
     func forwardingOverloads() {
-        let table = Path.Table("target")
-        let value = Path.Column("value")
-        let other = Path.Column("other")
-        let predicate: any SwifQLable = Path.Column("ready") == true
+        let table = DB.Table("target")
+        let value = DB.Column("value")
+        let other = DB.Column("other")
+        let predicate: any SwifQLable = DB.Column("ready") == true
         let newColumn = NewColumn("id", .int)
-        let withItem = With(Path.Table("cte"), Select { value })
+        let withItem = With(DB.Table("cte"), Select { value })
         let cases: [(String, any SwifQLable)] = [
             ("attach option variadic", base.attach("memory", options: .compress("zstd"))),
-            ("copy to option variadic", base.copy(table, to: Path.Table("file"), options: .format("csv"))),
+            ("copy to option variadic", base.copy(table, to: DB.Table("file"), options: .format("csv"))),
             ("copy from option variadic", base.copy(table, from: other, options: .format("csv"))),
-            ("copy query option variadic", base.copy(query: Select { value }, to: Path.Table("file"), options: .format("csv"))),
-            ("copy database option variadic", base.copy(fromDatabase: Path.Catalog("source"), to: Path.Catalog("destination"), options: .format("csv"))),
+            ("copy query option variadic", base.copy(query: Select { value }, to: DB.Table("file"), options: .format("csv"))),
+            ("copy database option variadic", base.copy(fromDatabase: DB.Catalog("source"), to: DB.Catalog("destination"), options: .format("csv"))),
             ("table definitions variadic", base.tableDefinitions(value, other)),
             ("index items variadic", base.indexItems(.column("id"), .column("name"))),
             ("macro parameters variadic", base.macroParameters(MacroParameter("p", .int), MacroParameter("q", .text))),
-            ("complete MERGE convenience", base.merge(into: table, using: Path.Table("source"), on: predicate)),
+            ("complete MERGE convenience", base.merge(into: table, using: DB.Table("source"), on: predicate)),
             ("conflict paths variadic", base.conflict("id", "name")),
             ("filter predicates variadic", base.filter(where: predicate, value == "x")),
-            ("from tables variadic", base.from(table, Path.Table("source"))),
+            ("from tables variadic", base.from(table, DB.Table("source"))),
             ("group by array", base.groupBy([value, other])),
             ("group by variadic", base.groupBy(value, other)),
-            ("IN variadic", base.in(Path.Column("one"), Path.Column("two"))),
+            ("IN variadic", base.in(DB.Column("one"), DB.Column("two"))),
             ("new columns variadic", base.newColumns(newColumn, NewColumn("name", .text))),
             ("new columns subscript variadic", base[newColumns: newColumn, NewColumn("name", .text)]),
             ("new columns subscript array", base[newColumns: [newColumn]]),
@@ -788,7 +788,7 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
             ("select fields variadic", base.select(value, other)),
             ("timestamp fields variadic", base.timestamp(value, other)),
             ("type string overload", base.type("label")),
-            ("update tables variadic", base.update(table, Path.Table("source"))),
+            ("update tables variadic", base.update(table, DB.Table("source"))),
             ("values subscript variadic", base[values: value, other]),
             ("values subscript array", base[values: [value, other]]),
             ("values variadic", base.values(value, other)),
@@ -809,10 +809,10 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
 
     @Test("Remaining JOIN, predicate, and set-result overloads preserve ordered input")
     func joinPredicateAndSetOverloads() {
-        let table = Path.Table("joined")
-        let value = Path.Column("value")
-        let other = Path.Column("other")
-        let predicate: any SwifQLable = Path.Column("ready") == true
+        let table = DB.Table("joined")
+        let value = DB.Column("value")
+        let other = DB.Column("other")
+        let predicate: any SwifQLable = DB.Column("ready") == true
         let joins: [(String, any SwifQLable)] = [
             ("JOIN match condition USING variadic", base.join(table, matchCondition: predicate, using: "id", "name")),
             ("JOIN mode match condition USING variadic", base.join(.inner, table, matchCondition: predicate, using: "id", "name")),
@@ -826,8 +826,8 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
         verify(joins)
         verify([("OR expression", base.or(predicate)), ("NOT IN variadic", base.notIn(value, other))])
 
-        let lhs = Select { Path.Column("root_column") }.as("probe_suffix")
-        let rhs = Select { Path.Column("other") }
+        let lhs = Select { DB.Column("root_column") }.as("probe_suffix")
+        let rhs = Select { DB.Column("other") }
         let intersectAll = lhs.intersect(all: rhs).prepare(.psql).plain
         let exceptAll = lhs.except(all: rhs).prepare(.psql).plain
         #expect(intersectAll.contains(#"as "probe_suffix" INTERSECT ALL"#))
@@ -839,10 +839,10 @@ struct Design037GlobalRootSuffixCompatibilityTests: SwifQLTests {
     func aggregateAndInfixConstructors() {
         let arrayItems = [
             Design037RootSuffixArrayElement(parts: base.parts),
-            Design037RootSuffixArrayElement(parts: Path.Column("later").parts)
+            Design037RootSuffixArrayElement(parts: DB.Column("later").parts)
         ]
         let array = arrayItems.separator(.comma)
-        let concatenated = Fn.concatStrings(lhs: base, rhs: Path.Column("later"))
+        let concatenated = Fn.concatStrings(lhs: base, rhs: DB.Column("later"))
 
         for (name, value, continuationToken) in [
             ("array separator", array, ","),

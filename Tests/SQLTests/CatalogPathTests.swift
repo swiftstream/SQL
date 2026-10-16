@@ -11,10 +11,10 @@ struct CatalogPathTests: SwifQLTests {
 
     @Test("Duck renders each catalog path level")
     func pathLevels() {
-        #expect(Path.Catalog("analytics").prepare(.duck).plain == #""analytics""#)
-        #expect(Path.Catalog("analytics").schema("main").prepare(.duck).plain == #""analytics"."main""#)
-        #expect(Path.Catalog("analytics").schema("main").table("events").prepare(.duck).plain == #""analytics"."main"."events""#)
-        #expect(Path.Catalog("analytics").schema("main").table("events").column("id").prepare(.duck).plain == #""analytics"."main"."events"."id""#)
+        #expect(DB.Catalog("analytics").prepare(.duck).plain == #""analytics""#)
+        #expect(DB.Catalog("analytics").schema("main").prepare(.duck).plain == #""analytics"."main""#)
+        #expect(DB.Catalog("analytics").schema("main").table("events").prepare(.duck).plain == #""analytics"."main"."events""#)
+        #expect(DB.Catalog("analytics").schema("main").table("events").column("id").prepare(.duck).plain == #""analytics"."main"."events"."id""#)
     }
 
     @Test("Duck catalog paths quote reserved, Unicode, and embedded quote names")
@@ -22,7 +22,7 @@ struct CatalogPathTests: SwifQLTests {
         let names = ["select", "данные", "event\"archive"]
 
         for name in names {
-            let path = Path.Catalog(name)
+            let path = DB.Catalog(name)
                 .schema(name)
                 .table(name)
                 .column(name)
@@ -35,12 +35,12 @@ struct CatalogPathTests: SwifQLTests {
 
     @Test("Catalog prefixes survive copied parts and helper composition")
     func composition() {
-        let oneChain = Path.Catalog("analytics")
+        let oneChain = DB.Catalog("analytics")
             .schema("main")
             .table("events")
             .column("id")
-        let helper = Path.Catalog("analytics").schema("main")
-        let helperPath = helper.table(Path.Table("events")).column(Path.Column("id"))
+        let helper = DB.Catalog("analytics").schema("main")
+        let helperPath = helper.table(DB.Table("events")).column(DB.Column("id"))
         let copied = SwifQLableParts(parts: oneChain.parts)
 
         #expect(helperPath.prepare(.duck).plain == oneChain.prepare(.duck).plain)
@@ -56,12 +56,20 @@ struct CatalogPathTests: SwifQLTests {
         #expect(oneChain.prepare(.psql).plain == #""analytics"."main"."events"."id""#)
         #expect(oneChain.prepare(.duck).plain == #""analytics"."main"."events"."id""#)
         #expect(oneChain.prepare(.mysql).plain == "analytics.main.events.id")
+
+        let relation = DB.Catalog("analytics").schema("main").table("events")
+        #expect(relation.parts.count == 1)
+        let relationPart = relation.parts.first as? SQLPartTable
+        #expect(relationPart?.catalog == "analytics")
+        #expect(relationPart?.schema == "main")
+        #expect(relationPart?.table == "events")
+        #expect(relation.prepare(.psql).plain == #""analytics"."main"."events""#)
     }
 
     @Test("Catalog parts and final key paths remain publicly inspectable")
     func publicRepresentation() {
-        let catalog = Path.Catalog("analytics")
-        let catalogPart = catalog.parts.first as? SwifQLPartCatalog
+        let catalog = DB.Catalog("analytics")
+        let catalogPart = catalog.parts.first as? SQLPartCatalog
         #expect(catalogPart?.name == "analytics")
 
         let path = catalog.schema("main").table("events").column("id")
@@ -71,18 +79,18 @@ struct CatalogPathTests: SwifQLTests {
 
     @Test("Catalog rendering delegates to additive dialect hook")
     func dialectHook() {
-        #expect(Path.Catalog("analytics").prepare(CatalogDialect()).plain == "CATALOG[analytics]")
+        #expect(DB.Catalog("analytics").prepare(CatalogDialect()).plain == "CATALOG[analytics]")
     }
 
     @Test("Existing no-catalog paths retain PostgreSQL and MySQL SQL")
     func legacyPaths() {
         check(
-            Path.Table("events").column("id"),
+            DB.Table("events").column("id"),
             .psql(#""events"."id""#),
             .mysql("events.id")
         )
         check(
-            Path.Schema("main").table("events").column("id"),
+            DB.Schema("main").table("events").column("id"),
             .psql(#""main"."events"."id""#),
             .mysql("main.events.id")
         )

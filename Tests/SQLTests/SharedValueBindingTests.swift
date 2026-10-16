@@ -126,7 +126,7 @@ struct SharedValueBindingTests {
         #expect(select.query == "SELECT $1")
         #expect(select.values.count == 1)
 
-        let predicate = SwifQL.where(Path.Column("event_date") == date)
+        let predicate = SwifQL.where(DB.Column("event_date") == date)
             .prepare(.duck)
             .splitted
         #expect(predicate.query == #"WHERE "event_date" = $1"#)

@@ -13,11 +13,11 @@ struct DuckDBDialectTests: SwifQLTests {
     @Test("Duck identifiers and strings escape correctly")
     func escaping() {
         check(
-            SwifQL.select(Path.Schema("ana\"lytics").table("event\"s").column("id\"value")),
+            SwifQL.select(DB.Schema("ana\"lytics").table("event\"s").column("id\"value")),
             .duck(#"SELECT "ana""lytics"."event""s"."id""value""#)
         )
         check(
-            SwifQL.select(Path.Schema("данные").table("事件").column("名")),
+            SwifQL.select(DB.Schema("данные").table("事件").column("名")),
             .duck(#"SELECT "данные"."事件"."名""#)
         )
         check(SwifQL.select("O'Reilly"), .duck("SELECT 'O''Reilly'"))

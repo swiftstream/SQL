@@ -110,7 +110,7 @@ struct DuckTableDDLTests: SwifQLTests {
                 Task21Parent.self,
                 onDelete: action
             )
-            let deleteQuery = SwifQL.create.table[any: Path.Table("fk_table")]
+            let deleteQuery = SwifQL.create.table[any: DB.Table("fk_table")]
                 .tableDefinitions(
                     NewColumn("parent_id", .integer)
                         .constraint(expression: deleteConstraint.query)
@@ -125,7 +125,7 @@ struct DuckTableDDLTests: SwifQLTests {
                 Task21Parent.self,
                 onUpdate: action
             )
-            let updateQuery = SwifQL.create.table[any: Path.Table("fk_table")]
+            let updateQuery = SwifQL.create.table[any: DB.Table("fk_table")]
                 .tableDefinitions(
                     NewColumn("parent_id", .integer)
                         .constraint(expression: updateConstraint.query)
@@ -140,8 +140,8 @@ struct DuckTableDDLTests: SwifQLTests {
 
     @Test("CTAS, OR REPLACE CTAS, and ALTER TYPE use direct generic composition")
     func directSqlComposition() {
-        let source = Path.Table("source_table")
-        let target = Path.SchemaWithTable(schema: "ddl_schema", table: "copy_table")
+        let source = DB.Table("source_table")
+        let target = DB.Schema("ddl_schema").table("copy_table")
         let ctas = SwifQL.create.table[any: target]
             .as
             .select(source.column("id"), source.column("name"))
@@ -151,7 +151,7 @@ struct DuckTableDDLTests: SwifQLTests {
                 #"CREATE TABLE "ddl_schema"."copy_table" as SELECT "source_table"."id", "source_table"."name" FROM "source_table""#
         )
 
-        let atomicReplace = SwifQL.create.or.replace.table[any: Path.Table("copy_table")]
+        let atomicReplace = SwifQL.create.or.replace.table[any: DB.Table("copy_table")]
             .as
             .select(source.column("id"))
             .from(source)
@@ -164,23 +164,23 @@ struct DuckTableDDLTests: SwifQLTests {
         #expect(copied.prepare(.duck).plain == atomicReplace.prepare(.duck).plain)
         #expect(copied.prepare(.duck).splitted.values.isEmpty)
 
-        let alterType = SwifQL.alter.table[any: Path.Table("task21_table")]
+        let alterType = SwifQL.alter.table[any: DB.Table("task21_table")]
             .alter
-            .column[any: Path.Column("score")]
+            .column[any: DB.Column("score")]
             .type(.varchar)
-        let alterSetType = SwifQL.alter.table[any: Path.Table("task21_table")]
+        let alterSetType = SwifQL.alter.table[any: DB.Table("task21_table")]
             .alter
-            .column[any: Path.Column("score")]
+            .column[any: DB.Column("score")]
             .set
             .type(.integer)
-        let alter = SwifQL.alter.table[any: Path.Table("task21_table")]
+        let alter = SwifQL.alter.table[any: DB.Table("task21_table")]
             .alter
-            .column[any: Path.Column("score")]
+            .column[any: DB.Column("score")]
             .set
             .data
             .type(.varchar)
             .using(
-                Path.Column("score").structurallyAppending(
+                DB.Column("score").structurallyAppending(
                     SwifQLableParts(parts: [SwifQLPartOperator("::VARCHAR")])
                 )
             )
@@ -201,10 +201,10 @@ struct DuckTableDDLTests: SwifQLTests {
 
     @Test("Generated columns remain generic SQL-shaped boundaries")
     func generatedColumnBoundaries() {
-        let expression = Path.Column("a") + 1
-        let inferred = SwifQL.create.table[any: Path.Table("generated_table")]
+        let expression = DB.Column("a") + 1
+        let inferred = SwifQL.create.table[any: DB.Table("generated_table")]
             .tableDefinitions(GeneratedColumn("b", as: expression))
-        let explicitVirtual = SwifQL.create.table[any: Path.Table("generated_table")]
+        let explicitVirtual = SwifQL.create.table[any: DB.Table("generated_table")]
             .tableDefinitions(
                 GeneratedColumn(
                     "c",
@@ -213,11 +213,11 @@ struct DuckTableDDLTests: SwifQLTests {
                     storage: .virtual
                 )
             )
-        let defaultVirtual = SwifQL.create.table[any: Path.Table("generated_table")]
+        let defaultVirtual = SwifQL.create.table[any: DB.Table("generated_table")]
             .tableDefinitions(
                 GeneratedColumn("d", .integer, generatedAlwaysAs: expression)
             )
-        let stored = SwifQL.create.table[any: Path.Table("generated_table")]
+        let stored = SwifQL.create.table[any: DB.Table("generated_table")]
             .tableDefinitions(
                 GeneratedColumn(
                     "e",
@@ -226,14 +226,14 @@ struct DuckTableDDLTests: SwifQLTests {
                     storage: .stored
                 )
             )
-        let mixed = SwifQL.create.table[any: Path.Table("generated_table")]
+        let mixed = SwifQL.create.table[any: DB.Table("generated_table")]
             .tableDefinitions([
                 NewColumn("base", .integer),
-                GeneratedColumn("derived", as: Path.Column("base") + 1),
+                GeneratedColumn("derived", as: DB.Column("base") + 1),
                 GeneratedColumn(
                     "typed",
                     .integer,
-                    generatedAlwaysAs: Path.Column("base") + 2,
+                    generatedAlwaysAs: DB.Column("base") + 2,
                     storage: .virtual
                 )
             ])
@@ -279,10 +279,7 @@ struct DuckTableDDLTests: SwifQLTests {
         )
         #expect(prepared.splitted.values.isEmpty)
 
-        let direct = SwifQL.create.table[any: Path.SchemaWithTable(
-            schema: "quoted schema",
-            table: "quoted table"
-        )]
+        let direct = SwifQL.create.table[any: DB.Schema("quoted schema").table("quoted table")]
         let directParts = appendDirect(
             direct,
             [

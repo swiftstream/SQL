@@ -26,8 +26,8 @@ private func returningPreservingExpressionParts(
 
 @Suite("Duck MERGE")
 struct DuckMergeTests: SwifQLTests {
-    private let target = Path.Table("merge_target")
-    private let source = Path.Table("merge_source")
+    private let target = DB.Table("merge_target")
+    private let source = DB.Table("merge_source")
 
     private func base() -> SwifQLable {
         SwifQL.merge(
@@ -67,7 +67,7 @@ struct DuckMergeTests: SwifQLTests {
         let stringTarget = SwifQL.merge(
             into: "merge_target",
             using: source,
-            on: Path.Column("id") == source.column("id")
+            on: DB.Column("id") == source.column("id")
         )
         #expect(
             stringTarget.prepare(.duck).plain ==
@@ -103,7 +103,7 @@ struct DuckMergeTests: SwifQLTests {
         let multiple = SwifQL
             .merge(into: target)
             .using(source)
-            .using(columns: Path.Column("id"), Path.Column("tenant"))
+            .using(columns: DB.Column("id"), DB.Column("tenant"))
         let quoted = SwifQL
             .merge(into: target)
             .using(source)
@@ -130,9 +130,9 @@ struct DuckMergeTests: SwifQLTests {
     func usingShorthandUsesColumnHook() {
         let dialect = MergeSemanticDialect()
         let query = SwifQL
-            .merge(into: Path.Table("merge_target"))
-            .using(Path.Table("merge_source"))
-            .using(columns: Path.Column("id"), Path.Column("tenant"))
+            .merge(into: DB.Table("merge_target"))
+            .using(DB.Table("merge_source"))
+            .using(columns: DB.Column("id"), DB.Column("tenant"))
 
         #expect(
             TableAlias("alias_marker").prepare(dialect).plain == "alias(alias_marker)"
@@ -154,12 +154,12 @@ struct DuckMergeTests: SwifQLTests {
             .when.matched
             .then
             .update
-            .set(Path.Column("value") == source.column("value"))
+            .set(DB.Column("value") == source.column("value"))
         let conditionalUpdate = base()
             .when.matched.and(target.column("kind") == "apply")
             .then
             .update
-            .set(Path.Column("value") == "updated")
+            .set(DB.Column("value") == "updated")
         let delete = base()
             .when.matched.and(target.column("kind") == "expired")
             .then
@@ -188,7 +188,7 @@ struct DuckMergeTests: SwifQLTests {
             .when.not.matched.by.source.and(target.column("kind") == "expired")
             .then
             .update
-            .set(Path.Column("value") == "expired")
+            .set(DB.Column("value") == "expired")
 
         check(
             update,
@@ -228,7 +228,7 @@ struct DuckMergeTests: SwifQLTests {
             .when.matched
             .then
             .update
-            .set(Path.Column("value") == "first")
+            .set(DB.Column("value") == "first")
             .when.not.matched
             .then
             .insert
@@ -242,7 +242,7 @@ struct DuckMergeTests: SwifQLTests {
             .when.matched
             .then
             .update
-            .set(Path.Column("value") == "updated")
+            .set(DB.Column("value") == "updated")
             .returning[items: SwifQL.mergeAction, SwifQL.asterisk]
 
         #expect(SwifQL.mergeAction.prepare(.duck).plain == "merge_action")
@@ -263,14 +263,14 @@ struct DuckMergeTests: SwifQLTests {
             .when.matched.and(target.column("kind") == "apply")
             .then
             .update
-            .set(Path.Column("value") == "updated")
+            .set(DB.Column("value") == "updated")
             .when.not.matched.and(target.column("kind") == "new")
             .then
             .insert
             .fields("id", "value")
             .values
             .values(2, "inserted")
-            .returning[items: SwifQL.mergeAction, Path.Column("id")]
+            .returning[items: SwifQL.mergeAction, DB.Column("id")]
         let prepared = query.prepare(.duck)
         let expectedPlain = #"MERGE INTO "merge_target" USING "merge_source" ON "merge_target"."id" = "merge_source"."id" WHEN MATCHED AND "merge_target"."kind" = 'apply' THEN UPDATE SET "value" = 'updated' WHEN NOT MATCHED AND "merge_target"."kind" = 'new' THEN INSERT ("id", "value") VALUES (2, 'inserted') RETURNING merge_action, "id""#
         let expectedQuery = #"MERGE INTO "merge_target" USING "merge_source" ON "merge_target"."id" = "merge_source"."id" WHEN MATCHED AND "merge_target"."kind" = $1 THEN UPDATE SET "value" = $2 WHEN NOT MATCHED AND "merge_target"."kind" = $3 THEN INSERT ("id", "value") VALUES ($4, $5) RETURNING merge_action, "id""#
@@ -291,7 +291,7 @@ struct DuckMergeTests: SwifQLTests {
             .when.not.matched.by.target
             .then
             .update
-            .set(Path.Column("value") == "mechanical")
+            .set(DB.Column("value") == "mechanical")
         let byTargetDelete = base()
             .when.not.matched.by.target
             .then
@@ -304,7 +304,7 @@ struct DuckMergeTests: SwifQLTests {
             .when.matched
             .then
             .update
-            .set(Path.Column("value") == source.column("value"))
+            .set(DB.Column("value") == source.column("value"))
         let targetQualifiedReturning = returningPreservingExpressionParts(
             returningBase,
             target.column("value")

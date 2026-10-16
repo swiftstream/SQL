@@ -11,20 +11,20 @@ private struct Task22IndexTable: Table, Schemable {
 @Suite("Duck direct type and index DDL")
 struct DuckTypeIndexTests: SwifQLTests {
     private func helperEnumSource() -> SwifQLable {
-        var query: SwifQLable = SwifQL.create.type[any: Path.Identifier("status")]
+        var query: SwifQLable = SwifQL.create.type[any: DB.Object("status")]
         query = query.as
         return query.enum("open", "closed")
     }
 
     private func helperIndexSource() -> SwifQLable {
-        var query: SwifQLable = SwifQL.create.index[any: Path.Identifier("events_id_idx")]
-        query = query.on[any: Path.Table("events")]
+        var query: SwifQLable = SwifQL.create.index[any: DB.Object("events_id_idx")]
+        query = query.on[any: DB.Table("events")]
         return query.indexItems(.column("id"))
     }
 
     @Test("ENUM labels are safe parser literals and never ordinary binds")
     func enumLiteralBody() {
-        let query = SwifQL.create.type[any: Path.Identifier("status")]
+        let query = SwifQL.create.type[any: DB.Object("status")]
             .as
             .enum("open", "it's", "名前")
         let prepared = query.prepare(.duck)
@@ -36,17 +36,17 @@ struct DuckTypeIndexTests: SwifQLTests {
 
     @Test("ENUM SELECT preserves child query composition and bind boundaries")
     func enumSelectBody() {
-        let staticQuery = SwifQL.create.type[any: Path.Identifier("status")]
+        let staticQuery = SwifQL.create.type[any: DB.Object("status")]
             .as
-            .enum(select: SwifQL.select(Path.Column("label")).from(Path.Table("labels")))
+            .enum(select: SwifQL.select(DB.Column("label")).from(DB.Table("labels")))
         #expect(
             staticQuery.prepare(.duck).plain ==
                 #"CREATE TYPE "status" as ENUM (SELECT "label" FROM "labels")"#
         )
 
-        let dynamicQuery = SwifQL.create.type[any: Path.Identifier("status")]
+        let dynamicQuery = SwifQL.create.type[any: DB.Object("status")]
             .as
-            .enum(select: SwifQL.select("label").from(Path.Table("labels")))
+            .enum(select: SwifQL.select("label").from(DB.Table("labels")))
         let prepared = dynamicQuery.prepare(.duck)
         #expect(prepared.plain == #"CREATE TYPE "status" as ENUM (SELECT 'label' FROM "labels")"#)
         #expect(prepared.splitted.query == #"CREATE TYPE "status" as ENUM (SELECT $1 FROM "labels")"#)
@@ -56,12 +56,12 @@ struct DuckTypeIndexTests: SwifQLTests {
 
     @Test("STRUCT, UNION, scalar aliases, and DROP TYPE reuse existing Type vocabulary")
     func namedTypes() {
-        let structure = SwifQL.create.type[any: Path.Identifier("payload")]
+        let structure = SwifQL.create.type[any: DB.Object("payload")]
             .as(Type.`struct`(("id", .integer), ("label", .varchar)))
-        let union = SwifQL.create.type[any: Path.Identifier("choice")]
+        let union = SwifQL.create.type[any: DB.Object("choice")]
             .as(Type.union(("number", .integer), ("string", .varchar)))
-        let alias = SwifQL.create.type[any: Path.Identifier("cents")].as(.integer)
-        let drop = SwifQL.drop.type.if.exists[any: Path.Identifier("status")]
+        let alias = SwifQL.create.type[any: DB.Object("cents")].as(.integer)
+        let drop = SwifQL.drop.type.if.exists[any: DB.Object("status")]
 
         #expect(
             structure.prepare(.duck).plain ==
@@ -77,14 +77,14 @@ struct DuckTypeIndexTests: SwifQLTests {
 
     @Test("TYPE modifier and DROP TYPE siblings remain direct mechanical atoms")
     func typeModifiersAndDrops() {
-        let replace = SwifQL.create.or.replace.type[any: Path.Identifier("status")]
+        let replace = SwifQL.create.or.replace.type[any: DB.Object("status")]
             .as
             .enum("open", "closed")
-        let ifNotExists = SwifQL.create.type.if.not.exists[any: Path.Identifier("status")]
+        let ifNotExists = SwifQL.create.type.if.not.exists[any: DB.Object("status")]
             .as
             .enum("open", "closed")
-        let restrict = SwifQL.drop.type[any: Path.Identifier("status")].restrict
-        let cascade = SwifQL.drop.type[any: Path.Identifier("status")].cascade
+        let restrict = SwifQL.drop.type[any: DB.Object("status")].restrict
+        let cascade = SwifQL.drop.type[any: DB.Object("status")].cascade
 
         #expect(
             replace.prepare(.duck).plain ==
@@ -104,32 +104,32 @@ struct DuckTypeIndexTests: SwifQLTests {
 
     @Test("Direct indexItems owns only the parenthesized IndexItem list")
     func directIndexItems() {
-        let table = Path.Table("events")
-        let basic = SwifQL.create.index[any: Path.Identifier("events_id_idx")]
+        let table = DB.Table("events")
+        let basic = SwifQL.create.index[any: DB.Object("events_id_idx")]
             .on[any: table]
             .indexItems(.column("id"))
         let unique = SwifQL.create.unique.index.if.not.exists[
-            any: Path.Identifier("events_unique_idx")
+            any: DB.Object("events_unique_idx")
         ]
         .on[any: table]
         .indexItems(
             .column("tenant"),
             .column("id", order: .descNullsLast)
         )
-        let expression = SwifQL.create.index[any: Path.Identifier("events_expr_idx")]
+        let expression = SwifQL.create.index[any: DB.Object("events_expr_idx")]
             .on[any: table]
-            .indexItems(.expression(Path.Column("x") + Path.Column("y")))
-        let art = SwifQL.create.index[any: Path.Identifier("events_art_idx")]
+            .indexItems(.expression(DB.Column("x") + DB.Column("y")))
+        let art = SwifQL.create.index[any: DB.Object("events_art_idx")]
             .on[any: table]
             .using(IndexType.art)
             .indexItems(.column("id"))
-        let drop = SwifQL.drop.index.if.exists[any: Path.Identifier("events_id_idx")]
-        let replace = SwifQL.create.or.replace.index[any: Path.Identifier("idx")]
+        let drop = SwifQL.drop.index.if.exists[any: DB.Object("events_id_idx")]
+        let replace = SwifQL.create.or.replace.index[any: DB.Object("idx")]
             .on[any: table]
             .indexItems(.column("id"))
-        let partial = basic.where(Path.Column("id") > 0)
-        let dropRestrict = SwifQL.drop.index[any: Path.Identifier("idx")].restrict
-        let dropCascade = SwifQL.drop.index[any: Path.Identifier("idx")].cascade
+        let partial = basic.where(DB.Column("id") > 0)
+        let dropRestrict = SwifQL.drop.index[any: DB.Object("idx")].restrict
+        let dropCascade = SwifQL.drop.index[any: DB.Object("idx")].cascade
 
         #expect(basic.prepare(.duck).plain == #"CREATE INDEX "events_id_idx" ON "events" ("id")"#)
         #expect(
@@ -174,17 +174,17 @@ struct DuckTypeIndexTests: SwifQLTests {
         #expect(IndexItem.column("id", order: .desc).prepare(.any).plain == "id DESC")
         #expect(IndexItem.column("id", order: .descNullsLast).prepare(.any).plain == "id DESC NULLS LAST")
 
-        let ascending = SwifQL.create.index[any: Path.Identifier("ordered_asc_idx")]
-            .on[any: Path.Table("events")]
+        let ascending = SwifQL.create.index[any: DB.Object("ordered_asc_idx")]
+            .on[any: DB.Table("events")]
             .indexItems(.column("id", order: .asc))
-        let ascNullsFirst = SwifQL.create.index[any: Path.Identifier("ordered_asc_nulls_first_idx")]
-            .on[any: Path.Table("events")]
+        let ascNullsFirst = SwifQL.create.index[any: DB.Object("ordered_asc_nulls_first_idx")]
+            .on[any: DB.Table("events")]
             .indexItems(.column("id", order: .ascNullsFirst))
-        let descending = SwifQL.create.index[any: Path.Identifier("ordered_desc_idx")]
-            .on[any: Path.Table("events")]
+        let descending = SwifQL.create.index[any: DB.Object("ordered_desc_idx")]
+            .on[any: DB.Table("events")]
             .indexItems(.column("id", order: .desc))
-        let descNullsLast = SwifQL.create.index[any: Path.Identifier("ordered_desc_nulls_last_idx")]
-            .on[any: Path.Table("events")]
+        let descNullsLast = SwifQL.create.index[any: DB.Object("ordered_desc_nulls_last_idx")]
+            .on[any: DB.Table("events")]
             .indexItems(.column("id", order: .descNullsLast))
 
         #expect(
@@ -211,20 +211,20 @@ struct DuckTypeIndexTests: SwifQLTests {
 
     @Test("TYPE and INDEX sources preserve direct, erased, copied, and helper composition")
     func typeAndIndexComposition() {
-        let directType = SwifQL.create.type[any: Path.Identifier("status")]
+        let directType = SwifQL.create.type[any: DB.Object("status")]
             .as
             .enum("open", "closed")
-        var erasedType: SwifQLable = SwifQL.create.type[any: Path.Identifier("status")]
+        var erasedType: SwifQLable = SwifQL.create.type[any: DB.Object("status")]
         erasedType = erasedType.as
         erasedType = erasedType.enum("open", "closed")
         let copiedType = SwifQLableParts(parts: directType.parts)
         let helperType = helperEnumSource()
 
-        let directIndex = SwifQL.create.index[any: Path.Identifier("events_id_idx")]
-            .on[any: Path.Table("events")]
+        let directIndex = SwifQL.create.index[any: DB.Object("events_id_idx")]
+            .on[any: DB.Table("events")]
             .indexItems(.column("id"))
-        var erasedIndex: SwifQLable = SwifQL.create.index[any: Path.Identifier("events_id_idx")]
-        erasedIndex = erasedIndex.on[any: Path.Table("events")]
+        var erasedIndex: SwifQLable = SwifQL.create.index[any: DB.Object("events_id_idx")]
+        erasedIndex = erasedIndex.on[any: DB.Table("events")]
         erasedIndex = erasedIndex.indexItems(.column("id"))
         let copiedIndex = SwifQLableParts(parts: directIndex.parts)
         let helperIndex = helperIndexSource()

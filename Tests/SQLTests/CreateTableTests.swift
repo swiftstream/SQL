@@ -36,7 +36,7 @@ struct CreateTableTests: SwifQLTests {
     func generatedColumn() {
         let query = CreateTable("metrics") {
             NewColumn("base", .integer)
-            GeneratedColumn("derived", as: Path.Column("base") + 1)
+            GeneratedColumn("derived", as: DB.Column("base") + 1)
         }
 
         check(
@@ -82,7 +82,7 @@ struct CreateTableTests: SwifQLTests {
     func preparationNeutrality() {
         let query = CreateTable("metrics") {
             NewColumn("base", .integer)
-            GeneratedColumn("derived", as: Path.Column("base") + 7)
+            GeneratedColumn("derived", as: DB.Column("base") + 7)
         }
 
         let prepared = query.prepare(.duck)

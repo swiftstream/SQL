@@ -47,11 +47,11 @@ extension SQLable {
 }
 
 extension Fn {
-    public static func call(_ name: Path.Identifier, _ arguments: SQLable...) -> SQLable {
+    public static func call(_ name: DB.Object, _ arguments: SQLable...) -> SQLable {
         call(name, arguments)
     }
 
-    public static func call(_ name: Path.Identifier, _ arguments: [SQLable]) -> SQLable {
+    public static func call(_ name: DB.Object, _ arguments: [SQLable]) -> SQLable {
         var parts = name.parts
         parts.append(o: .openBracket)
         for (index, argument) in arguments.enumerated() {

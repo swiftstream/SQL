@@ -19,7 +19,7 @@ struct ExpressionFrontierSliceTests: SwifQLTests {
 
     @Test("Slice forms render exact bracket interiors")
     func exactForms() {
-        let scores = Path.Column("scores")
+        let scores = DB.Column("scores")
 
         check(
             scores[slice(2, 4)],
@@ -52,7 +52,7 @@ struct ExpressionFrontierSliceTests: SwifQLTests {
 
     @Test("Duck stepped slice keeps exact SQL identity")
     func steppedSlice() {
-        let scores = Path.Column("scores")
+        let scores = DB.Column("scores")
         let expression = scores[slice(2, 8, step: 2)]
 
         #expect(expression.prepare(.duck).plain == #""scores"[2:8:2]"#)
@@ -62,7 +62,7 @@ struct ExpressionFrontierSliceTests: SwifQLTests {
 
     @Test("Slice reuses Wave 04 general-expression base grouping")
     func generalExpressionBase() {
-        let expression = Fn.arrayAgg(Path.Column("score"))[slice(2, 4)]
+        let expression = Fn.arrayAgg(DB.Column("score"))[slice(2, 4)]
 
         #expect(expression.prepare(.psql).plain == #"(array_agg("score"))[2:4]"#)
         #expect(expression.prepare(.psql).splitted.query == #"(array_agg("score"))[$1:$2]"#)
@@ -72,7 +72,7 @@ struct ExpressionFrontierSliceTests: SwifQLTests {
 
     @Test("Slice composes with chained index subscripts")
     func chainedSubscripts() {
-        let scores = Path.Column("scores")
+        let scores = DB.Column("scores")
 
         let sliceThenIndex = scores[slice(2, 4)][1]
         #expect(sliceThenIndex.prepare(.psql).plain == #""scores"[2:4][1]"#)
@@ -87,7 +87,7 @@ struct ExpressionFrontierSliceTests: SwifQLTests {
 
     @Test("Slice preserves lower upper step bind order")
     func bindOrder() {
-        let expression = Path.Column("scores")[slice(2, 8, step: 3)]
+        let expression = DB.Column("scores")[slice(2, 8, step: 3)]
 
         let postgres = expression.prepare(.psql)
         #expect(postgres.splitted.query == #""scores"[$1:$2:$3]"#)
@@ -112,7 +112,7 @@ struct ExpressionFrontierSliceTests: SwifQLTests {
         let step = CountingSQLable(3)
 
         let operand = slice(lower, upper, step: step)
-        let expression = Path.Column("scores")[operand]
+        let expression = DB.Column("scores")[operand]
 
         _ = expression.prepare(.psql)
         _ = expression.prepare(.duck)
@@ -124,7 +124,7 @@ struct ExpressionFrontierSliceTests: SwifQLTests {
 
     @Test("Slice accepts negative ordinary expression bounds")
     func negativeBounds() {
-        let expression = Path.Column("scores")[slice(-4, -1)]
+        let expression = DB.Column("scores")[slice(-4, -1)]
 
         #expect(expression.prepare(.psql).plain == #""scores"[-4:-1]"#)
         #expect(expression.prepare(.duck).plain == #""scores"[-4:-1]"#)

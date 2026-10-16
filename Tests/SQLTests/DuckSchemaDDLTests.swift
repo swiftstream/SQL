@@ -30,10 +30,10 @@ struct DuckSchemaDDLTests: SwifQLTests {
                 .plain == #"DROP SCHEMA IF EXISTS "task22_schema""#
         )
 
-        let direct = SwifQL.create.schema[any: Path.Schema("analytics")]
-        let replace = SwifQL.create.or.replace.schema[any: Path.Schema("analytics")]
-        let dropRestrict = SwifQL.drop.schema[any: Path.Schema("analytics")].restrict
-        let dropCascade = SwifQL.drop.schema[any: Path.Schema("analytics")].cascade
+        let direct = SwifQL.create.schema[any: DB.Schema("analytics")]
+        let replace = SwifQL.create.or.replace.schema[any: DB.Schema("analytics")]
+        let dropRestrict = SwifQL.drop.schema[any: DB.Schema("analytics")].restrict
+        let dropCascade = SwifQL.drop.schema[any: DB.Schema("analytics")].cascade
 
         #expect(direct.prepare(.duck).plain == #"CREATE SCHEMA "analytics""#)
         #expect(replace.prepare(.duck).plain == #"CREATE OR REPLACE SCHEMA "analytics""#)
@@ -43,7 +43,7 @@ struct DuckSchemaDDLTests: SwifQLTests {
 
     @Test("Schema names use the existing schema hook and never become binds")
     func schemaNamesAndBindings() {
-        let edge = SwifQL.create.schema[any: Path.Schema("select\"schema")]
+        let edge = SwifQL.create.schema[any: DB.Schema("select\"schema")]
         let prepared = edge.prepare(.duck)
 
         #expect(prepared.plain == #"CREATE SCHEMA "select""schema""#)
@@ -53,7 +53,7 @@ struct DuckSchemaDDLTests: SwifQLTests {
 
     @Test("Direct schema composition survives copy, erasure, and helper assembly")
     func compositionInvariance() {
-        let source = SwifQL.create.or.replace.schema[any: Path.Schema("analytics")]
+        let source = SwifQL.create.or.replace.schema[any: DB.Schema("analytics")]
         let copied = SwifQLableParts(parts: source.parts)
         let erased: SwifQLable = copied
         let helperParts: [SwifQLPart] = [

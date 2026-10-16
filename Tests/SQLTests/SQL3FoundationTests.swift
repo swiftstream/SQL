@@ -136,8 +136,29 @@ struct SQL3FoundationTests {
         #expect(catalogColumn.name == "id")
     }
 
-    // F18 is protected by declaration review: DB.Catalog, DB.Schema, and DB.Table
-    // explicitly conform to Equatable and Sendable without Hashable conformance.
+    @Test("F18 Catalog and Schema metadata, equality, and Sendable contracts")
+    func catalogSchemaMetadataEqualityAndSendability() {
+        func requireSendable<T: Sendable>(_ type: T.Type) {}
+        requireSendable(DB.Catalog.self)
+        requireSendable(DB.Schema.self)
+        requireSendable(DB.Catalog.Schema.self)
+
+        let catalog = DB.Catalog("warehouse")
+        let sameCatalog = DB.Catalog("warehouse")
+        let schema = DB.Schema(catalog: catalog, name: "analytics")
+        let sameSchema = DB.Schema(catalog: "warehouse", name: "analytics")
+        let scopedSchema = catalog.schema("analytics")
+        let sameScopedSchema = DB.Catalog("warehouse").schema(DB.Schema("analytics"))
+
+        #expect(catalog.name == "warehouse")
+        #expect(catalog == sameCatalog)
+        #expect(schema.name == "analytics")
+        #expect(schema.catalog == catalog)
+        #expect(schema == sameSchema)
+        #expect(scopedSchema.catalog == catalog)
+        #expect(scopedSchema.schema == schema)
+        #expect(scopedSchema == sameScopedSchema)
+    }
 
     @Test("F19 existing schema based SQL rendering remains byte-for-byte stable")
     func schemaRenderingCompatibility() {

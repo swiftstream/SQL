@@ -92,7 +92,7 @@ struct StructuralCompositionTests {
 
     @Test("Expression parentheses are not structural frames")
     func expressionParentheses() {
-        let table = Path.Table("events")
+        let table = DB.Table("events")
         let expression = |(table.column("year") + 1)|
 
         #expect(expression.parts.first is SwifQLStructuralFramePart == false)
@@ -100,7 +100,7 @@ struct StructuralCompositionTests {
 
     @Test("Neutral framing preserves representative SQL and bind order")
     func compatibility() {
-        let table = Path.Table("users")
+        let table = DB.Table("users")
         let id = table.column("id")
         let name = table.column("name")
         let age = table.column("age")

@@ -15,10 +15,9 @@ extension Decodable {
         } else {
             tableName = String(describing: Self.self)
         }
-        if let schema = Self.self as? Schemable.Type {
-            return Path.SchemaWithTable(schema: schema.schema.name, table: tableName)
-        } else {
-            return Path.Table(tableName)
+        if let schema = ModelQualification.resolve(Self.self) {
+            return schema.table(tableName)
         }
+        return DB.Table(tableName)
     }
 }

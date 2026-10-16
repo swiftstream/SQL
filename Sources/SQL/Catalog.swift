@@ -17,14 +17,14 @@ extension Catalog where T: Schemable {
     }
 
     public var table: SQLable {
-        Path.SchemaWithTable(schema: normalizedSchema.name, table: T.tableName)
+        normalizedSchema.table(T.tableName)
     }
 }
 
 extension Catalog where T: Table & Schemable {
     public subscript<V>(dynamicMember keyPath: KeyPath<T, V>) -> SQLable {
         guard let key = keyPath as? Keypathable else { return "<keyPath should conform to Keypathable>" }
-        return SQLPartKeyPath(schema: normalizedSchema.name, table: key.table, paths: key.paths)
+        return normalizedSchema.table(key.table).column(key.paths)
     }
 }
 

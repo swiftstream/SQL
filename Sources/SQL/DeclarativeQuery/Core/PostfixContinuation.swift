@@ -23,7 +23,7 @@ public func Collate(_ name: String) -> SQLSelectPostfixRequest {
 }
 
 /// `COLLATE <schema>.<name>` postfix continuation with structural identifier qualifiers.
-public func Collate(_ collation: Path.Identifier) -> SQLSelectPostfixRequest {
+public func Collate(_ collation: DB.Object) -> SQLSelectPostfixRequest {
     var parts: [SQLPart] = [SQLPartOperator.collate, SQLPartOperator.space]
     parts.append(contentsOf: collation.parts)
     return SQLSelectPostfixRequest(parts: parts)
@@ -52,12 +52,12 @@ public func AtLocal() -> SQLSelectPostfixRequest {
 /// `expression COLLATE <name>` as an ordinary SQLable; the collation is
 /// structural identifier identity and never binds.
 public func Collate(_ expression: SQLable, _ name: String) -> SQLable {
-    Collate(expression, Path.Identifier(name))
+    Collate(expression, DB.Object(name))
 }
 
 /// `expression COLLATE <identifier>` as an ordinary SQLable; schema/catalog
 /// qualifiers stay structural.
-public func Collate(_ expression: SQLable, _ collation: Path.Identifier) -> SQLable {
+public func Collate(_ expression: SQLable, _ collation: DB.Object) -> SQLable {
     var parts = expression.parts
     parts.appendSpaceIfNeeded()
     parts.append(o: .collate, .space)

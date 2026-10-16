@@ -22,7 +22,7 @@ struct Design037ModularityCorrectionTests {
 
     @Test("Stored statement aliases keep postfix suffixes outside the statement")
     func storedStatementAliases() {
-        let statement = Select { Path.Column("id") }
+        let statement = Select { DB.Column("id") }
         let fluent = statement.as("x")
         let operatorAlias = statement => "x"
         let expressionAlias = statement.as(=>"x")
@@ -41,8 +41,8 @@ struct Design037ModularityCorrectionTests {
 
     @Test("Public set results embed atomically in FROM, SELECT, and value JOIN")
     func setResultEmbedding() {
-        let left: any SwifQLable = Select { Path.Column("id") }
-        let right: any SwifQLable = Select { Path.Column("name") }
+        let left: any SwifQLable = Select { DB.Column("id") }
+        let right: any SwifQLable = Select { DB.Column("name") }
         let setResult = Union([left, right])
         let aliasedSet = setResult.as("combined")
 
@@ -53,7 +53,7 @@ struct Design037ModularityCorrectionTests {
         #expect(Select { aliasedSet }.prepare(.psql).plain == #"SELECT ((SELECT "id") UNION (SELECT "name")) as "combined""#)
 
         let joined = From {
-            Path.Table("User")
+            DB.Table("User")
             Join(.left, aliasedSet)
             On(true)
         }
@@ -63,24 +63,24 @@ struct Design037ModularityCorrectionTests {
     @Test("Value JOIN embeds statements and preserves the closure form")
     func statementJoinEmbedding() {
         let statement: any SwifQLable = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("Profile") }
+            Select { DB.Column("id") }
+            From { DB.Table("Profile") }
         }
         let plain = From {
-            Path.Table("User")
+            DB.Table("User")
             Join(.left, statement)
             On(true)
         }
         let aliased = From {
-            Path.Table("User")
+            DB.Table("User")
             Join(.left, statement.as("profile"))
             On(true)
         }
         let closure = From {
-            Path.Table("User")
+            DB.Table("User")
             Join(.left) {
-                Select { Path.Column("id") }
-                From { Path.Table("Profile") }
+                Select { DB.Column("id") }
+                From { DB.Table("Profile") }
             }
             On(true)
         }
@@ -88,28 +88,28 @@ struct Design037ModularityCorrectionTests {
         #expect(plain.prepare(.psql).plain == #"FROM "User" LEFT JOIN (SELECT "id" FROM "Profile") ON TRUE"#)
         #expect(aliased.prepare(.psql).plain == #"FROM "User" LEFT JOIN (SELECT "id" FROM "Profile") as "profile" ON TRUE"#)
         #expect(closure.prepare(.psql).plain == plain.prepare(.psql).plain)
-        #expect(From { Join(.inner, Path.Table("Profile")) }.prepare(.psql).plain == #"FROM INNER JOIN "Profile""#)
+        #expect(From { Join(.inner, DB.Table("Profile")) }.prepare(.psql).plain == #"FROM INNER JOIN "Profile""#)
     }
 
     @Test("Stored statements remain one scalar SELECT projection")
     func statementProjectionEmbedding() {
         let statement: any SwifQLable = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
-            Where { Path.Column("id") == "inside" }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
+            Where { DB.Column("id") == "inside" }
         }
         let aliased = statement.as("one")
 
         #expect(
-            Select { statement; Path.Column("name") }.prepare(.psql).plain
+            Select { statement; DB.Column("name") }.prepare(.psql).plain
                 == #"SELECT (SELECT "id" FROM "User" WHERE "id" = 'inside'), "name""#
         )
         #expect(
-            Select { aliased; Path.Column("name") }.prepare(.psql).plain
+            Select { aliased; DB.Column("name") }.prepare(.psql).plain
                 == #"SELECT (SELECT "id" FROM "User" WHERE "id" = 'inside') as "one", "name""#
         )
         #expect(
-            Select { Path.Column("id").as("identifier"); Path.Column("name") => "displayName" }
+            Select { DB.Column("id").as("identifier"); DB.Column("name") => "displayName" }
                 .prepare(.psql).plain == #"SELECT "id" as "identifier", "name" as "displayName""#
         )
     }
@@ -117,15 +117,15 @@ struct Design037ModularityCorrectionTests {
     @Test("Nested source, JOIN, and projection keep bind order across dialects")
     func nestedBindOrderAndDialects() {
         let nested: any SwifQLable = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("Inner") }
-            Where { Path.Column("id") == "inside" }
+            Select { DB.Column("id") }
+            From { DB.Table("Inner") }
+            Where { DB.Column("id") == "inside" }
         }
         let source = From { nested.as("q"); Fn.generateSeries("tail", "end") }
         let join = From {
-            Path.Table("Outer")
+            DB.Table("Outer")
             Join(.inner, nested.as("q"))
-            On(Path.Column("enabled") == "yes")
+            On(DB.Column("enabled") == "yes")
         }
         let projection = Select { nested; "outside" }
 
@@ -151,24 +151,24 @@ struct Design037ModularityCorrectionTests {
     @Test("Empty SELECT projections do not add separators or transfer alias ownership")
     func emptyProjectionOmission() {
         let empty: any SwifQLable = SwifQLableParts(parts: [])
-        let first = Select { empty; Path.Column("id") }
-        let last = Select { Path.Column("id"); empty }
-        let middle = Select { Path.Column("id"); empty; Path.Column("name") }
+        let first = Select { empty; DB.Column("id") }
+        let last = Select { DB.Column("id"); empty }
+        let middle = Select { DB.Column("id"); empty; DB.Column("name") }
         let all = Select { empty; empty }
-        let aliasBarrier = Select { Path.Column("id"); empty; As("orphan") }
+        let aliasBarrier = Select { DB.Column("id"); empty; As("orphan") }
         let conditional = Select {
-            Path.Column("id")
+            DB.Column("id")
             if true { empty }
-            Path.Column("name")
+            DB.Column("name")
         }
         let omittedBranch = Select {
-            Path.Column("id")
+            DB.Column("id")
             if false { empty }
-            Path.Column("name")
+            DB.Column("name")
         }
-        let distinct = Select { Distinct(); empty; Path.Column("id") }
-        let distinctOn = Select { DistinctOn(Path.Column("country")); empty; Path.Column("id") }
-        let projectionDistinct = Select { Distinct(Path.Column("id")); empty; Path.Column("name") }
+        let distinct = Select { Distinct(); empty; DB.Column("id") }
+        let distinctOn = Select { DistinctOn(DB.Column("country")); empty; DB.Column("id") }
+        let projectionDistinct = Select { Distinct(DB.Column("id")); empty; DB.Column("name") }
 
         #expect(first.prepare(.psql).plain == #"SELECT "id""#)
         #expect(last.prepare(.psql).plain == #"SELECT "id""#)
@@ -194,13 +194,13 @@ struct Design037ModularityCorrectionTests {
         #expect(multiple.prepare(.psql).plain == #"USING ("id", "name")"#)
         #expect(multiple.prepare(.psql).splitted.values.isEmpty)
         #expect(Using("id").prepare(.psql).plain == #"USING ("id")"#)
-        #expect(Using(Path.Column("id")).prepare(.psql).plain == #"USING ("id")"#)
+        #expect(Using(DB.Column("id")).prepare(.psql).plain == #"USING ("id")"#)
         #expect(Using(\User.$id).prepare(.psql).plain == #"USING ("id")"#)
         #expect(Using(DualUsingInput()).prepare(.psql).plain == #"USING ("legacyName")"#)
 
         let joined = From {
-            Path.Table("Profile")
-            Join(.inner, Path.Table("User"))
+            DB.Table("Profile")
+            Join(.inner, DB.Table("User"))
             Using(User.$id)
         }
         #expect(joined.prepare(.psql).plain == #"FROM "Profile" INNER JOIN "User" USING ("id")"#)
@@ -211,7 +211,7 @@ struct Design037ModularityCorrectionTests {
         let emptySelect = Select {}
         let aliased = emptySelect.as("x")
         let chained = emptySelect.as("x").as("y")
-        let spacedScalar = Path.Column("id") ~ SwifQLPartOperator.space
+        let spacedScalar = DB.Column("id") ~ SwifQLPartOperator.space
 
         #expect(emptySelect.prepare(.psql).plain == "SELECT ")
         #expect(aliased.prepare(.psql).plain == #"SELECT as "x""#)
@@ -219,26 +219,26 @@ struct Design037ModularityCorrectionTests {
         #expect(chained.prepare(.psql).plain == #"SELECT as "x" as "y""#)
         #expect(From { chained }.prepare(.psql).plain == #"FROM (SELECT) as "x" as "y""#)
         #expect(spacedScalar.as("x").prepare(.psql).plain == #""id" as "x""#)
-        #expect(Select { Path.Column("id") }.as("x").prepare(.psql).plain == #"SELECT "id" as "x""#)
+        #expect(Select { DB.Column("id") }.as("x").prepare(.psql).plain == #"SELECT "id" as "x""#)
     }
 
     @Test("Ordinary aliases and canonical JOIN closure rendering stay unchanged")
     func canonicalControls() {
-        let source: any SwifQLable = Select { Path.Column("id") }
+        let source: any SwifQLable = Select { DB.Column("id") }
         let storedFromAlias = From { source; As("x") }
-        let tableAlias = From { Path.Table("User").as("u") }
+        let tableAlias = From { DB.Table("User").as("u") }
         let closureJoin = From {
-            Path.Table("User")
+            DB.Table("User")
             Join(.left) {
-                Select { Path.Column("id") }
-                From { Path.Table("Profile") }
+                Select { DB.Column("id") }
+                From { DB.Table("Profile") }
             }
             On(true)
         }
 
         #expect(storedFromAlias.prepare(.psql).plain == #"FROM (SELECT "id") AS "x""#)
         #expect(tableAlias.prepare(.psql).plain == #"FROM "User" as "u""#)
-        #expect(Path.Column("id").as("identifier").prepare(.psql).plain == #""id" as "identifier""#)
+        #expect(DB.Column("id").as("identifier").prepare(.psql).plain == #""id" as "identifier""#)
         #expect(closureJoin.prepare(.psql).plain == #"FROM "User" LEFT JOIN (SELECT "id" FROM "Profile") ON TRUE"#)
     }
 }

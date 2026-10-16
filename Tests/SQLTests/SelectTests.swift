@@ -72,7 +72,7 @@ struct SelectTests: SwifQLTests {
     @Test("Test Select Column Path")
     func selectColumn_path() {
         check(
-            SwifQL.select(Path.Column("id")),
+            SwifQL.select(DB.Column("id")),
             .psql(#"SELECT "id""#),
             .mysql("SELECT id"),
             .duck(#"SELECT "id""#)
@@ -116,7 +116,7 @@ struct SelectTests: SwifQLTests {
     @Test("Test Select Column With Table")
     func selectColumnWithTable() {
         check(
-            SwifQL.select(Path.Table("CarBrands").column("id")),
+            SwifQL.select(DB.Table("CarBrands").column("id")),
             .psql(#"SELECT "CarBrands"."id""#),
             .mysql("SELECT CarBrands.id"),
             .duck(#"SELECT "CarBrands"."id""#)
@@ -126,7 +126,7 @@ struct SelectTests: SwifQLTests {
     @Test("Test Select Column With Table And Schema")
     func selectColumnWithTableAndSchema() {
         check(
-            SwifQL.select(Path.Schema("test").table("CarBrands").column("id")),
+            SwifQL.select(DB.Schema("test").table("CarBrands").column("id")),
             .psql(#"SELECT "test"."CarBrands"."id""#),
             .mysql("SELECT test.CarBrands.id"),
             .duck(#"SELECT "test"."CarBrands"."id""#)
@@ -136,7 +136,7 @@ struct SelectTests: SwifQLTests {
     @Test("Test Select Column Without Table")
     func selectColumnWithoutTable() {
         check(
-            SwifQL.select(Path.Column("id")),
+            SwifQL.select(DB.Column("id")),
             .psql(#"SELECT "id""#),
             .mysql("SELECT id"),
             .duck(#"SELECT "id""#)
@@ -791,7 +791,7 @@ struct SelectTests: SwifQLTests {
 
     @Test("Wave 04: column subscripts stay direct in every established dialect")
     func wave04ColumnSubscript() {
-        let expression = Path.Table("items").column("scores")[1]
+        let expression = DB.Table("items").column("scores")[1]
         check(
             SwifQL.select(expression),
             .psql(#"SELECT "items"."scores"[1]"#),
@@ -802,7 +802,7 @@ struct SelectTests: SwifQLTests {
 
     @Test("Wave 04: aggregate subscripts group only in PostgreSQL")
     func wave04AggregateSubscript() {
-        let expression = Fn.arrayAgg(Path.Column("score"))[1]
+        let expression = Fn.arrayAgg(DB.Column("score"))[1]
         check(
             SwifQL.select(expression),
             .psql(#"SELECT (array_agg("score"))[1]"#),
@@ -851,11 +851,11 @@ struct SelectTests: SwifQLTests {
 
     @Test("Wave 04: chained subscripts group only the original general base")
     func wave04ChainedSubscripts() {
-        let column = Path.Table("items").column("matrix")[1][2]
+        let column = DB.Table("items").column("matrix")[1][2]
         #expect(column.prepare(.psql).plain == #""items"."matrix"[1][2]"#)
         #expect(column.prepare(.psql).splitted.query == #""items"."matrix"[$1][$2]"#)
 
-        let aggregate = Fn.arrayAgg(Path.Column("score"))[1][2]
+        let aggregate = Fn.arrayAgg(DB.Column("score"))[1][2]
         #expect(aggregate.prepare(.psql).plain == #"(array_agg("score"))[1][2]"#)
         #expect(aggregate.prepare(.psql).splitted.query == #"(array_agg("score"))[$1][$2]"#)
         #expect(aggregate.prepare(.duck).plain == #"array_agg("score")[1][2]"#)
@@ -864,7 +864,7 @@ struct SelectTests: SwifQLTests {
 
     @Test("Wave 04: non-function expression and value bases are grouped")
     func wave04OtherGeneralBases() {
-        let arithmeticBase = Path.Column("left") + Path.Column("right")
+        let arithmeticBase = DB.Column("left") + DB.Column("right")
         #expect(arithmeticBase.parts.count > 1)
         let expression = arithmeticBase[1]
         #expect(expression.prepare(.psql).plain == "(" + arithmeticBase.prepare(.psql).plain + ")[1]")

@@ -11,7 +11,7 @@ public class DropTableBuilder<T: Table>: SQLable {
         if shouldCheckIfExists {
             query = query.if.exists
         }
-        query = query[any: Path.Table(T.tableName)]
+        query = query[any: DB.Table(T.tableName)]
         return query.parts
     }
     

@@ -22,23 +22,23 @@ public struct Schema<T: AnyTable> {
 
     public subscript<V>(dynamicMember keyPath: KeyPath<T, V>) -> SQLable {
         guard let k = keyPath as? Keypathable else { return "<keyPath should conform to Keypathable>" }
-        return SQLPartKeyPath(schema: schema.name, table: k.table, paths: k.paths)
+        return schema.table(k.table).column(k.paths)
     }
 
     public var table: SQLable {
-        Path.SchemaWithTable(schema: schema.name, table: T.tableName)
+        schema.table(T.tableName)
     }
 
-    public func column(_ paths: String...) -> Path.SchemaWithTableAndColumn {
+    public func column(_ paths: String...) -> DB.Schema.Table.Column {
         column(paths)
     }
 
-    public func column(_ paths: [String]) -> Path.SchemaWithTableAndColumn {
-        .init(schema: schema.name, table: T.tableName, paths: paths)
+    public func column(_ paths: [String]) -> DB.Schema.Table.Column {
+        schema.table(T.tableName).column(paths)
     }
 
     public func `as`(_ alias: String) -> GenericTableAlias<T> {
-        .init(alias, schema: schema.name)
+        .init(alias, sourceSchema: schema)
     }
 
     public func inCatalog(_ catalog: DB.Catalog) -> Schema<T> {

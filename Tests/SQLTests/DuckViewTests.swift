@@ -4,17 +4,17 @@ import Testing
 @Suite("Duck direct view DDL")
 struct DuckViewTests: SwifQLTests {
     private func viewSource(on prefix: SwifQLable) -> SwifQLable {
-        let events = Path.Table("events")
+        let events = DB.Table("events")
         return prefix.select(events.column("id"), events.column("label")).from(events)
     }
 
     @Test("CREATE VIEW and OR REPLACE replacement columns use direct composition")
     func createAndReplace() {
         let create = viewSource(
-            on: SwifQL.create.view[any: Path.Identifier("report")].as
+            on: SwifQL.create.view[any: DB.Object("report")].as
         )
         let replace = viewSource(
-            on: SwifQL.create.or.replace.view[any: Path.Identifier("report")]
+            on: SwifQL.create.or.replace.view[any: DB.Object("report")]
             .fields("event_id", "event_label")
             .as
         )
@@ -34,10 +34,10 @@ struct DuckViewTests: SwifQLTests {
     @Test("TEMP and TEMPORARY are independent atomic view keywords")
     func temporaryViews() {
         let temp = viewSource(
-            on: SwifQL.create.temp.view[any: Path.Identifier("scratch")].as
+            on: SwifQL.create.temp.view[any: DB.Object("scratch")].as
         )
         let temporary = viewSource(
-            on: SwifQL.create.temporary.view[any: Path.Identifier("scratch_long")].as
+            on: SwifQL.create.temporary.view[any: DB.Object("scratch_long")].as
         )
 
         #expect(
@@ -52,12 +52,12 @@ struct DuckViewTests: SwifQLTests {
 
     @Test("ALTER VIEW rename and DROP VIEW modifiers stay ordinary atoms")
     func alterAndDrop() {
-        let rename = SwifQL.alter.view[any: Path.Identifier("report")]
+        let rename = SwifQL.alter.view[any: DB.Object("report")]
             .rename
-            .to[any: Path.Identifier("report_v2")]
-        let drop = SwifQL.drop.view.if.exists[any: Path.Identifier("report_v2")]
-        let dropRestrict = SwifQL.drop.view[any: Path.Identifier("report_v2")].restrict
-        let dropCascade = SwifQL.drop.view[any: Path.Identifier("report_v2")].cascade
+            .to[any: DB.Object("report_v2")]
+        let drop = SwifQL.drop.view.if.exists[any: DB.Object("report_v2")]
+        let dropRestrict = SwifQL.drop.view[any: DB.Object("report_v2")].restrict
+        let dropCascade = SwifQL.drop.view[any: DB.Object("report_v2")].cascade
 
         #expect(rename.prepare(.duck).plain == #"ALTER VIEW "report" RENAME TO "report_v2""#)
         #expect(drop.prepare(.duck).plain == #"DROP VIEW IF EXISTS "report_v2""#)
@@ -67,9 +67,9 @@ struct DuckViewTests: SwifQLTests {
 
     @Test("Qualified view identifiers preserve catalog/schema ownership")
     func qualifiedNames() {
-        let schemaView = SwifQL.create.view[any: Path.Identifier(schema: "analytics", name: "report")]
+        let schemaView = SwifQL.create.view[any: DB.Object(schema: "analytics", name: "report")]
         let catalogView = SwifQL.create.view[
-            any: Path.Identifier(catalog: "memory", schema: "analytics", name: "report")
+            any: DB.Object(catalog: "memory", schema: "analytics", name: "report")
         ]
 
         #expect(schemaView.prepare(.duck).plain == #"CREATE VIEW "analytics"."report""#)
@@ -78,7 +78,7 @@ struct DuckViewTests: SwifQLTests {
 
     @Test("View source values keep ordinary bind mechanics at the child boundary")
     func preparedValues() {
-        let query = SwifQL.create.view[any: Path.Identifier("runtime")]
+        let query = SwifQL.create.view[any: DB.Object("runtime")]
             .as
             .select("runtime")
         let prepared = query.prepare(.duck)
@@ -92,7 +92,7 @@ struct DuckViewTests: SwifQLTests {
     @Test("Copied, erased, and helper-composed view source stays invariant")
     func compositionInvariance() {
         let query = viewSource(
-            on: SwifQL.create.view[any: Path.Identifier("report")].as
+            on: SwifQL.create.view[any: DB.Object("report")].as
         )
         let copied = SwifQLableParts(parts: query.parts)
         let erased: SwifQLable = copied

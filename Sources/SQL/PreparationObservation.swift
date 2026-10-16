@@ -206,15 +206,23 @@ final class SQLPreparationRenderer {
                 guard let schema = v.schema else { return "" }
                 return dialect.schemaName(schema)
             case let v as SQLPartTable:
-                if let schema = v.schema {
-                    return dialect.schemaName(schema) + "." + dialect.tableName(v.table)
+                var relation = ""
+                if let catalog = v.catalog {
+                    relation += dialect.catalogName(catalog) + "."
                 }
-                return dialect.tableName(v.table)
+                if let schema = v.schema {
+                    relation += dialect.schemaName(schema) + "."
+                }
+                return relation + dialect.tableName(v.table)
             case let v as SQLPartTableWithAlias:
-                if let schema = v.schema {
-                    return dialect.schemaName(schema) + "." + dialect.tableName(v.table, andAlias: v.alias)
+                var relation = ""
+                if let catalog = v.catalog {
+                    relation += dialect.catalogName(catalog) + "."
                 }
-                return dialect.tableName(v.table, andAlias: v.alias)
+                if let schema = v.schema {
+                    relation += dialect.schemaName(schema) + "."
+                }
+                return relation + dialect.tableName(v.table, andAlias: v.alias)
             case let v as SQLPartAlias:
                 return dialect.alias(v.alias)
             case let v as SQLPartKeyPath:

@@ -89,7 +89,7 @@ struct StructuralBuilderCompatibilityTests: SwifQLTests {
             return query.structurallyAppending(SwifQLableParts(parts: fragmentParts))
         }
 
-        let table = Path.Table("events")
+        let table = DB.Table("events")
         var query: SwifQLable = SwifQL.select(table.column("id")).from(table)
         if true {
             query = query.groupBy(table.column("id"))
@@ -105,7 +105,7 @@ struct StructuralBuilderCompatibilityTests: SwifQLTests {
 
     @Test("WITH bodies are nested statement frames and keep outer clauses separate")
     func withIsolation() {
-        let table = Path.Table("events")
+        let table = DB.Table("events")
         let body = ownedStatement(nestedOwner).groupBy(table.column("kind"))
         let outer = SwifQLableParts(parts: SwifQLStructuralFramePart(
             region: .statement,
@@ -113,7 +113,7 @@ struct StructuralBuilderCompatibilityTests: SwifQLTests {
             children: []
         ))
         let query = outer
-            .with(.init(Path.Table("grouped"), body))
+            .with(.init(DB.Table("grouped"), body))
             .groupBy(table.column("kind"))
 
         let outerFrame = root(of: query)
@@ -122,9 +122,9 @@ struct StructuralBuilderCompatibilityTests: SwifQLTests {
         #expect(nestedFrames.contains { groupByPart(in: $0)?.owner == nestedOwner })
 
         let ordinary = SwifQL
-            .with(.init(Path.Table("recent"), SwifQL.select(table.column("id")).from(table)))
-            .select(Path.Table("recent").column("id"))
-            .from(Path.Table("recent"))
+            .with(.init(DB.Table("recent"), SwifQL.select(table.column("id")).from(table)))
+            .select(DB.Table("recent").column("id"))
+            .from(DB.Table("recent"))
         check(
             ordinary,
             .psql(#"WITH "recent" as (SELECT "events"."id" FROM "events") SELECT "recent"."id" FROM "recent""#),
@@ -134,8 +134,8 @@ struct StructuralBuilderCompatibilityTests: SwifQLTests {
 
     @Test("UNION and UNION ALL use a set-result root and final ORDER BY")
     func unionSetResultOwnership() {
-        let leftTable = Path.Table("left_table")
-        let rightTable = Path.Table("right_table")
+        let leftTable = DB.Table("left_table")
+        let rightTable = DB.Table("right_table")
         let left = SwifQL.select(leftTable.column("id")).from(leftTable)
         let right = SwifQL.select(rightTable.column("id")).from(rightTable)
 
@@ -166,7 +166,7 @@ struct StructuralBuilderCompatibilityTests: SwifQLTests {
 
     @Test("Nested SELECT, set-result, and builder outputs preserve exact SQL and bind order")
     func nestedAndBuilderCompatibility() {
-        let users = Path.Table("users")
+        let users = DB.Table("users")
         let id = users.column("id")
         let age = users.column("age")
         let nested = SwifQL
@@ -203,7 +203,7 @@ struct StructuralBuilderCompatibilityTests: SwifQLTests {
 
     @Test("Historical raw tilde composition retains Task 01 PostgreSQL/MySQL bytes")
     func historicalTildeCompositionCompatibility() {
-        let users = Path.Table("users")
+        let users = DB.Table("users")
         let age = users.column("age")
         let tildeParts: [SwifQLable] = [
             SwifQL, Op.select, Op.space, users.*,
@@ -320,7 +320,7 @@ struct StructuralBuilderCompatibilityTests: SwifQLTests {
 
     @Test("Expression parentheses stay syntax-only and raw tilde semantics remain distinct")
     func parenthesesAndTilde() {
-        let expression = |(Path.Table("events").column("year") + 1)|
+        let expression = |(DB.Table("events").column("year") + 1)|
         #expect(expression.parts.first is SwifQLStructuralFramePart == false)
 
         let continuationParts: [SwifQLPart] = [
@@ -346,7 +346,7 @@ struct StructuralBuilderCompatibilityTests: SwifQLTests {
     @Test("Nested statement frames reset scopes and preserve depth-first bindings")
     func scopeAndBindingIsolation() {
         let scope = SwifQLRenderScope(namespace: "example", name: "outer")
-        let outerExpression = Path.Table("outer").column("value").scoped(scope)
+        let outerExpression = DB.Table("outer").column("value").scoped(scope)
         let nestedFrame = SwifQLStructuralFramePart(
             region: .statement,
             children: [
@@ -377,8 +377,8 @@ struct StructuralBuilderCompatibilityTests: SwifQLTests {
 
     @Test("Stored MATCH_CONDITION and ON roles survive select-builder materialization")
     func storedMatchConditionOnBuilderComposition() {
-        let trades = Path.Table("trades")
-        let prices = Path.Table("prices")
+        let trades = DB.Table("trades")
+        let prices = DB.Table("prices")
         let base = SwifQL.select(trades.column("id")).from(trades)
         let temporal = trades.column("event_time") >= 100
         let equality = trades.column("symbol") == "A"
@@ -434,8 +434,8 @@ struct StructuralBuilderCompatibilityTests: SwifQLTests {
 
     @Test("Stored MATCH_CONDITION and USING roles preserve structural columns")
     func storedMatchConditionUsingBuilderComposition() {
-        let trades = Path.Table("trades")
-        let prices = Path.Table("prices")
+        let trades = DB.Table("trades")
+        let prices = DB.Table("prices")
         let base = SwifQL.select(trades.column("id")).from(trades)
         let temporal = trades.column("event_time") >= 100
         let columns: [KeyPathLastPath] = [
@@ -495,8 +495,8 @@ struct StructuralBuilderCompatibilityTests: SwifQLTests {
 
     @Test("Legacy ON-only stored join builders retain established output")
     func legacyOnOnlyBuilderComposition() {
-        let trades = Path.Table("trades")
-        let prices = Path.Table("prices")
+        let trades = DB.Table("trades")
+        let prices = DB.Table("prices")
         let equality = trades.column("symbol") == "A"
         let storedJoin = SwifQLJoinBuilder(.asOf, prices, on: equality)
         let built = SwifQLSelectBuilder()
@@ -530,8 +530,8 @@ struct StructuralBuilderCompatibilityTests: SwifQLTests {
 
     @Test("Copied select builders preserve stored MATCH_CONDITION join state")
     func copiedStoredMatchConditionBuilderComposition() {
-        let trades = Path.Table("trades")
-        let prices = Path.Table("prices")
+        let trades = DB.Table("trades")
+        let prices = DB.Table("prices")
         let temporal = trades.column("event_time") >= 100
         let equality = trades.column("symbol") == "A"
         let storedJoin = SwifQLJoinBuilder(

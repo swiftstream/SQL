@@ -57,7 +57,7 @@ struct DeclarativeQueryCoreTests: SwifQLTests {
 
     @Test("T03 single framed SELECT/FROM preserves SQL, binds, and root frame")
     func t03SingleFramedQuery() {
-        let table = Path.Table("CarBrands")
+        let table = DB.Table("CarBrands")
         let q = SwifQL.select(table.column("name"), "seed").from(table)
 
         let wrapped = SwifQL {

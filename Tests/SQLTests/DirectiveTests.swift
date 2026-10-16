@@ -8,13 +8,13 @@ struct DirectiveTests: SwifQLTests {
     @Test("Test Update")
     func update() {
         check(
-            SwifQL.update(Path.Schema(nil).table("ttt")),
+            SwifQL.update(DB.Table("ttt")),
             .psql(#"UPDATE "ttt""#),
             .mysql("UPDATE ttt"),
             .duck(#"UPDATE "ttt""#)
         )
         check(
-            SwifQL.update(Path.Schema("sss").table("ttt")),
+            SwifQL.update(DB.Schema("sss").table("ttt")),
             .psql(#"UPDATE "sss"."ttt""#),
             .mysql("UPDATE sss.ttt"),
             .duck(#"UPDATE "sss"."ttt""#)
@@ -26,13 +26,13 @@ struct DirectiveTests: SwifQLTests {
     @Test("Test Insert Into")
     func insertInto() {
         check(
-            SwifQL.insertInto(Path.Schema(nil).table("ttt"), fields: "id"),
+            SwifQL.insertInto(DB.Table("ttt"), fields: "id"),
             .psql(#"INSERT INTO "ttt" ("id")"#),
             .mysql("INSERT INTO ttt (id)"),
             .duck(#"INSERT INTO "ttt" ("id")"#)
         )
         check(
-            SwifQL.insertInto(Path.Schema("sss").table("ttt"), fields: "id"),
+            SwifQL.insertInto(DB.Schema("sss").table("ttt"), fields: "id"),
             .psql(#"INSERT INTO "sss"."ttt" ("id")"#),
             .mysql("INSERT INTO sss.ttt (id)"),
             .duck(#"INSERT INTO "sss"."ttt" ("id")"#)

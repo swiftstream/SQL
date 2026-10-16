@@ -3,8 +3,8 @@ import Testing
 
 @Suite("Duck JSON precedence and exact surface")
 struct DuckJSONPrecedenceTests: SwifQLTests {
-    private let payload = Path.Table("events").column("payload")
-    private let field = Path.Table("events").column("payload", "field")
+    private let payload = DB.Table("events").column("payload")
+    private let field = DB.Table("events").column("payload", "field")
     private let fieldText = SwifQLPartKeyPath(
         table: "events",
         paths: ["payload", "field"],
@@ -27,13 +27,13 @@ struct DuckJSONPrecedenceTests: SwifQLTests {
     func grammarPositions() {
         let alias = field => "field_value"
         let length = Fn.subStr(nestedText, 1)
-        let order = SwifQL.select(field).from(Path.Table("events")).orderBy(.asc(field))
+        let order = SwifQL.select(field).from(DB.Table("events")).orderBy(.asc(field))
         let predicate = fieldText == "alpha"
 
         #expect(SwifQL.select(alias).prepare(.duck).plain == #"SELECT ("events"."payload"->'field') as "field_value""#)
         #expect(SwifQL.select(length).prepare(.duck).plain == #"SELECT substr(("events"."payload"->'nested'->>'field'), 1)"#)
         #expect(order.prepare(.duck).plain == #"SELECT ("events"."payload"->'field') FROM "events" ORDER BY ("events"."payload"->'field') ASC"#)
-        #expect(SwifQL.select(field).from(Path.Table("events")).where(predicate).prepare(.duck).plain == #"SELECT ("events"."payload"->'field') FROM "events" WHERE ("events"."payload"->>'field') = 'alpha'"#)
+        #expect(SwifQL.select(field).from(DB.Table("events")).where(predicate).prepare(.duck).plain == #"SELECT ("events"."payload"->'field') FROM "events" WHERE ("events"."payload"->>'field') = 'alpha'"#)
         #expect(predicate.prepare(.psql).plain == #""events"."payload"->>'field' = 'alpha'"#)
         #expect(predicate.prepare(.mysql).plain == "events.field = 'alpha'")
     }
@@ -54,7 +54,7 @@ struct DuckJSONPrecedenceTests: SwifQLTests {
         let list = SwifQLableParts(parts: [10, 20])
 
         #expect(SwifQL.select(field).prepare(.duck).plain == #"SELECT ("events"."payload"->'field')"#)
-        #expect(SwifQL.select(jsonSubscript).from(Path.Table("events")).prepare(.duck).plain == #"SELECT "events"."payload"['items'][0] FROM "events""#)
+        #expect(SwifQL.select(jsonSubscript).from(DB.Table("events")).prepare(.duck).plain == #"SELECT "events"."payload"['items'][0] FROM "events""#)
         #expect(SwifQL.select(list[1]).prepare(.duck).plain == "SELECT [10,20][1]")
     }
 

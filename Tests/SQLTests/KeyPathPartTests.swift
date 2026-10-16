@@ -25,7 +25,7 @@ struct KeyPathPartTests {
 
     @Test("Catalog column path is one semantic part")
     func catalogColumnPathIsOneSemanticPart() {
-        let path = Path.Catalog("warehouse")
+        let path = DB.Catalog("warehouse")
             .schema("analytics")
             .table("events")
             .column("payload", "field")
@@ -53,7 +53,7 @@ struct KeyPathPartTests {
 
     @Test("Items projection drops qualification and uses the first path")
     func itemsProjectionDropsQualificationAndUsesFirstPath() {
-        let keyPath = Path.Catalog("warehouse")
+        let keyPath = DB.Catalog("warehouse")
             .schema("analytics")
             .table("events")
             .column("payload", "field")
@@ -66,7 +66,7 @@ struct KeyPathPartTests {
 
     @Test("Terminal name projections use the last path")
     func terminalNameProjectionsUseLastPath() {
-        let keyPath = Path.Catalog("warehouse")
+        let keyPath = DB.Catalog("warehouse")
             .schema("analytics")
             .table("events")
             .column("payload", "field")
@@ -74,8 +74,8 @@ struct KeyPathPartTests {
             keyPath
         )
         let using = From {
-            Path.Table("left_events")
-            Join(.inner, Path.Table("right_events"))
+            DB.Table("left_events")
+            Join(.inner, DB.Table("right_events"))
             Using(keyPath)
         }
 

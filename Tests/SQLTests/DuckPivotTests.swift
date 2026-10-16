@@ -57,7 +57,7 @@ private final class OwnerDerivedClauseScopeDialect: SQLDialect {
 
 @Suite("Duck simplified PIVOT")
 struct DuckPivotTests {
-    private let cities = Path.Table("cities")
+    private let cities = DB.Table("cities")
 
     private func target() -> SwifQLable {
         var query: SwifQLable = SwifQL
@@ -233,9 +233,9 @@ struct DuckPivotTests {
         })
 
         let cte = SwifQL
-            .with(.init(Path.Table("pivoted"), inner))
-            .select(Path.Table("pivoted").column("country"))
-            .from(Path.Table("pivoted"))
+            .with(.init(DB.Table("pivoted"), inner))
+            .select(DB.Table("pivoted").column("country"))
+            .from(DB.Table("pivoted"))
         #expect(root(of: cte).owner(for: .groupBy) == nil)
         #expect(root(of: cte).children.contains { part in
             (part as? SwifQLStructuralFramePart)?.owner(for: .groupBy) == .simplifiedPivot
@@ -383,12 +383,12 @@ struct DuckPivotTests {
         let query = SwifQL
             .pivot(cities)
             .on(
-                Path.Catalog("warehouse").schema("analytics").table("events").column("year"),
+                DB.Catalog("warehouse").schema("analytics").table("events").column("year"),
                 in: 2000
             )
-            .using(Path.Catalog("warehouse").schema("analytics").table("events").column("population"))
-            .groupBy(Path.Catalog("warehouse").schema("analytics").table("events").column("country"))
-            .orderBy(.desc(Path.Catalog("warehouse").schema("analytics").table("events").column("country")))
+            .using(DB.Catalog("warehouse").schema("analytics").table("events").column("population"))
+            .groupBy(DB.Catalog("warehouse").schema("analytics").table("events").column("country"))
+            .orderBy(.desc(DB.Catalog("warehouse").schema("analytics").table("events").column("country")))
 
         #expect(
             query.prepare(.duck).plain

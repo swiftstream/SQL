@@ -29,7 +29,7 @@ struct JsonTests: SwifQLTests {
     @Test("Existing JSON path SQL remains exact for PostgreSQL and MySQL")
     func legacyKeyPathDialectOutput() {
         check(
-            Path.Table("events").column("payload", "field"),
+            DB.Table("events").column("payload", "field"),
             .psql(#""events"."payload"->'field'"#),
             .mysql("events.field")
         )

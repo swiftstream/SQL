@@ -93,7 +93,7 @@ extension SQLable {
     public func attach(
         _ source: String,
         mode: AttachMode = .none,
-        as catalog: Path.Catalog? = nil,
+        as catalog: DB.Catalog? = nil,
         options: AttachOption...
     ) -> SQLable {
         attach(source, mode: mode, as: catalog, options: options)
@@ -103,7 +103,7 @@ extension SQLable {
     public func attach(
         _ source: String,
         mode: AttachMode = .none,
-        as catalog: Path.Catalog? = nil,
+        as catalog: DB.Catalog? = nil,
         options: [AttachOption]
     ) -> SQLable {
         var parts = self.parts
@@ -142,7 +142,7 @@ extension SQLable {
     }
 
     /// Appends `DETACH` for a structural catalog name.
-    public func detach(_ catalog: Path.Catalog) -> SQLable {
+    public func detach(_ catalog: DB.Catalog) -> SQLable {
         var parts = self.parts
         parts.appendSpaceIfNeeded()
         parts.append(o: .custom("DETACH"), .space)
@@ -151,17 +151,17 @@ extension SQLable {
     }
 
     /// Appends `USE` for a structural catalog name.
-    public func use(_ catalog: Path.Catalog) -> SQLable {
+    public func use(_ catalog: DB.Catalog) -> SQLable {
         appendingUse(catalog)
     }
 
     /// Appends `USE` for a structural schema name.
-    public func use(_ schema: Path.Schema) -> SQLable {
+    public func use(_ schema: DB.Schema) -> SQLable {
         appendingUse(schema)
     }
 
     /// Appends `USE` for a structural catalog-and-schema path.
-    public func use(_ path: Path.CatalogWithSchema) -> SQLable {
+    public func use(_ path: DB.Catalog.Schema) -> SQLable {
         appendingUse(path)
     }
 

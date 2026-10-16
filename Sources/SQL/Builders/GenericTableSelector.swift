@@ -696,7 +696,7 @@ public class TableSelector<T: Table>: SQLable {
                 if exceptColumns.count > 0 {
                     cols = cols.filter { !exceptColumns.contains($0) }
                 }
-                query = query.select(cols.map { Path.Table(T.tableName).column($0) })
+                query = query.select(cols.map { DB.Table(T.tableName).column($0) })
             } else {
                 query = query.select(T.table.*)
             }
@@ -705,7 +705,7 @@ public class TableSelector<T: Table>: SQLable {
             if exceptColumns.count > 0 {
                 cols = cols.filter { !exceptColumns.contains($0) }
             }
-            query = query.select(cols.map { Path.Table(T.tableName).column($0) })
+            query = query.select(cols.map { DB.Table(T.tableName).column($0) })
         }
         query = query.from(T.table)
         return query.parts

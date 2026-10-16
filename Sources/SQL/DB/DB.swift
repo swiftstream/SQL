@@ -1,2 +1,2 @@
-/// A namespace for SQL-shaped database values that do not render SQL.
+/// A namespace for structural database names that render through SQL parts.
 public enum DB {}

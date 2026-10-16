@@ -28,7 +28,12 @@ public struct AlterTable: SQLable {
         @AlterTableActionBuilder _ actions: () -> [any AlterTableAction]
     ) {
         let actionParts = actions().map(\.parts)
-        var parts = SQL.alter.table[any: Path.SchemaWithTable(schema: schema, table: table)].parts
+        let target: SQLable = if let schema {
+            DB.Schema(schema).table(table)
+        } else {
+            DB.Table(table)
+        }
+        var parts = SQL.alter.table[any: target].parts
         for (index, action) in actionParts.enumerated() {
             if index == 0 {
                 parts.append(o: .space)

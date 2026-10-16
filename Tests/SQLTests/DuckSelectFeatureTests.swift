@@ -73,7 +73,7 @@ struct DuckSelectFeatureTests {
 
     @Test("GROUP BY ALL reuses the existing generic groupBy surface")
     func groupByAllReuse() {
-        let table = Path.Table("events")
+        let table = DB.Table("events")
         let category = table.column("category")
         let amount = table.column("amount")
         let base = SwifQL.select(category, Fn.sum(amount)).from(table)
@@ -96,7 +96,7 @@ struct DuckSelectFeatureTests {
 
     @Test("GROUPING SETS, ROLLUP, and CUBE are ordinary GROUP BY expressions")
     func groupingExpressions() {
-        let table = Path.Table("events")
+        let table = DB.Table("events")
         let category = table.column("category")
         let region = table.column("region")
         let amount = table.column("amount")
@@ -149,7 +149,7 @@ struct DuckSelectFeatureTests {
 
     @Test("Grouping ID and count overloads preserve exact function shapes")
     func groupingFunctionsAndCount() {
-        let table = Path.Table("events")
+        let table = DB.Table("events")
         let value = table.column("value")
         let query = SwifQL.select(Fn.count(), Fn.count(value)).from(table)
 
@@ -161,14 +161,14 @@ struct DuckSelectFeatureTests {
 
     @Test("QUALIFY composes with a real window expression")
     func qualifyWindowComposition() {
-        let table = Path.Table("events")
+        let table = DB.Table("events")
         let category = table.column("category")
         let sequence = table.column("seq")
         let ranked = Fn.rowNumber()
             .over(partitionBy: category, orderBy: .asc(sequence))
 
         func predicate() -> SwifQLable {
-            Path.Column("rn") == 1
+            DB.Column("rn") == 1
         }
 
         var query: SwifQLable = SwifQL
@@ -183,7 +183,7 @@ struct DuckSelectFeatureTests {
 
     @Test("ORDER BY ALL uses the existing owner-bearing order part")
     func allOrderItemReuse() {
-        let table = Path.Table("events")
+        let table = DB.Table("events")
         let category = table.column("category")
         let region = table.column("region")
         let base = SwifQL.select(category, region).from(table)
@@ -215,7 +215,7 @@ struct DuckSelectFeatureTests {
 
     @Test("Percentage LIMIT keeps ordinary LIMIT binding and SQL identity")
     func limitPercent() {
-        let table = Path.Table("events")
+        let table = DB.Table("events")
         let value = table.column("value")
         let query = SwifQL.select(value).from(table).limit(percent: 30)
         let prepared = query.prepare(.duck)
@@ -231,7 +231,7 @@ struct DuckSelectFeatureTests {
 
     @Test("USING SAMPLE and TABLESAMPLE use distinct typed SQL shapes")
     func sampling() {
-        let table = Path.Table("events")
+        let table = DB.Table("events")
         let value = table.column("value")
         let using = SwifQL
             .select(value)
@@ -308,7 +308,7 @@ struct DuckSelectFeatureTests {
 
     @Test("Sampling values stay open, ordered, and construct-specific")
     func samplingSemanticModel() {
-        let expression: SwifQLable = Path.Table("events").column("weight")
+        let expression: SwifQLable = DB.Table("events").column("weight")
         let method = SampleMethod(namespace: "vendor", name: "stratified")
         let arguments = [
             SampleArgument(percentage: expression),
@@ -339,7 +339,7 @@ struct DuckSelectFeatureTests {
 
     @Test("Custom dialect sampling policies retain binds and reshape grammar")
     func samplingDialectPolicies() {
-        let table = Path.Table("events")
+        let table = DB.Table("events")
         let value = SwifQLableParts(parts: SwifQLPartOperator("value"))
         let bigQuery = SwifQL
             .select(value)
@@ -393,7 +393,7 @@ struct DuckSelectFeatureTests {
 
     @Test("Existing DISTINCT, FILTER, WINDOW, OFFSET, and FROM-first forms remain exact")
     func existingSelectReuse() {
-        let table = Path.Table("events")
+        let table = DB.Table("events")
         let category = table.column("category")
         let value = table.column("value")
 

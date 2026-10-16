@@ -99,7 +99,7 @@ struct DuckTypeTests: SwifQLTests {
         #expect(structure.name == "STRUCT(\"name\" integer, \"select\" integer, \"名前\" integer, \"a\"\"b\" integer)")
         #expect(union.name == "UNION(\"a\"\"b\" integer)")
 
-        let globalPath = Path.Schema("analytics").table("events").column("payload")
+        let globalPath = DB.Schema("analytics").table("events").column("payload")
         #expect(globalPath.prepare(.duck).plain == "\"analytics\".\"events\".\"payload\"")
     }
 

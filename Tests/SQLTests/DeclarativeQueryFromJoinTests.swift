@@ -13,7 +13,7 @@ private struct DQ04CountedSource: SwifQLable {
 
     var parts: [SwifQLPart] {
         counter.count += 1
-        return Path.Table("User").parts
+        return DB.Table("User").parts
     }
 }
 
@@ -22,31 +22,31 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     @Test("D04-S01 FROM sources own commas")
     func s01FromSourcesOwnCommas() {
         let query = From {
-            Path.Table("User")
-            Path.Table("Profile")
-            Path.Table("Organization")
+            DB.Table("User")
+            DB.Table("Profile")
+            DB.Table("Organization")
         }
         #expect(query.prepare(.psql).plain == #"FROM "User", "Profile", "Organization""#)
     }
 
     @Test("D04-S02 source explicit alias")
     func s02SourceExplicitAlias() {
-        let query = From { Path.Table("User"); As("u") }
+        let query = From { DB.Table("User"); As("u") }
         #expect(query.prepare(.psql).plain == #"FROM "User" AS "u""#)
         #expect(query.prepare(.psql).splitted.values.isEmpty)
     }
 
     @Test("D04-S03 source fluent and operator aliases remain compatible")
     func s03SourceAliasCompatibility() {
-        let fluent = From { Path.Table("User").as("u") }
-        let operatorForm = From { Path.Table("User") => "u" }
+        let fluent = From { DB.Table("User").as("u") }
+        let operatorForm = From { DB.Table("User") => "u" }
         #expect(fluent.prepare(.psql).plain == #"FROM "User" as "u""#)
         #expect(operatorForm.prepare(.psql).plain == #"FROM "User" as "u""#)
     }
 
     @Test("D04-S04 Columns treats names as identifiers")
     func s04ColumnsIdentifierSafety() {
-        let query = From { Path.Table("User"); As("u"); Columns("id", "display name") }
+        let query = From { DB.Table("User"); As("u"); Columns("id", "display name") }
         #expect(query.prepare(.psql).plain == #"FROM "User" AS "u" ("id", "display name")"#)
         #expect(query.prepare(.psql).splitted.values.isEmpty)
     }
@@ -57,7 +57,7 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
             From {
                 Values { Row("admin", 100) }
                 As("rp")
-                Columns { Path.Column("role"); Path.Column("priority") }
+                Columns { DB.Column("role"); DB.Column("priority") }
             }
         }
 
@@ -76,7 +76,7 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     func s05DynamicColumnsTrueBranch() {
         let includeName = true
         let query = From {
-            Path.Table("User")
+            DB.Table("User")
             As("u")
             Columns {
                 "id"
@@ -90,7 +90,7 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     func s06DynamicColumnsEmptyOmission() {
         let includeName = false
         let query = From {
-            Path.Table("User")
+            DB.Table("User")
             As("u")
             Columns { if includeName { "name" } }
         }
@@ -112,12 +112,12 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     func s08ConditionalCompleteSource() {
         let includeProfile = true
         let query = From {
-            Path.Table("User")
+            DB.Table("User")
             if includeProfile {
-                Path.Table("Profile")
+                DB.Table("Profile")
                 As("profile")
             }
-            Path.Table("Organization")
+            DB.Table("Organization")
         }
         #expect(query.prepare(.psql).plain == #"FROM "User", "Profile" AS "profile", "Organization""#)
     }
@@ -127,12 +127,12 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
         let useProfile = false
         let query = From {
             if useProfile {
-                Path.Table("Profile")
+                DB.Table("Profile")
                 As("profile")
             } else {
-                Path.Table("Guest")
+                DB.Table("Guest")
             }
-            Path.Table("Organization")
+            DB.Table("Organization")
         }
         #expect(query.prepare(.psql).plain == #"FROM "Guest", "Organization""#)
     }
@@ -141,7 +141,7 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     func s10LoopCompleteSources() {
         let query = From {
             for name in ["User", "Profile"] {
-                Path.Table(name)
+                DB.Table(name)
             }
         }
         #expect(query.prepare(.psql).plain == #"FROM "User", "Profile""#)
@@ -150,8 +150,8 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     @Test("D04-S11 direct nested SELECT FROM alias")
     func s11DirectNestedSelectFromAlias() {
         let query = From {
-            Select { Path.Table("Order").column("userId") }
-            From { Path.Table("Order") }
+            Select { DB.Table("Order").column("userId") }
+            From { DB.Table("Order") }
             As("orders")
         }
         #expect(query.prepare(.psql).plain == #"FROM (SELECT "Order"."userId" FROM "Order") AS "orders""#)
@@ -160,9 +160,9 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     @Test("D04-S12 nested statement finalizes before next outer source")
     func s12NestedSourceFinalizedByOuterSource() {
         let query = From {
-            Select { Path.Table("Order").column("id") }
-            From { Path.Table("Order") }
-            Path.Table("Organization")
+            Select { DB.Table("Order").column("id") }
+            From { DB.Table("Order") }
+            DB.Table("Organization")
         }
         #expect(query.prepare(.psql).plain == #"FROM (SELECT "Order"."id" FROM "Order"), "Organization""#)
     }
@@ -172,11 +172,11 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
         let includeOrders = true
         let query = From {
             if includeOrders {
-                Select { Path.Table("Order").column("userId") }
-                From { Path.Table("Order") }
+                Select { DB.Table("Order").column("userId") }
+                From { DB.Table("Order") }
                 As("orders")
             }
-            Path.Table("Organization")
+            DB.Table("Organization")
         }
         #expect(query.prepare(.psql).plain == #"FROM (SELECT "Order"."userId" FROM "Order") AS "orders", "Organization""#)
     }
@@ -184,8 +184,8 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     @Test("D04-S14 explicit SwifQL root is an already formed source")
     func s14ExplicitCurrentRootSource() {
         let nested = SwifQL {
-            Select { Path.Table("Order").column("id") }
-            From { Path.Table("Order") }
+            Select { DB.Table("Order").column("id") }
+            From { DB.Table("Order") }
         }
         let query = From { nested; As("orders") }
         #expect(query.prepare(.psql).plain == #"FROM (SELECT "Order"."id" FROM "Order") AS "orders""#)
@@ -194,11 +194,11 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     @Test("D04-S15 JOIN ON builder AND composition")
     func s15JoinOnBuilder() {
         let query = From {
-            Path.Table("User")
-            Join(.left, Path.Table("Profile"))
+            DB.Table("User")
+            Join(.left, DB.Table("Profile"))
             On {
-                Path.Table("User").column("id") == Path.Table("Profile").column("userId")
-                Path.Table("Profile").column("active") == true
+                DB.Table("User").column("id") == DB.Table("Profile").column("userId")
+                DB.Table("Profile").column("active") == true
             }
         }
         #expect(query.prepare(.psql).plain == #"FROM "User" LEFT JOIN "Profile" ON "User"."id" = "Profile"."userId" AND "Profile"."active" = TRUE"#)
@@ -207,45 +207,45 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     @Test("D04-S16 JOIN source alias and ON")
     func s16JoinAliasAndOn() {
         let query = From {
-            Path.Table("User")
-            Join(.left, Path.Table("Profile"))
+            DB.Table("User")
+            Join(.left, DB.Table("Profile"))
             As("profile")
-            On(Path.Table("User").column("id") == Path.Table("Profile").column("userId"))
+            On(DB.Table("User").column("id") == DB.Table("Profile").column("userId"))
         }
         #expect(query.prepare(.psql).plain == #"FROM "User" LEFT JOIN "Profile" AS "profile" ON "User"."id" = "Profile"."userId""#)
     }
 
     @Test("D04-S17 JOIN USING")
     func s17JoinUsing() {
-        let query = From { Path.Table("User"); Join(.left, Path.Table("Profile")); Using("id", "accountId") }
+        let query = From { DB.Table("User"); Join(.left, DB.Table("Profile")); Using("id", "accountId") }
         #expect(query.prepare(.psql).plain == #"FROM "User" LEFT JOIN "Profile" USING ("id", "accountId")"#)
     }
 
     @Test("D04-S18 JOIN source alias and USING")
     func s18JoinAliasAndUsing() {
-        let query = From { Path.Table("User"); Join(.left, Path.Table("Profile")); As("profile"); Using("id") }
+        let query = From { DB.Table("User"); Join(.left, DB.Table("Profile")); As("profile"); Using("id") }
         #expect(query.prepare(.psql).plain == #"FROM "User" LEFT JOIN "Profile" AS "profile" USING ("id")"#)
     }
 
     @Test("D04-S19 JOIN USING result alias")
     func s19JoinUsingResultAlias() {
-        let query = From { Path.Table("User"); Join(.left, Path.Table("Profile")); Using("id"); As("keys") }
+        let query = From { DB.Table("User"); Join(.left, DB.Table("Profile")); Using("id"); As("keys") }
         #expect(query.prepare(.psql).plain == #"FROM "User" LEFT JOIN "Profile" USING ("id") AS "keys""#)
     }
 
     @Test("D04-S20 JOIN source and USING result aliases have distinct owners")
     func s20JoinDistinctAliasOwners() {
-        let query = From { Path.Table("User"); Join(.left, Path.Table("Profile")); As("profile"); Using("id"); As("keys") }
+        let query = From { DB.Table("User"); Join(.left, DB.Table("Profile")); As("profile"); Using("id"); As("keys") }
         #expect(query.prepare(.psql).plain == #"FROM "User" LEFT JOIN "Profile" AS "profile" USING ("id") AS "keys""#)
     }
 
     @Test("D04-S21 independent JOIN items preserve order")
     func s21TwoIndependentJoins() {
         let query = From {
-            Path.Table("User")
-            Join(.left, Path.Table("Profile"))
+            DB.Table("User")
+            Join(.left, DB.Table("Profile"))
             On(true)
-            Join(.inner, Path.Table("Account"))
+            Join(.inner, DB.Table("Account"))
             Using("id")
         }
         #expect(query.prepare(.psql).plain == #"FROM "User" LEFT JOIN "Profile" ON TRUE INNER JOIN "Account" USING ("id")"#)
@@ -255,9 +255,9 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     func s22ConditionalJoin() {
         let includeProfile = true
         let query = From {
-            Path.Table("User")
+            DB.Table("User")
             if includeProfile {
-                Join(.left, Path.Table("Profile"))
+                Join(.left, DB.Table("Profile"))
                 As("profile")
                 On(true)
             }
@@ -268,13 +268,13 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     @Test("D04-S23 left lateral structural source")
     func s23LeftLateralNestedSource() {
         let query = From {
-            Path.Table("User")
+            DB.Table("User")
             Join(.leftLateral) {
                 Select {
-                    Path.Table("Post").column("id")
-                    Path.Table("Post").column("createdAt")
+                    DB.Table("Post").column("id")
+                    DB.Table("Post").column("createdAt")
                 }
-                From { Path.Table("Post") }
+                From { DB.Table("Post") }
             }
             As("latestPost")
             On(true)
@@ -344,14 +344,14 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
         #expect(counter.count == 1)
 
         let query = SwifQL {
-            Select { Path.Table("User").column("id") }
+            Select { DB.Table("User").column("id") }
             From {
                 sample
                 As("sampledUsers")
-                Join(.left, Path.Table("Profile"))
+                Join(.left, DB.Table("Profile"))
                 On {
-                    Path.Table("User").column("id") == 101
-                    Path.Table("Profile").column("userId") == 202
+                    DB.Table("User").column("id") == 101
+                    DB.Table("Profile").column("userId") == 202
                 }
             }
         }
@@ -372,15 +372,15 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     @Test("D04-S27 fluent JOIN source alias keeps typed ON ownership")
     func s27FluentJoinSourceAlias() {
         let explicit = From {
-            Path.Table("User")
-            Join(.left, Path.Table("Profile"))
+            DB.Table("User")
+            Join(.left, DB.Table("Profile"))
             As("profile")
-            On(Path.Table("User").column("id") == Path.Table("Profile").column("userId"))
+            On(DB.Table("User").column("id") == DB.Table("Profile").column("userId"))
         }
         let fluent = From {
-            Path.Table("User")
-            Join(.left, Path.Table("Profile")).as("profile")
-            On(Path.Table("User").column("id") == Path.Table("Profile").column("userId"))
+            DB.Table("User")
+            Join(.left, DB.Table("Profile")).as("profile")
+            On(DB.Table("User").column("id") == DB.Table("Profile").column("userId"))
         }
         #expect(fluent.prepare(.psql).plain == explicit.prepare(.psql).plain)
         #expect(fluent.prepare(.psql).plain == #"FROM "User" LEFT JOIN "Profile" AS "profile" ON "User"."id" = "Profile"."userId""#)
@@ -390,8 +390,8 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     @Test("D04-S28 operator JOIN source alias keeps typed USING ownership")
     func s28OperatorJoinSourceAlias() {
         let query = From {
-            Path.Table("User")
-            Join(.left, Path.Table("Profile")) => "profile name"
+            DB.Table("User")
+            Join(.left, DB.Table("Profile")) => "profile name"
             Using("id")
         }
         #expect(query.prepare(.psql).plain == #"FROM "User" LEFT JOIN "Profile" AS "profile name" USING ("id")"#)
@@ -401,10 +401,10 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     @Test("D04-S29 fluent nested JOIN alias keeps typed ON ownership")
     func s29FluentNestedJoinAlias() {
         let query = From {
-            Path.Table("User")
+            DB.Table("User")
             Join(.leftLateral) {
-                Select { Path.Table("Post").column("id") }
-                From { Path.Table("Post") }
+                Select { DB.Table("Post").column("id") }
+                From { DB.Table("Post") }
             }.as("latestPost")
             On(true)
         }
@@ -415,10 +415,10 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     @Test("D04-S30 operator nested JOIN alias keeps typed ON ownership")
     func s30OperatorNestedJoinAlias() {
         let query = From {
-            Path.Table("User")
+            DB.Table("User")
             Join(.leftLateral) {
-                Select { Path.Table("Post").column("id") }
-                From { Path.Table("Post") }
+                Select { DB.Table("Post").column("id") }
+                From { DB.Table("Post") }
             } => "latestPost"
             On(true)
         }
@@ -430,11 +430,11 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     func s31ConditionalMultipleJoinContinuation() {
         let includeBoth = true
         let query = From {
-            Path.Table("User")
+            DB.Table("User")
             if includeBoth {
-                Join(.left, Path.Table("Profile"))
+                Join(.left, DB.Table("Profile"))
                 On(true)
-                Join(.inner, Path.Table("Account"))
+                Join(.inner, DB.Table("Account"))
                 Using("id")
             }
         }
@@ -442,11 +442,11 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
 
         let includeNeither = false
         let withoutJoins = From {
-            Path.Table("User")
+            DB.Table("User")
             if includeNeither {
-                Join(.left, Path.Table("Profile"))
+                Join(.left, DB.Table("Profile"))
                 On(true)
-                Join(.inner, Path.Table("Account"))
+                Join(.inner, DB.Table("Account"))
                 Using("id")
             }
         }
@@ -457,12 +457,12 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     func s32IfElseJoinAttachment() {
         let useProfile = false
         let query = From {
-            Path.Table("User")
+            DB.Table("User")
             if useProfile {
-                Join(.left, Path.Table("Profile"))
+                Join(.left, DB.Table("Profile"))
                 On(true)
             } else {
-                Join(.inner, Path.Table("Account"))
+                Join(.inner, DB.Table("Account"))
                 Using("id")
             }
         }
@@ -473,17 +473,17 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     func s33SourceLoopThenSource() {
         let query = From {
             for name in ["User", "Profile"] {
-                Path.Table(name)
+                DB.Table(name)
             }
-            Path.Table("Organization")
+            DB.Table("Organization")
         }
         #expect(query.prepare(.psql).plain == #"FROM "User", "Profile", "Organization""#)
 
         let emptyLoop = From {
             for name in [String]() {
-                Path.Table(name)
+                DB.Table(name)
             }
-            Path.Table("Organization")
+            DB.Table("Organization")
         }
         #expect(emptyLoop.prepare(.psql).plain == #"FROM "Organization""#)
     }
@@ -493,10 +493,10 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
         let includeProfile = true
         let withOptionalSource = From {
             if includeProfile {
-                Path.Table("Profile")
+                DB.Table("Profile")
             }
-            Path.Table("User")
-            Join(.left, Path.Table("Account"))
+            DB.Table("User")
+            Join(.left, DB.Table("Account"))
             On(true)
         }
         #expect(withOptionalSource.prepare(.psql).plain == #"FROM "Profile", "User" LEFT JOIN "Account" ON TRUE"#)
@@ -504,10 +504,10 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
         let omitProfile = false
         let withoutOptionalSource = From {
             if omitProfile {
-                Path.Table("Profile")
+                DB.Table("Profile")
             }
-            Path.Table("User")
-            Join(.left, Path.Table("Account"))
+            DB.Table("User")
+            Join(.left, DB.Table("Account"))
             On(true)
         }
         #expect(withoutOptionalSource.prepare(.psql).plain == #"FROM "User" LEFT JOIN "Account" ON TRUE"#)
@@ -516,9 +516,9 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     @Test("D04-S35 JOIN attaches to the immediately preceding source")
     func s35TwoSourcesThenJoin() {
         let query = From {
-            Path.Table("User")
-            Path.Table("Profile")
-            Join(.left, Path.Table("Account"))
+            DB.Table("User")
+            DB.Table("Profile")
+            Join(.left, DB.Table("Account"))
             On(true)
         }
         #expect(query.prepare(.psql).plain == #"FROM "User", "Profile" LEFT JOIN "Account" ON TRUE"#)
@@ -528,7 +528,7 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     func s36LoopOnlyEmptySourceListObservation() {
         let query = From {
             for name in [String]() {
-                Path.Table(name)
+                DB.Table(name)
             }
         }
         // D3 observation only: an empty FROM source list is invalid caller input.
@@ -540,7 +540,7 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
         let includeUser = true
         let present = From {
             if includeUser {
-                Path.Table("User")
+                DB.Table("User")
             }
         }
         #expect(present.prepare(.psql).plain == #"FROM "User""#)
@@ -548,7 +548,7 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
         let omitUser = false
         let absent = From {
             if omitUser {
-                Path.Table("User")
+                DB.Table("User")
             }
         }
         // D4 observation only: an absent optional source is invalid caller input.
@@ -580,15 +580,15 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     @Test("D04-S38 sibling JOIN matches nested SQL and binds on every dialect")
     func s38SiblingJoinMatchesNestedAcrossDialects() {
         let sibling = SwifQL {
-            From { Path.Table("User") }
-            Join(.left, Path.Table("Profile"))
-            On(Path.Table("User").column("id") == 41)
+            From { DB.Table("User") }
+            Join(.left, DB.Table("Profile"))
+            On(DB.Table("User").column("id") == 41)
         }
         let nested = SwifQL {
             From {
-                Path.Table("User")
-                Join(.left, Path.Table("Profile"))
-                On(Path.Table("User").column("id") == 41)
+                DB.Table("User")
+                Join(.left, DB.Table("Profile"))
+                On(DB.Table("User").column("id") == 41)
             }
         }
 
@@ -620,23 +620,23 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
 
     @Test("D04-S39 one From result carries two sibling JOINs and alias owners")
     func s39ConcreteFromWithMultipleSiblingJoins() {
-        let from = From { Path.Table("User") }
+        let from = From { DB.Table("User") }
         let fromResult: FromBuilder.Result = from
         _ = fromResult
         let sibling = SwifQL {
             from
-            Join(.left, Path.Table("Profile")).as("profile")
+            Join(.left, DB.Table("Profile")).as("profile")
             On(true)
-            Join(.inner, Path.Table("Organization"))
+            Join(.inner, DB.Table("Organization"))
             Using("id")
             As("organizationKeys")
         }
         let nested = SwifQL {
             From {
-                Path.Table("User")
-                Join(.left, Path.Table("Profile")).as("profile")
+                DB.Table("User")
+                Join(.left, DB.Table("Profile")).as("profile")
                 On(true)
-                Join(.inner, Path.Table("Organization"))
+                Join(.inner, DB.Table("Organization"))
                 Using("id")
                 As("organizationKeys")
             }
@@ -652,9 +652,9 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
 
     @Test("D04-S40 explicit legacy Result variables and helpers remain completed FROM clauses")
     func s40ExplicitLegacyResultCompatibility() {
-        let standalone: FromBuilder.Result = From { Path.Table("User") }
+        let standalone: FromBuilder.Result = From { DB.Table("User") }
         func helper() -> FromBuilder.Result {
-            From { Path.Table("Profile") }
+            From { DB.Table("Profile") }
         }
 
         #expect(standalone.prepare(.psql).plain == #"FROM "User""#)
@@ -667,22 +667,22 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
         let omitUser = false
         let loopOnly: FromBuilder.Result = From {
             for name in ["User", "Profile"] {
-                Path.Table(name)
+                DB.Table(name)
             }
         }
         let optionalPresent: FromBuilder.Result = From {
             if includeUser {
-                Path.Table("User")
+                DB.Table("User")
             }
         }
         let optionalEmpty: FromBuilder.Result = From {
             if omitUser {
-                Path.Table("User")
+                DB.Table("User")
             }
         }
         let emptyLoop: FromBuilder.Result = From {
             for name in [String]() {
-                Path.Table(name)
+                DB.Table(name)
             }
         }
 
@@ -695,39 +695,39 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
         let names = ["Profile"]
         let optionalThenGuaranteed = From {
             if includeProfile {
-                Path.Table("Profile")
+                DB.Table("Profile")
             }
-            Path.Table("User")
+            DB.Table("User")
         }
         let loopThenGuaranteed = From {
             for name in names {
-                Path.Table(name)
+                DB.Table(name)
             }
-            Path.Table("User")
+            DB.Table("User")
         }
         let optionalSibling = SwifQL {
             optionalThenGuaranteed
-            Join(.left, Path.Table("Account"))
+            Join(.left, DB.Table("Account"))
             On(true)
         }
         let optionalNested = SwifQL {
             From {
-                if includeProfile { Path.Table("Profile") }
-                Path.Table("User")
-                Join(.left, Path.Table("Account"))
+                if includeProfile { DB.Table("Profile") }
+                DB.Table("User")
+                Join(.left, DB.Table("Account"))
                 On(true)
             }
         }
         let loopSibling = SwifQL {
             loopThenGuaranteed
-            Join(.left, Path.Table("Account"))
+            Join(.left, DB.Table("Account"))
             On(true)
         }
         let loopNested = SwifQL {
             From {
-                for name in names { Path.Table(name) }
-                Path.Table("User")
-                Join(.left, Path.Table("Account"))
+                for name in names { DB.Table(name) }
+                DB.Table("User")
+                Join(.left, DB.Table("Account"))
                 On(true)
             }
         }
@@ -747,26 +747,26 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     @Test("D04-S42 nested S11-S14 FROM bridge keeps exact dialect SQL")
     func s42NestedFromBridgeCompatibilityAcrossDialects() {
         let nestedSelectAlias = From {
-            Select { Path.Table("Order").column("userId") }
-            From { Path.Table("Order") }
+            Select { DB.Table("Order").column("userId") }
+            From { DB.Table("Order") }
             As("orders")
         }
         let nestedThenSource = From {
-            Select { Path.Table("Order").column("id") }
-            From { Path.Table("Order") }
-            Path.Table("Organization")
+            Select { DB.Table("Order").column("id") }
+            From { DB.Table("Order") }
+            DB.Table("Organization")
         }
         let conditionalNested = From {
             if true {
-                Select { Path.Table("Order").column("userId") }
-                From { Path.Table("Order") }
+                Select { DB.Table("Order").column("userId") }
+                From { DB.Table("Order") }
                 As("orders")
             }
-            Path.Table("Organization")
+            DB.Table("Organization")
         }
         let explicitRoot = SwifQL {
-            Select { Path.Table("Order").column("id") }
-            From { Path.Table("Order") }
+            Select { DB.Table("Order").column("id") }
+            From { DB.Table("Order") }
         }
         let explicitRootSource = From { explicitRoot; As("orders") }
 
@@ -803,20 +803,20 @@ struct DeclarativeQueryFromJoinTests: SwifQLTests {
     @Test("D04-S43 later SELECT closes sibling JOIN ownership")
     func s43LaterSelectClosesSiblingJoinOwnership() {
         let sibling = SwifQL {
-            Select { Path.Table("User").column("id") }
-            From { Path.Table("User") }
-            Join(.left, Path.Table("Profile"))
+            Select { DB.Table("User").column("id") }
+            From { DB.Table("User") }
+            Join(.left, DB.Table("Profile"))
             On(true)
-            Select { Path.Table("User").column("name") }
+            Select { DB.Table("User").column("name") }
         }
         let nested = SwifQL {
-            Select { Path.Table("User").column("id") }
+            Select { DB.Table("User").column("id") }
             From {
-                Path.Table("User")
-                Join(.left, Path.Table("Profile"))
+                DB.Table("User")
+                Join(.left, DB.Table("Profile"))
                 On(true)
             }
-            Select { Path.Table("User").column("name") }
+            Select { DB.Table("User").column("name") }
         }
         let psql = #"SELECT "User"."id" FROM "User" LEFT JOIN "Profile" ON TRUE SELECT "User"."name""#
         let mysql = "SELECT User.id FROM User LEFT JOIN Profile ON TRUE SELECT User.name"

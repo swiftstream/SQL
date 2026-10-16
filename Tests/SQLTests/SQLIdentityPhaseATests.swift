@@ -22,15 +22,15 @@ struct SQLIdentityPhaseATests {
     @Test("Concrete SQL supports declarative and fluent roots")
     func concreteSQLRoots() {
         let declarative: SQLContent = SQL {
-            Select { Path.Column("id") }
-            From { Path.Table("users") }
-            Where { Path.Column("active") == true }
+            Select { DB.Column("id") }
+            From { DB.Table("users") }
+            Where { DB.Column("active") == true }
         }
 
         let fluent: SQLable = SQL
-            .select(Path.Column("id"))
-            .from(Path.Table("users"))
-            .where(Path.Column("active") == true)
+            .select(DB.Column("id"))
+            .from(DB.Table("users"))
+            .where(DB.Column("active") == true)
 
         #expect(declarative.prepare(.psql).plain == fluent.prepare(.psql).plain)
         #expect(declarative.prepare(.psql).splitted.values.count == fluent.prepare(.psql).splitted.values.count)
@@ -47,14 +47,14 @@ struct SQLIdentityPhaseATests {
 
     @Test("Deprecated root wrappers preserve canonical SQL behavior")
     func legacyRootWrappers() {
-        let canonical = SQL.select(Path.Column("id"))
-        let legacyFluent = SwifQL.select(Path.Column("id"))
+        let canonical = SQL.select(DB.Column("id"))
+        let legacyFluent = SwifQL.select(DB.Column("id"))
 
         let canonicalBuilder: SQLContent = SQL {
-            Select { Path.Column("id") }
+            Select { DB.Column("id") }
         }
         let legacyBuilder = SwifQL {
-            Select { Path.Column("id") }
+            Select { DB.Column("id") }
         }
         let legacyUnary = SwifQL(canonicalBuilder)
 

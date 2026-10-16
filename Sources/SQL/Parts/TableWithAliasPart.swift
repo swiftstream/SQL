@@ -8,10 +8,12 @@
 import Foundation
 
 public struct SQLPartTableWithAlias: SQLPart {
+    public var catalog: String?
     public var schema: String?
     public var table, alias: String
     
-    public init (schema: String?, table: String, alias: String) {
+    public init (schema: String?, table: String, alias: String, catalog: String? = nil) {
+        self.catalog = catalog
         self.schema = schema
         self.table = table
         self.alias = alias

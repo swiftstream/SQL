@@ -258,7 +258,7 @@ struct PreparationObservationTests {
         #expect(starOccurrences.compactMap { $0.value as? String } == [pattern])
         #expect(starOccurrences.map(\.disposition) == [.notBound])
 
-        let ordinary = Path.Column("metric").like(pattern)
+        let ordinary = DB.Column("metric").like(pattern)
         let observedOrdinary = ordinary.prepareObservingUnsafeValues(.duck)
         let ordinaryOccurrences = completeOccurrences(observedOrdinary)
         #expect(observedOrdinary.prepared.splitted.values.count == 1)

@@ -11,21 +11,26 @@ public class CreateTableBuilder<T: Table>: SQLable {
         if shouldCheckIfNotExists {
             query = query.if.not.exists
         }
-        let table = Path.Schema(schemaName).table(T.tableName)
+        let table: SQLable
+        if let schemaName {
+            table = schemaName.table(T.tableName)
+        } else {
+            table = DB.Table(T.tableName)
+        }
         query = query[any: table].newColumns(columns)
         return query.parts
     }
     
     var columns: [NewColumn] = []
     var shouldCheckIfNotExists = false
-    var schemaName: String?
+    var schemaName: DB.Schema?
     
     public init (schema: Schemable.Type? = nil) {
-        self.schemaName = schema?.schema.name ?? (T.self as? Schemable.Type)?.schema.name
+        self.schemaName = schema.flatMap { ModelQualification.resolve($0) } ?? ModelQualification.resolve(T.self)
     }
     
     public init (schema: String) {
-        self.schemaName = schema
+        self.schemaName = DB.Schema(schema)
     }
     
     public func column(_ newColumn: NewColumn) -> Self {

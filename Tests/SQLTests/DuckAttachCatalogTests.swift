@@ -15,7 +15,7 @@ private func task24Attach(_ source: String) -> SwifQLable {
     SwifQL.attach(
         source,
         mode: .ifNotExists,
-        as: Path.Catalog("analytics")
+        as: DB.Catalog("analytics")
     )
 }
 
@@ -23,7 +23,7 @@ private func task24Attach(_ source: String) -> SwifQLable {
 struct DuckAttachCatalogTests: SwifQLTests {
     @Test("ATTACH modes, aliases, and ordered options render exactly")
     func attachModesAliasesAndOptions() {
-        let catalog = Path.Catalog("analytics")
+        let catalog = DB.Catalog("analytics")
         let basic = SwifQL.attach("file.duckdb")
         let ifNotExists = SwifQL.attach(
             "file.duckdb",
@@ -122,7 +122,7 @@ struct DuckAttachCatalogTests: SwifQLTests {
 
     @Test("Source values and catalog aliases keep distinct part semantics")
     func sourceAndAliasParts() {
-        let alias = Path.Catalog("данные")
+        let alias = DB.Catalog("данные")
         let source: String = "source.duckdb"
         let query = SwifQL.attach(source, as: alias)
         let frame = query.parts.first as? SwifQLStructuralFramePart
@@ -140,7 +140,7 @@ struct DuckAttachCatalogTests: SwifQLTests {
     @Test("Dynamic ATTACH String sources escape apostrophes and remain bind-free")
     func dynamicStringSourceEscaping() {
         let source = "o'clock.duckdb"
-        let query = SwifQL.attach(source, as: Path.Catalog("quoted"))
+        let query = SwifQL.attach(source, as: DB.Catalog("quoted"))
         let frame = query.parts.first as? SwifQLStructuralFramePart
         let children = frame?.children ?? []
 
@@ -159,7 +159,7 @@ struct DuckAttachCatalogTests: SwifQLTests {
         )
         let query = SwifQL.attach(
             "file.duckdb",
-            as: Path.Catalog("analytics"),
+            as: DB.Catalog("analytics"),
             options: [custom, .encryptionCipher("GCM")]
         )
 
@@ -179,10 +179,10 @@ struct DuckAttachCatalogTests: SwifQLTests {
 
     @Test("DETACH and all three USE targets are structural and bind-free")
     func detachAndUseTargets() {
-        let catalog = SwifQL.detach(Path.Catalog("select\"catalog"))
-        let catalogUse = SwifQL.use(Path.Catalog("данные"))
-        let schemaUse = SwifQL.use(Path.Schema("reporting"))
-        let catalogSchemaUse = SwifQL.use(Path.Catalog("analytics").schema("main"))
+        let catalog = SwifQL.detach(DB.Catalog("select\"catalog"))
+        let catalogUse = SwifQL.use(DB.Catalog("данные"))
+        let schemaUse = SwifQL.use(DB.Schema("reporting"))
+        let catalogSchemaUse = SwifQL.use(DB.Catalog("analytics").schema("main"))
 
         #expect(catalog.prepare(.duck).plain == "DETACH \"select\"\"catalog\"")
         #expect(catalogUse.prepare(.duck).plain == "USE \"данные\"")
@@ -206,7 +206,7 @@ struct DuckAttachCatalogTests: SwifQLTests {
 
         var conditional: SwifQLable = SwifQL
         if true {
-            conditional = conditional.attach("conditional.duckdb", as: Path.Catalog("conditional"))
+            conditional = conditional.attach("conditional.duckdb", as: DB.Catalog("conditional"))
         }
 
         #expect(copied.prepare(.duck).plain == direct.prepare(.duck).plain)
@@ -217,16 +217,16 @@ struct DuckAttachCatalogTests: SwifQLTests {
         #expect(erased.prepare(.duck).splitted.values.isEmpty)
         #expect(composed.prepare(.duck).plain.contains("TAIL"))
         #expect(conditional.prepare(.duck).plain == "ATTACH 'conditional.duckdb' AS \"conditional\"")
-        #expect(SwifQL.detach(Path.Catalog("analytics")).prepare(.duck).splitted.values.isEmpty)
+        #expect(SwifQL.detach(DB.Catalog("analytics")).prepare(.duck).splitted.values.isEmpty)
     }
 
     @Test("Catalog, schema, table, alias, and identifier hooks stay distinct")
     func dialectHooksAndCatalogPaths() {
         let dialect = Task24CatalogDialect()
-        let attach = SwifQL.attach("file.duckdb", as: Path.Catalog("analytics"))
-        let detach = SwifQL.detach(Path.Catalog("analytics"))
-        let use = SwifQL.use(Path.Catalog("analytics").schema("main"))
-        let path = Path.Catalog("analytics").schema("main").table("events").column("id")
+        let attach = SwifQL.attach("file.duckdb", as: DB.Catalog("analytics"))
+        let detach = SwifQL.detach(DB.Catalog("analytics"))
+        let use = SwifQL.use(DB.Catalog("analytics").schema("main"))
+        let path = DB.Catalog("analytics").schema("main").table("events").column("id")
 
         #expect(attach.prepare(dialect).plain == "ATTACH 'file.duckdb' AS CAT[analytics]")
         #expect(detach.prepare(dialect).plain == "DETACH CAT[analytics]")
@@ -237,17 +237,17 @@ struct DuckAttachCatalogTests: SwifQLTests {
     @Test("Historical PostgreSQL and MySQL rendering remains unchanged")
     func historicalDialects() {
         check(
-            SwifQL.attach("file.duckdb", as: Path.Catalog("analytics")),
+            SwifQL.attach("file.duckdb", as: DB.Catalog("analytics")),
             .psql("ATTACH 'file.duckdb' AS \"analytics\""),
             .mysql("ATTACH 'file.duckdb' AS analytics")
         )
         check(
-            SwifQL.detach(Path.Catalog("analytics")),
+            SwifQL.detach(DB.Catalog("analytics")),
             .psql("DETACH \"analytics\""),
             .mysql("DETACH analytics")
         )
         check(
-            SwifQL.use(Path.Catalog("analytics").schema("main")),
+            SwifQL.use(DB.Catalog("analytics").schema("main")),
             .psql("USE \"analytics\".\"main\""),
             .mysql("USE analytics.main")
         )

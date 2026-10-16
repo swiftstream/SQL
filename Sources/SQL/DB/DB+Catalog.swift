@@ -19,6 +19,10 @@ extension DB {
             schema(DB.Schema(name))
         }
 
+        public var parts: [SQLPart] {
+            [SQLPartCatalog(name)]
+        }
+
         public struct Schema: Equatable, Sendable {
             public let catalog: DB.Catalog
             public let schema: DB.Schema
@@ -31,6 +35,17 @@ extension DB {
             public func table(_ name: String) -> DB.Schema.Table {
                 schema.table(name)
             }
+
+            public func table(_ table: DB.Table) -> DB.Schema.Table {
+                schema.table(table)
+            }
+
+            public var parts: [SQLPart] {
+                [SQLPartCatalog(catalog.name), SQLPartOperator.period, SQLPartSchema(schema.name)]
+            }
         }
     }
 }
+
+extension DB.Catalog: SQLable {}
+extension DB.Catalog.Schema: SQLable {}

@@ -11,13 +11,13 @@ private final class Task23IdentifierDialect: SQLDialect {
 }
 
 private func makeScalarMacro(_ parameter: MacroParameter) -> SwifQLable {
-    SwifQL.create.macro[any: Path.Identifier("helper_scalar")]
+    SwifQL.create.macro[any: DB.Object("helper_scalar")]
         .macroParameters(parameter)
         .as(parameter + 1)
 }
 
 private func makeTableMacro(_ parameter: MacroParameter) -> SwifQLable {
-    SwifQL.create.macro[any: Path.Identifier("helper_rows")]
+    SwifQL.create.macro[any: DB.Object("helper_rows")]
         .macroParameters(parameter)
         .as.table
         .select(parameter)
@@ -27,11 +27,11 @@ private func makeTableMacro(_ parameter: MacroParameter) -> SwifQLable {
 struct DuckSequenceMacroTests: SwifQLTests {
     @Test("Sequence atoms and value-bearing options compose mechanically")
     func sequenceAtomsAndClauses() {
-        let identifier = Path.Identifier(schema: "analytics", name: "order_id_seq")
+        let identifier = DB.Object(schema: "analytics", name: "order_id_seq")
         let create = SwifQL.create.sequence[any: identifier]
         let replace = SwifQL.create.or.replace.sequence.if.not.exists[any: identifier]
-        let temp = SwifQL.create.temp.sequence[any: Path.Identifier("scratch_seq")]
-        let temporary = SwifQL.create.temporary.sequence[any: Path.Identifier("scratch_long")]
+        let temp = SwifQL.create.temp.sequence[any: DB.Object("scratch_seq")]
+        let temporary = SwifQL.create.temporary.sequence[any: DB.Object("scratch_long")]
         let options = create
             .start(10)
             .start(with: 11)
@@ -63,7 +63,7 @@ struct DuckSequenceMacroTests: SwifQLTests {
         #expect(dropIfExists.prepare(.duck).plain == #"DROP SEQUENCE IF EXISTS "analytics"."order_id_seq" RESTRICT"#)
         #expect(dropCascade.prepare(.duck).plain == #"DROP SEQUENCE "analytics"."order_id_seq" CASCADE"#)
 
-        var conditional = SwifQL.create.sequence[any: Path.Identifier("conditional")]
+        var conditional = SwifQL.create.sequence[any: DB.Object("conditional")]
         if true {
             conditional = conditional.cycle
         }
@@ -128,25 +128,25 @@ struct DuckSequenceMacroTests: SwifQLTests {
         let y = MacroParameter("y")
         let typed = MacroParameter("value", .integer)
 
-        let zero = SwifQL.create.macro[any: Path.Identifier("zero")]
+        let zero = SwifQL.create.macro[any: DB.Object("zero")]
             .macroParameters()
             .as(42)
-        let one = SwifQL.create.macro[any: Path.Identifier("twice")]
+        let one = SwifQL.create.macro[any: DB.Object("twice")]
             .macroParameters(x)
             .as(x * 2)
-        let many = SwifQL.create.or.replace.macro.if.not.exists[any: Path.Identifier("sum")]
+        let many = SwifQL.create.or.replace.macro.if.not.exists[any: DB.Object("sum")]
             .macroParameters(x, y)
             .as(x + y)
-        let typedMacro = SwifQL.create.temp.macro[any: Path.Identifier("typed")]
+        let typedMacro = SwifQL.create.temp.macro[any: DB.Object("typed")]
             .macroParameters(typed)
             .as(typed)
-        let typedArithmeticMacro = SwifQL.create.macro[any: Path.Identifier("typed_arithmetic")]
+        let typedArithmeticMacro = SwifQL.create.macro[any: DB.Object("typed_arithmetic")]
             .macroParameters(typed)
             .as(typed + 1)
-        let temporary = SwifQL.create.temporary.macro[any: Path.Identifier("temporary")]
+        let temporary = SwifQL.create.temporary.macro[any: DB.Object("temporary")]
             .macroParameters(x)
             .as(x)
-        let functionAlias = SwifQL.create.function[any: Path.Identifier("function_alias")]
+        let functionAlias = SwifQL.create.function[any: DB.Object("function_alias")]
             .macroParameters(x)
             .as(x)
 
@@ -164,7 +164,7 @@ struct DuckSequenceMacroTests: SwifQLTests {
         #expect(temporary.prepare(.duck).plain == #"CREATE TEMPORARY MACRO "temporary" ("x") as "x""#)
         #expect(functionAlias.prepare(.duck).plain == #"CREATE FUNCTION "function_alias" ("x") as "x""#)
 
-        let body = SwifQL.create.macro[any: Path.Identifier("body")]
+        let body = SwifQL.create.macro[any: DB.Object("body")]
             .macroParameters(x)
             .as(x + "literal")
             .prepare(.duck).splitted
@@ -173,10 +173,10 @@ struct DuckSequenceMacroTests: SwifQLTests {
         #expect(body.values[0] as? String == "literal")
 
         let copied = SwifQLableParts(parts: one.parts)
-        var incrementallyErased: SwifQLable = SwifQL.create.macro[any: Path.Identifier("incremental")]
+        var incrementallyErased: SwifQLable = SwifQL.create.macro[any: DB.Object("incremental")]
         incrementallyErased = incrementallyErased.macroParameters(x)
         incrementallyErased = incrementallyErased.as(x * 2)
-        var conditionalMacro: SwifQLable = SwifQL.create.macro[any: Path.Identifier("conditional")]
+        var conditionalMacro: SwifQLable = SwifQL.create.macro[any: DB.Object("conditional")]
         if true {
             conditionalMacro = conditionalMacro.macroParameters(typed)
         }
@@ -199,21 +199,21 @@ struct DuckSequenceMacroTests: SwifQLTests {
     @Test("Table macros and macro drops stay direct composition")
     func tableMacros() {
         let value = MacroParameter("value", .integer)
-        let table = SwifQL.create.macro[any: Path.Identifier("rows")]
+        let table = SwifQL.create.macro[any: DB.Object("rows")]
             .macroParameters(value)
             .as.table
             .select(value)
         let helperTable = makeTableMacro(value)
-        let zero = SwifQL.create.macro[any: Path.Identifier("empty_rows")]
+        let zero = SwifQL.create.macro[any: DB.Object("empty_rows")]
             .macroParameters()
             .as.table
             .select(1)
-        let drop = SwifQL.drop.macro[any: Path.Identifier("rows")]
-        let dropTable = SwifQL.drop.macro.table[any: Path.Identifier("rows")]
-        let dropFunctionAlias = SwifQL.drop.function[any: Path.Identifier("function_alias")]
-        let dropRestrict = SwifQL.drop.macro.if.exists[any: Path.Identifier("macro")].restrict
-        let dropCascade = SwifQL.drop.macro.if.exists[any: Path.Identifier("missing")].cascade
-        let dropTableIfExists = SwifQL.drop.macro.table.if.exists[any: Path.Identifier("rows")]
+        let drop = SwifQL.drop.macro[any: DB.Object("rows")]
+        let dropTable = SwifQL.drop.macro.table[any: DB.Object("rows")]
+        let dropFunctionAlias = SwifQL.drop.function[any: DB.Object("function_alias")]
+        let dropRestrict = SwifQL.drop.macro.if.exists[any: DB.Object("macro")].restrict
+        let dropCascade = SwifQL.drop.macro.if.exists[any: DB.Object("missing")].cascade
+        let dropTableIfExists = SwifQL.drop.macro.table.if.exists[any: DB.Object("rows")]
 
         #expect(table.prepare(.duck).plain == #"CREATE MACRO "rows" ("value" integer) as TABLE SELECT "value""#)
         #expect(zero.prepare(.duck).plain == #"CREATE MACRO "empty_rows" () as TABLE SELECT 1"#)
@@ -225,8 +225,8 @@ struct DuckSequenceMacroTests: SwifQLTests {
         #expect(dropCascade.prepare(.duck).plain == #"DROP MACRO IF EXISTS "missing" CASCADE"#)
         #expect(dropTableIfExists.prepare(.duck).plain == #"DROP MACRO TABLE IF EXISTS "rows""#)
 
-        let invocation = Fn.call(Path.Identifier("rows"), 21, "tail")
-        let query = SwifQL.select(Path.Column("value")).from(invocation)
+        let invocation = Fn.call(DB.Object("rows"), 21, "tail")
+        let query = SwifQL.select(DB.Column("value")).from(invocation)
         let prepared = query.prepare(.duck).splitted
         #expect(query.prepare(.duck).plain == #"SELECT "value" FROM "rows"(21, 'tail')"#)
         #expect(prepared.query == #"SELECT "value" FROM "rows"($1, $2)"#)
@@ -247,11 +247,11 @@ struct DuckSequenceMacroTests: SwifQLTests {
 
     @Test("Identifier-aware calls route through the generic identifier hook")
     func functionCalls() {
-        let zero = Fn.call(Path.Identifier("zero"))
-        let one = Fn.call(Path.Identifier("one"), 1)
-        let many = Fn.call(Path.Identifier("many"), 1, "two", 3)
+        let zero = Fn.call(DB.Object("zero"))
+        let one = Fn.call(DB.Object("one"), 1)
+        let many = Fn.call(DB.Object("many"), 1, "two", 3)
         let qualified = Fn.call(
-            Path.Identifier(catalog: "memory", schema: "analytics", name: "rows"),
+            DB.Object(catalog: "memory", schema: "analytics", name: "rows"),
             21
         )
 
@@ -267,7 +267,7 @@ struct DuckSequenceMacroTests: SwifQLTests {
                 "CAT[memory].SCH[analytics].ID[rows](21)"
         )
         let typed = MacroParameter("value", .integer)
-        let customMacro = SwifQL.create.macro[any: Path.Identifier("typed")]
+        let customMacro = SwifQL.create.macro[any: DB.Object("typed")]
             .macroParameters(typed)
             .as(typed)
         #expect(typed.prepare(Task23IdentifierDialect()).plain == "ID[value]")

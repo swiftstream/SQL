@@ -4,8 +4,8 @@ import Testing
 
 @Suite("Duck join and set operations")
 struct DuckJoinSetOperationTests: SwifQLTests {
-    private func table(_ name: String) -> Path.Table {
-        Path.Table(name)
+    private func table(_ name: String) -> DB.Table {
+        DB.Table(name)
     }
 
     private func selection(from name: String) -> SwifQLable {
@@ -276,7 +276,7 @@ struct DuckJoinSetOperationTests: SwifQLTests {
         let left = table("left_table")
         let right = table("right_table")
         let base = SwifQL.select(left.column("id")).from(left)
-        let qualified = Path.Schema("analytics").table("source").column("tenant")
+        let qualified = DB.Schema("analytics").table("source").column("tenant")
         let columns: [KeyPathLastPath] = ["select", "имя", "a\"b"]
 
         let qualifiedQuery = base.join(.left, right, using: left.column("id"), qualified)

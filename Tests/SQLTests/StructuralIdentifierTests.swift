@@ -40,7 +40,7 @@ struct StructuralIdentifierTests: SwifQLTests {
 
     @Test("Qualifiers use catalog/schema hooks and the terminal uses only identifier")
     func qualifierAndTerminalOwnership() {
-        let identifier = Path.Identifier(catalog: "memory", schema: "analytics", name: "report")
+        let identifier = DB.Object(catalog: "memory", schema: "analytics", name: "report")
         #expect(
             identifier.prepare(MarkerIdentifierDialect()).plain ==
                 "CAT[memory].SCH[analytics].ID[report]"
@@ -57,7 +57,7 @@ struct StructuralIdentifierTests: SwifQLTests {
 
     @Test("Identifier paths are value-semantic across copied and erased composition")
     func copiedAndErasedIdentity() {
-        let original = Path.Identifier(schema: "analytics", name: "report")
+        let original = DB.Object(schema: "analytics", name: "report")
         let copied = original
         let erased: SwifQLable = copied
         let rebuilt = SwifQLableParts(parts: copied.parts)
@@ -72,15 +72,15 @@ struct StructuralIdentifierTests: SwifQLTests {
 
     @Test("Legacy dialects compile without an identifier override")
     func legacyDialectCompatibility() {
-        let identifier = Path.Identifier("report")
+        let identifier = DB.Object("report")
         #expect(identifier.prepare(LegacyIdentifierDialect()).plain == "report")
-        #expect(Path.Table("events").prepare(LegacyIdentifierDialect()).plain == "legacy-table[events]")
+        #expect(DB.Table("events").prepare(LegacyIdentifierDialect()).plain == "legacy-table[events]")
     }
 
     @Test("PostgreSQL, MySQL, and Duck escape only the new identifier category")
     func dialectEscaping() {
         let tick = String(UnicodeScalar(96)!)
-        let identifier = Path.Identifier("select\"" + tick + "name")
+        let identifier = DB.Object("select\"" + tick + "name")
         let expectedQuoted = "\"select\"\"" + tick + "name\""
         let expectedMySQL = tick + "select\"" + tick + tick + "name" + tick
 
@@ -92,8 +92,8 @@ struct StructuralIdentifierTests: SwifQLTests {
 
     @Test("Unicode and whitespace terminal identifiers stay exact and bind-free")
     func unicodeAndWhitespaceEscaping() {
-        let unicode = Path.Identifier("名字")
-        let whitespace = Path.Identifier("report name")
+        let unicode = DB.Object("名字")
+        let whitespace = DB.Object("report name")
 
         #expect(unicode.prepare(.psql).plain == #""名字""#)
         #expect(unicode.prepare(.mysql).plain == "`名字`")
@@ -112,7 +112,7 @@ struct StructuralIdentifierTests: SwifQLTests {
 
     @Test("Existing table and column paths keep their established output")
     func historicalPathOutput() {
-        let query = SwifQL.select(Path.Table("events").column("id"))
+        let query = SwifQL.select(DB.Table("events").column("id"))
         #expect(query.prepare(.psql).plain == #"SELECT "events"."id""#)
         #expect(query.prepare(.mysql).plain == "SELECT events.id")
         #expect(query.prepare(.duck).plain == #"SELECT "events"."id""#)

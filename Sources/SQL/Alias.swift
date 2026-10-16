@@ -94,7 +94,13 @@ extension KeyPath: _AliasKeyPath where Value: AnyAlias {}
 extension KeyPath: SQLable, CustomStringConvertible where Root: ColumnRoot, Value: ColumnRootNameable {
     public var parts: [SQLPart] {
         if let kp = self as? Keypathable {
-            return Path.Schema(kp.schema).table(kp.table).column(Root.key(for: self)).parts
+            let schema = ModelQualification.resolve(Root.self)
+            return [SQLPartKeyPath(
+                catalog: schema?.catalog?.name,
+                schema: schema?.name,
+                table: kp.table,
+                paths: [Root.key(for: self)]
+            )]
         }
         return [SQLPartAlias(Root.key(for: self))]
     }

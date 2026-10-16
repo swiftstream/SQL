@@ -109,7 +109,7 @@ struct StructuralClauseOwnershipTests {
 
     @Test("Ordinary GROUP BY and ORDER BY keep nil ownership")
     func ordinaryOwnershipAndSQL() {
-        let table = Path.Table("users")
+        let table = DB.Table("users")
         let id = table.column("id")
         let name = table.column("name")
         let query = SwifQL
@@ -126,7 +126,7 @@ struct StructuralClauseOwnershipTests {
 
     @Test("Current root owner is selected and persists in public clause parts")
     func syntheticOwnerPersistence() {
-        let table = Path.Table("events")
+        let table = DB.Table("events")
         let id = table.column("id")
         let country = table.column("country")
         let frame = SwifQLStructuralFramePart(
@@ -152,7 +152,7 @@ struct StructuralClauseOwnershipTests {
 
     @Test("Persisted clause owners drive bounded GROUP BY and ORDER BY rendering")
     func ownerSensitiveRendering() {
-        let table = Path.Table("events")
+        let table = DB.Table("events")
         let groupPath = table.column("group_value")
         let orderPath = table.column("order_value")
         let frame = SwifQLStructuralFramePart(
@@ -181,7 +181,7 @@ struct StructuralClauseOwnershipTests {
 
     @Test("Copied parts preserve frames and selected clause ownership")
     func copiedPartsPreserveOwnership() {
-        let table = Path.Table("events")
+        let table = DB.Table("events")
         let country = table.column("country")
         let frame = SwifQLStructuralFramePart(
             region: .statement,
@@ -212,10 +212,10 @@ struct StructuralClauseOwnershipTests {
     @Test("Nested frames isolate render context while sharing preparation")
     func nestedFrameContextIsolation() {
         let scope = SwifQLRenderScope(namespace: "example", name: "outer")
-        let outerExpression = Path.Table("outer").column("value").scoped(scope)
+        let outerExpression = DB.Table("outer").column("value").scoped(scope)
         let nestedFrame = SwifQLStructuralFramePart(
             region: .statement,
-            children: Path.Table("inner").column("value").parts
+            children: DB.Table("inner").column("value").parts
         )
         let rootFrame = SwifQLStructuralFramePart(
             region: .statement,
@@ -271,14 +271,14 @@ struct StructuralClauseOwnershipTests {
             region: .statement,
             children: [nested]
         )
-        let query = SwifQLableParts(parts: outer).groupBy(Path.Table("events").column("country"))
+        let query = SwifQLableParts(parts: outer).groupBy(DB.Table("events").column("country"))
 
         #expect(groupByPart(in: query).owner == nil)
     }
 
     @Test("Arbitrary GROUP BY expressions remain composable")
     func arbitraryGroupByExpression() {
-        let table = Path.Table("users")
+        let table = DB.Table("users")
         let expression = table.column("id") + 1
         let query = SwifQL.select(expression).from(table).groupBy(expression)
 

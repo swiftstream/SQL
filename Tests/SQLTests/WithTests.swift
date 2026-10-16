@@ -7,9 +7,9 @@ struct WithTests: SwifQLTests {
     func with() {
         check(
             SwifQL
-                .with(.init(Path.Table("Table1"), SwifQL.select(Path.Table("Table2").*).from(Path.Table("Table2"))))
-                .select(Path.Table("Table1").*)
-                .from(Path.Table("Table1")),
+                .with(.init(DB.Table("Table1"), SwifQL.select(DB.Table("Table2").*).from(DB.Table("Table2"))))
+                .select(DB.Table("Table1").*)
+                .from(DB.Table("Table1")),
             .psql(#"WITH "Table1" as (SELECT "Table2".* FROM "Table2") SELECT "Table1".* FROM "Table1""#),
             .mysql("WITH Table1 as (SELECT Table2.* FROM Table2) SELECT Table1.* FROM Table1"),
                 .duck(#"WITH "Table1" as (SELECT "Table2".* FROM "Table2") SELECT "Table1".* FROM "Table1""#)
@@ -23,10 +23,10 @@ struct WithTests: SwifQLTests {
             SwifQL
                 .with(
                     .init(Table1.table, SwifQL.select(Table1.table.*).from(Table1.table)),
-                    .init(Path.Table("Table2"), columns: [Path.Column("hi"), Path.Column("there")], SwifQL.select(Path.Table("Table2").*).from(Path.Table("Table2")))
+                    .init(DB.Table("Table2"), columns: [DB.Column("hi"), DB.Column("there")], SwifQL.select(DB.Table("Table2").*).from(DB.Table("Table2")))
                 )
-                .select(Path.Table("Table3").*)
-                .from(Path.Table("Table3")),
+                .select(DB.Table("Table3").*)
+                .from(DB.Table("Table3")),
             .psql(#"WITH "Table1" as (SELECT "Table1".* FROM "Table1"), "Table2" ("hi", "there") as (SELECT "Table2".* FROM "Table2") SELECT "Table3".* FROM "Table3""#),
             .mysql("WITH Table1 as (SELECT Table1.* FROM Table1), Table2 (hi, there) as (SELECT Table2.* FROM Table2) SELECT Table3.* FROM Table3"),
                 .duck(#"WITH "Table1" as (SELECT "Table1".* FROM "Table1"), "Table2" ("hi", "there") as (SELECT "Table2".* FROM "Table2") SELECT "Table3".* FROM "Table3""#)

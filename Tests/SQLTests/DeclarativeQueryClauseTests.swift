@@ -16,13 +16,13 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
     @Test("DQ05.3 WHERE joins direct predicates with AND and preserves grouped OR bind order")
     func whereDefaultAndGroups() {
         let query = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
             Where {
-                Path.Column("age") >= 18
+                DB.Column("age") >= 18
                 Or {
-                    Path.Column("role") == "admin"
-                    Path.Column("role") == "editor"
+                    DB.Column("role") == "admin"
+                    DB.Column("role") == "editor"
                 }
             }
         }
@@ -46,16 +46,16 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
     @Test("DQ05.3 explicit And and Or groups remain parenthesized in source order")
     func explicitBooleanGroups() {
         let query = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
             Where {
                 And {
-                    Path.Column("a") == 1
-                    Path.Column("b") == 2
+                    DB.Column("a") == 1
+                    DB.Column("b") == 2
                 }
                 Or {
-                    Path.Column("c") == 3
-                    Path.Column("d") == 4
+                    DB.Column("c") == 3
+                    DB.Column("d") == 4
                 }
             }
         }
@@ -70,11 +70,11 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
     func emptyWhereOmission() {
         let includeAge = false
         let query = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
             Where {
                 if includeAge {
-                    Path.Column("age") >= 18
+                    DB.Column("age") >= 18
                 }
             }
         }
@@ -88,15 +88,15 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
     @Test("DQ05.3 empty dynamic predicates omit WHERE HAVING and QUALIFY")
     func emptyPredicateClauseOmission() {
         let includePredicate = false
-        let ranked = Fn.rowNumber().over(partitionBy: Path.Column("group"), orderBy: .asc(Path.Column("id")))
+        let ranked = Fn.rowNumber().over(partitionBy: DB.Column("group"), orderBy: .asc(DB.Column("id")))
         let query = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
             Where {
-                if includePredicate { Path.Column("age") >= 18 }
+                if includePredicate { DB.Column("age") >= 18 }
             }
             Having {
-                if includePredicate { Fn.count(Path.Column("id")) > 1 }
+                if includePredicate { Fn.count(DB.Column("id")) > 1 }
             }
             Qualify {
                 if includePredicate { ranked <= 3 }
@@ -113,7 +113,7 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
     func predicateSnapshot() {
         let probe = ClausePredicatePartsProbe()
         let query = SwifQL {
-            Select { Path.Column("id") }
+            Select { DB.Column("id") }
             Where { probe }
         }
 
@@ -125,12 +125,12 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
     @Test("DQ05.3 HAVING without GROUP BY follows WHERE and binds in order")
     func havingWithoutGroupBy() {
         let query = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
-            Where { Path.Column("active") == true }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
+            Where { DB.Column("active") == true }
             Having {
-                Fn.count(Path.Column("id")) > 1
-                Path.Column("maxAge") < 100
+                Fn.count(DB.Column("id")) > 1
+                DB.Column("maxAge") < 100
             }
         }
 
@@ -148,10 +148,10 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
     @Test("DQ05.3 QUALIFY uses the existing window expression and binds its predicate")
     func qualifyWindowExpression() {
         let ranked = Fn.rowNumber()
-            .over(partitionBy: Path.Column("category"), orderBy: .asc(Path.Column("id")))
+            .over(partitionBy: DB.Column("category"), orderBy: .asc(DB.Column("id")))
         let query = SwifQL {
             Select { ranked }
-            From { Path.Table("events") }
+            From { DB.Table("events") }
             Qualify { ranked <= 3 }
         }
 
@@ -164,12 +164,12 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
     @Test("DQ05.3 nested FROM SELECT accepts WHERE HAVING QUALIFY then As")
     func nestedClauseSequence() {
         let ranked = Fn.rowNumber()
-            .over(partitionBy: Path.Column("category"), orderBy: .asc(Path.Column("id")))
+            .over(partitionBy: DB.Column("category"), orderBy: .asc(DB.Column("id")))
         let query = From {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
-            Where { Path.Column("age") >= 18 }
-            Having { Fn.count(Path.Column("id")) > 1 }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
+            Where { DB.Column("age") >= 18 }
+            Having { Fn.count(DB.Column("id")) > 1 }
             Qualify { ranked <= 3 }
             As("filtered")
         }
@@ -183,11 +183,11 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
     @Test("DQ05.3 WHERE remains attached after sibling JOIN")
     func whereAfterSiblingJoin() {
         let query = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
-            Join(.left, Path.Table("Profile"))
-            On(Path.Column("id") == Path.Column("userId"))
-            Where { Path.Column("active") == true }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
+            Join(.left, DB.Table("Profile"))
+            On(DB.Column("id") == DB.Column("userId"))
+            Where { DB.Column("active") == true }
         }
 
         let prepared = query.prepare(.psql)
@@ -198,15 +198,15 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
     @Test("DQ05.4 complete root clause chain preserves SQL and bind order")
     func completeGroupOrderLimitOffsetChain() {
         let query = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
-            Where { Path.Column("age") >= 18 }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
+            Where { DB.Column("age") >= 18 }
             GroupBy {
-                Path.Column("id")
-                Rollup(Path.Column("role"))
+                DB.Column("id")
+                Rollup(DB.Column("role"))
             }
-            Having { Fn.count(Path.Column("id")) > 1 }
-            OrderBy { OrderByItem.desc(Path.Column("id")) }
+            Having { Fn.count(DB.Column("id")) > 1 }
+            OrderBy { OrderByItem.desc(DB.Column("id")) }
             Limit(10)
             Offset(2)
         }
@@ -235,14 +235,14 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
     @Test("DQ05.4 GROUP BY accepts existing ROLLUP CUBE and GROUPING SETS values")
     func existingGroupingForms() {
         let query = SwifQL {
-            Select { Path.Column("id") }
+            Select { DB.Column("id") }
             GroupBy {
-                Path.Column("region")
-                Rollup(Path.Column("role"))
-                Cube(Path.Column("department"))
+                DB.Column("region")
+                Rollup(DB.Column("role"))
+                Cube(DB.Column("department"))
                 GroupingSets([
-                    [Path.Column("region")],
-                    [Path.Column("role"), Path.Column("department")]
+                    [DB.Column("region")],
+                    [DB.Column("role"), DB.Column("department")]
                 ])
             }
         }
@@ -257,13 +257,13 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
         let includeGroup = false
         let includeOrder = false
         let query = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
             GroupBy {
-                if includeGroup { Path.Column("region") }
+                if includeGroup { DB.Column("region") }
             }
             OrderBy {
-                if includeOrder { OrderByItem.desc(Path.Column("id")) }
+                if includeOrder { OrderByItem.desc(DB.Column("id")) }
             }
             Limit(SwifQLableParts(rawParts: []))
             Offset(SwifQLableParts(rawParts: []))
@@ -278,18 +278,18 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
     @Test("DQ05.4 builder and concise ORDER BY preserve the same query and binds")
     func builderAndConciseOrderByEquivalence() {
         let builderQuery = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
-            Where { Path.Column("age") >= 18 }
-            OrderBy { OrderByItem.desc(Path.Column("id")) }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
+            Where { DB.Column("age") >= 18 }
+            OrderBy { OrderByItem.desc(DB.Column("id")) }
             Limit(10)
             Offset(2)
         }
         let conciseQuery = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
-            Where { Path.Column("age") >= 18 }
-            OrderBy(Path.Column("id"), .desc)
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
+            Where { DB.Column("age") >= 18 }
+            OrderBy(DB.Column("id"), .desc)
             Limit(10)
             Offset(2)
         }
@@ -304,26 +304,26 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
         #expect(concise.splitted.values.map { String(describing: $0) } == builder.splitted.values.map { String(describing: $0) })
 
         let nullOrdered = SwifQL {
-            Select { Path.Column("id") }
-            OrderBy { OrderByItem.asc(Path.Column("id"), nulls: .last) }
+            Select { DB.Column("id") }
+            OrderBy { OrderByItem.asc(DB.Column("id"), nulls: .last) }
         }
         #expect(nullOrdered.prepare(.psql).plain == #"SELECT "id" ORDER BY "id" ASC NULLS LAST"#)
     }
 
     @Test("DQ05.4 nested SELECT accepts clauses before As and keeps bind order")
     func nestedGroupOrderLimitOffsetAndAlias() {
-        let ranked = Fn.rowNumber().over(partitionBy: Path.Column("role"), orderBy: .asc(Path.Column("id")))
+        let ranked = Fn.rowNumber().over(partitionBy: DB.Column("role"), orderBy: .asc(DB.Column("id")))
         let query = From {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
-            Where { Path.Column("age") >= 18 }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
+            Where { DB.Column("age") >= 18 }
             GroupBy {
-                Path.Column("id")
-                Rollup(Path.Column("role"))
+                DB.Column("id")
+                Rollup(DB.Column("role"))
             }
-            Having { Fn.count(Path.Column("id")) > 1 }
+            Having { Fn.count(DB.Column("id")) > 1 }
             Qualify { ranked <= 3 }
-            OrderBy { OrderByItem.desc(Path.Column("id")) }
+            OrderBy { OrderByItem.desc(DB.Column("id")) }
             Limit(10)
             Offset(2)
             As("filtered")
@@ -338,9 +338,9 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
     @Test("DQ05.4 nested SELECT can start GROUP and result-order clauses before As")
     func nestedSelectClausesWithoutNestedFrom() {
         let query = From {
-            Select { Path.Column("id") }
-            GroupBy { Path.Column("id") }
-            OrderBy { OrderByItem.desc(Path.Column("id")) }
+            Select { DB.Column("id") }
+            GroupBy { DB.Column("id") }
+            OrderBy { OrderByItem.desc(DB.Column("id")) }
             Limit(10)
             Offset(2)
             As("direct")
@@ -355,13 +355,13 @@ struct DeclarativeQueryClauseTests: SwifQLTests {
     @Test("DQ05.4 GROUP and ORDER remain attached after sibling JOIN")
     func groupOrderAfterSiblingJoin() {
         let query = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
-            Join(.left, Path.Table("Profile"))
-            On(Path.Column("id") == Path.Column("userId"))
-            Where { Path.Column("active") == true }
-            GroupBy { Path.Column("role") }
-            OrderBy(Path.Column("id"), .desc)
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
+            Join(.left, DB.Table("Profile"))
+            On(DB.Column("id") == DB.Column("userId"))
+            Where { DB.Column("active") == true }
+            GroupBy { DB.Column("role") }
+            OrderBy(DB.Column("id"), .desc)
         }
 
         let prepared = query.prepare(.psql)

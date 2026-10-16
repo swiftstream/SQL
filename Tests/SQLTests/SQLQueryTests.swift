@@ -7,19 +7,19 @@ private struct UsersQuery: SQLQuery {
 
     var query: Query {
         Select {
-            Path.Column("id")
-            Path.Column("email")
+            DB.Column("id")
+            DB.Column("email")
         }
 
         From {
-            Path.Table("users")
+            DB.Table("users")
         }
 
         Where {
-            Path.Column("active") == active
+            DB.Column("active") == active
 
             if let email {
-                Path.Column("email") == email
+                DB.Column("email") == email
             }
         }
     }
@@ -113,14 +113,14 @@ struct SQLQueryTests {
     func joinAndProjectionComposition() {
         let queryValue = UsersQuery(active: true, email: "john@example.com")
         let reusableJoin = From {
-            Path.Table("outer")
+            DB.Table("outer")
             Join(.left, queryValue.as("activeUsers"))
-            On(Path.Column("enabled") == "yes")
+            On(DB.Column("enabled") == "yes")
         }
         let directJoin = From {
-            Path.Table("outer")
+            DB.Table("outer")
             Join(.left, queryValue.query.as("activeUsers"))
-            On(Path.Column("enabled") == "yes")
+            On(DB.Column("enabled") == "yes")
         }
 
         expectEquivalent(reusableJoin, directJoin, dialect: .psql)
@@ -142,8 +142,8 @@ struct SQLQueryTests {
     @Test("IN and EXISTS use generic SQLable composition")
     func inAndExistsComposition() {
         let queryValue = UsersQuery(active: true, email: "john@example.com")
-        let reusableIn = Path.Column("candidate").in(queryValue)
-        let directIn = Path.Column("candidate").in(queryValue.query)
+        let reusableIn = DB.Column("candidate").in(queryValue)
+        let directIn = DB.Column("candidate").in(queryValue.query)
         let reusableExists = SQL.exists(queryValue)
         let directExists = SQL.exists(queryValue.query)
 

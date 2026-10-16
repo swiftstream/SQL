@@ -11,7 +11,7 @@ public class CreateSchemaBuilder<Schema: Schemable>: SQLable {
         if shouldCheckIfNotExists {
             query = query.if.not.exists
         }
-        query = query[any: Path.Schema(Schema.schema.name)]
+        query = query[any: ModelQualification.resolve(Schema.self)!]
         return query.parts
     }
     

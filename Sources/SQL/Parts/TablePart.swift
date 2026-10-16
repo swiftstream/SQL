@@ -15,12 +15,15 @@ public struct SQLPartSchema: SQLPart {
 }
 
 public struct SQLPartTable: SQLPart {
+    public var catalog: String?
     public var schema: String?
     public var table: String
-    public init (_ table: String) {
+    public init (_ table: String, catalog: String? = nil) {
+        self.catalog = catalog
         self.table = table
     }
-    public init (schema: String?, table: String) {
+    public init (schema: String?, table: String, catalog: String? = nil) {
+        self.catalog = catalog
         self.schema = schema
         self.table = table
     }

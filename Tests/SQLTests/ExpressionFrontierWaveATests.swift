@@ -65,15 +65,15 @@ struct ExpressionFrontierWaveATests: SwifQLTests {
         let tokens = ["->", "->>", "#>", "#>>", "@?", "@@", "&&", "<<", ">>", "&<", "&>", "-|-"]
 
         for token in tokens {
-            let expression = Path.Column("lhs").op(.custom(token), Path.Column("rhs"))
+            let expression = DB.Column("lhs").op(.custom(token), DB.Column("rhs"))
             #expect(expression.prepare(.psql).plain == "(\"lhs\" \(token) \"rhs\")")
             #expect(expression.prepare(.mysql).plain == "(lhs \(token) rhs)")
             #expect(expression.prepare(.duck).plain == "(\"lhs\" \(token) \"rhs\")")
         }
 
-        let nested = Path.Column("lhs")
-            .op(.custom("&&"), Path.Column("middle"))
-            .op(.custom("-|-"), Path.Column("rhs"))
+        let nested = DB.Column("lhs")
+            .op(.custom("&&"), DB.Column("middle"))
+            .op(.custom("-|-"), DB.Column("rhs"))
 
         #expect(nested.prepare(.psql).plain == "((\"lhs\" && \"middle\") -|- \"rhs\")")
     }
@@ -99,7 +99,7 @@ struct ExpressionFrontierWaveATests: SwifQLTests {
 
         let qualified = Collate(
             Fixture.$name,
-            Path.Identifier(schema: "pg_catalog", name: "C")
+            DB.Object(schema: "pg_catalog", name: "C")
         )
 
         #expect(

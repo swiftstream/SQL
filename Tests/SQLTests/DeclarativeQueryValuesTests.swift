@@ -147,8 +147,8 @@ struct DeclarativeQueryValuesTests: SwifQLTests {
     func identifierColumnsAcceptStructuralPaths() {
         let counter = DQ05ValuesEvaluationCounter()
         let request = Columns {
-            Path.Column("id")
-            Path.Column("name")
+            DB.Column("id")
+            DB.Column("name")
             DQ052CountedColumnPath(counter: counter)
         }
 
@@ -172,15 +172,15 @@ struct DeclarativeQueryValuesTests: SwifQLTests {
     @Test("INSERT consumes semantic DEFAULT fields without binding them")
     func insertOwnsDefaultLowering() {
         let pathColumns = SwifQL {
-            Insert(Path.Table("User")) {
-                Columns { Path.Column("id"); Path.Column("name"); Path.Column("createdAt") }
+            Insert(DB.Table("User")) {
+                Columns { DB.Column("id"); DB.Column("name"); DB.Column("createdAt") }
                 Values {
                     Row(1, "John", Default())
                     Row(2, "Kate", Default())
                 }
             }
         }
-        let stringColumns = Insert(Path.Table("User")) {
+        let stringColumns = Insert(DB.Table("User")) {
             Columns { "id"; "name"; "createdAt" }
             Values { Row(1, "John", Default()); Row(2, "Kate", Default()) }
         }
@@ -302,27 +302,27 @@ struct DeclarativeQueryValuesTests: SwifQLTests {
 
     @Test("Empty, partial, and reordered INSERT bodies render deterministically")
     func emptyPartialAndReorderedInsertBodiesRender() {
-        #expect(Insert(Path.Table("User")) {}.prepare(.psql).plain == #"INSERT INTO "User""#)
+        #expect(Insert(DB.Table("User")) {}.prepare(.psql).plain == #"INSERT INTO "User""#)
 
         #expect(
-            Insert(Path.Table("User")) {
+            Insert(DB.Table("User")) {
                 Columns { "id" }
             }.prepare(.psql).plain == #"INSERT INTO "User" ("id")"#
         )
 
-        let valuesOnly = Insert(Path.Table("User")) {
+        let valuesOnly = Insert(DB.Table("User")) {
             Values { Row(1) }
         }
         #expect(valuesOnly.prepare(.psql).plain == #"INSERT INTO "User" VALUES (1)"#)
         #expect(valuesOnly.prepare(.mysql).plain == "INSERT INTO User VALUES ROW(1)")
 
         #expect(
-            Insert(Path.Table("User")) {
+            Insert(DB.Table("User")) {
                 Values {}
             }.prepare(.psql).plain == #"INSERT INTO "User" VALUES "#
         )
 
-        let reordered = Insert(Path.Table("User")) {
+        let reordered = Insert(DB.Table("User")) {
             Values { Row(1, "x") }
             Columns { "id"; "name" }
         }

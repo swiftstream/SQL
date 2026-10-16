@@ -434,9 +434,9 @@ struct OtherTests: SwifQLTests {
     
     @Test("Test Union")
     func union() {
-        let table1 = Path.Table("Table1")
-        let table2 = Path.Table("Table2")
-        let table3 = Path.Table("Table3")
+        let table1 = DB.Table("Table1")
+        let table2 = DB.Table("Table2")
+        let table3 = DB.Table("Table3")
         check(
             Union(
                 SwifQL.select(table1.*).from(table1),
@@ -450,11 +450,11 @@ struct OtherTests: SwifQLTests {
         
         check(
             SwifQL
-                .select(Distinct(Path.Column("uniqueName")) => .text => "name")
+                .select(Distinct(DB.Column("uniqueName")) => .text => "name")
                 .from(
                     Union(
-                        SwifQL.select(Distinct(Path.Column("name")) => .text => "uniqueName").from(table1),
-                        SwifQL.select(Distinct(Path.Column("name")) => .text => "uniqueName").from(table2)
+                        SwifQL.select(Distinct(DB.Column("name")) => .text => "uniqueName").from(table1),
+                        SwifQL.select(Distinct(DB.Column("name")) => .text => "uniqueName").from(table2)
                     )
             ),
             .psql(#"SELECT DISTINCT "uniqueName"::text as "name" FROM (SELECT DISTINCT "name"::text as "uniqueName" FROM "Table1") UNION (SELECT DISTINCT "name"::text as "uniqueName" FROM "Table2")"#),

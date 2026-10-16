@@ -16,7 +16,12 @@ public struct CreateTable: SQLable {
         let snapshots: [SQLable] = definitions().map {
             SQLableParts(rawParts: $0.parts)
         }
-        self.parts = SQL.create.table[any: Path.SchemaWithTable(schema: schema, table: table)]
+        let target: SQLable = if let schema {
+            DB.Schema(schema).table(table)
+        } else {
+            DB.Table(table)
+        }
+        self.parts = SQL.create.table[any: target]
             .tableDefinitions(snapshots)
             .parts
     }

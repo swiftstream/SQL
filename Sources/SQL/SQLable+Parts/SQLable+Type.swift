@@ -25,10 +25,10 @@ extension SQLable {
         parts.append(o: .type)
         if let schema = schema {
             parts.append(o: .space)
-            parts.append(contentsOf: Path.Schema(schema).table(name).parts)
+            parts.append(contentsOf: DB.Schema(schema).table(name).parts)
         } else {
             parts.append(o: .space)
-            parts.append(contentsOf: Path.Table(name).parts)
+            parts.append(contentsOf: DB.Table(name).parts)
         }
         return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }

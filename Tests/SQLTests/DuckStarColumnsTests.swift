@@ -32,7 +32,7 @@ private final class PatternOptInDialect: SQLDialect {
 
 @Suite("Duck star and COLUMNS tests")
 struct DuckStarColumnsTests: SwifQLTests {
-    private let events = Path.Table("events")
+    private let events = DB.Table("events")
 
     private func currentParts(of expression: SwifQLable) -> [SwifQLPart] {
         (expression.parts.first as? SwifQLStructuralFramePart)?.children ?? expression.parts
@@ -80,9 +80,9 @@ struct DuckStarColumnsTests: SwifQLTests {
         let single = SwifQL.asterisk.exclude(events.column("secret"))
         let query = SwifQL.asterisk.exclude(
             events.column("secret"),
-            Path.Column("select"),
-            Path.Column("имя"),
-            Path.Column("a\"b")
+            DB.Column("select"),
+            DB.Column("имя"),
+            DB.Column("a\"b")
         )
 
         #expect(
@@ -504,7 +504,7 @@ struct DuckStarColumnsTests: SwifQLTests {
     @Test("COLUMNS names use native structural string-list syntax without binds")
     func columnsNames() {
         let query = Fn.columns(
-            names: Path.Schema("analytics").table("events").column("metric_b"),
+            names: DB.Schema("analytics").table("events").column("metric_b"),
             events.column("metric_a")
         )
         let prepared = query.prepare(.duck)

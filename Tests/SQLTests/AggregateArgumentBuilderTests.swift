@@ -19,11 +19,11 @@ struct AggregateArgumentBuilderTests: SwifQLTests {
     @Test("Generic aggregate supports regular zero and star arguments")
     func genericBasics() {
         let one = Fn.aggregate(.weightedSumEF01) {
-            Path.Column("value")
+            DB.Column("value")
         }
         let multiple = Fn.aggregate(.weightedSumEF01) {
-            Path.Column("value")
-            Path.Column("weight")
+            DB.Column("value")
+            DB.Column("weight")
         }
         let zero = Fn.aggregate(.custom("zero_agg")) {}
         let star = Fn.aggregate(.custom("my_count")) {
@@ -39,16 +39,16 @@ struct AggregateArgumentBuilderTests: SwifQLTests {
     @Test("Plain Distinct supports concise builder and andAlso forms")
     func distinctForms() {
         let concise = Fn.aggregate(.pairAggEF01) {
-            Distinct(Path.Column("a"), Path.Column("b"))
+            Distinct(DB.Column("a"), DB.Column("b"))
         }
         let built = Fn.aggregate(.pairAggEF01) {
             Distinct {
-                Path.Column("a")
-                Path.Column("b")
+                DB.Column("a")
+                DB.Column("b")
             }
         }
         let extended = Fn.aggregate(.pairAggEF01) {
-            Distinct(Path.Column("a")).andAlso(Path.Column("b"))
+            Distinct(DB.Column("a")).andAlso(DB.Column("b"))
         }
 
         for expression in [concise, built, extended] {
@@ -59,9 +59,9 @@ struct AggregateArgumentBuilderTests: SwifQLTests {
     @Test("Aggregate local ORDER BY follows regular arguments without a comma")
     func regularOrderBy() {
         let expression = Fn.weightedSumEF01 {
-            Path.Column("value")
-            Path.Column("weight")
-            OrderBy(Path.Column("timestamp"), .desc)
+            DB.Column("value")
+            DB.Column("weight")
+            OrderBy(DB.Column("timestamp"), .desc)
         }
 
         #expect(
@@ -74,9 +74,9 @@ struct AggregateArgumentBuilderTests: SwifQLTests {
     func distinctOrderBy() {
         let expression = Fn.aggregate(.custom("my_agg")) {
             Distinct {
-                Path.Column("value")
+                DB.Column("value")
             }
-            OrderBy(Path.Column("value"), .asc)
+            OrderBy(DB.Column("value"), .asc)
         }
 
         #expect(
@@ -90,11 +90,11 @@ struct AggregateArgumentBuilderTests: SwifQLTests {
         for deduplicate in [true, false] {
             let expression = Fn.aggregate(.custom("my_agg")) {
                 if deduplicate {
-                    Distinct(Path.Column("value"))
+                    Distinct(DB.Column("value"))
                 } else {
-                    Path.Column("value")
+                    DB.Column("value")
                 }
-                OrderBy(Path.Column("value"), .desc)
+                OrderBy(DB.Column("value"), .desc)
             }
 
             let expected = deduplicate
@@ -153,7 +153,7 @@ struct AggregateArgumentBuilderTests: SwifQLTests {
 
     @Test("Existential SQLable ingress remains accepted")
     func existentialIngress() {
-        let value: any SQLable = Path.Column("value")
+        let value: any SQLable = DB.Column("value")
         let expression = Fn.sum {
             value
         }
@@ -163,7 +163,7 @@ struct AggregateArgumentBuilderTests: SwifQLTests {
 
     @Test("All nine built in aggregate builder overloads render")
     func builtInOverloads() {
-        let value = Path.Column("value")
+        let value = DB.Column("value")
 
         #expect(Fn.arrayAgg { value }.prepare(.psql).plain == #"array_agg("value")"#)
         #expect(Fn.avg { value }.prepare(.psql).plain == #"avg("value")"#)
@@ -183,7 +183,7 @@ struct AggregateArgumentBuilderTests: SwifQLTests {
 
     @Test("Existing concise aggregate overloads retain parity")
     func conciseParity() {
-        let value = Path.Column("value")
+        let value = DB.Column("value")
 
         let pairs: [(any SQLable, any SQLable)] = [
             (Fn.arrayAgg(value), Fn.arrayAgg { value }),
@@ -215,7 +215,7 @@ struct AggregateArgumentBuilderTests: SwifQLTests {
     func fnBuildCoexistence() {
         let scalar = Fn.build(
             .custom("scalar"),
-            body: Path.Column("value").parts
+            body: DB.Column("value").parts
         )
         let emptyScalar = Fn.build(.custom("scalar"))
 
@@ -225,7 +225,7 @@ struct AggregateArgumentBuilderTests: SwifQLTests {
 
     @Test("Aggregate results compose with filter over and alias")
     func postfixComposition() {
-        let value = Path.Column("value")
+        let value = DB.Column("value")
         let aggregate = Fn.sum { value }
 
         #expect(
@@ -236,7 +236,7 @@ struct AggregateArgumentBuilderTests: SwifQLTests {
         )
         #expect(
             aggregate
-                .over(partitionBy: Path.Column("group"))
+                .over(partitionBy: DB.Column("group"))
                 .prepare(.psql).plain
                 == #"sum("value") OVER (PARTITION BY "group")"#
         )
@@ -251,7 +251,7 @@ struct AggregateArgumentBuilderTests: SwifQLTests {
     @Test("Aggregate array result reuses Wave 04 subscript grouping")
     func aggregateSubscriptGrouping() {
         let expression = Fn.arrayAgg {
-            Path.Column("score")
+            DB.Column("score")
         }[1]
 
         #expect(
@@ -267,10 +267,10 @@ struct AggregateArgumentBuilderTests: SwifQLTests {
     @Test("OrderBy preserves multiple item source order")
     func multipleOrderItems() {
         let expression = Fn.arrayAgg {
-            Path.Column("value")
+            DB.Column("value")
             OrderBy {
-                OrderByItem.desc(Path.Column("createdAt"))
-                OrderByItem.asc(Path.Column("id"))
+                OrderByItem.desc(DB.Column("createdAt"))
+                OrderByItem.asc(DB.Column("id"))
             }
         }
 

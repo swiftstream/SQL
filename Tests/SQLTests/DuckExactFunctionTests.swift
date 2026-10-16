@@ -204,7 +204,7 @@ struct DuckExactFunctionTests: SwifQLTests {
 
     @Test("Aggregate helpers compose in a real aggregate query")
     func aggregateComposition() {
-        let table = Path.Table("aggregate_values")
+        let table = DB.Table("aggregate_values")
         let value = table.column("value")
         let query = SwifQL
             .select(
@@ -319,7 +319,7 @@ struct DuckExactFunctionTests: SwifQLTests {
 
     @Test("Window helpers compose in a real OVER query")
     func windowFunctions() {
-        let table = Path.Table("window_values")
+        let table = DB.Table("window_values")
         let group = table.column("grp")
         let value = table.column("value")
         func ordered(_ expression: SwifQLable) -> SwifQLable {

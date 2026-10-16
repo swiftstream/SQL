@@ -19,7 +19,7 @@ struct ExpressionFrontierArrayTests: SwifQLTests {
 
     @Test("SQLArray items use exact ARRAY syntax and preserve empty syntax")
     func exactItemsAndEmpty() {
-        let concise = SQLArray.items(1, 2, Path.Column("score"))
+        let concise = SQLArray.items(1, 2, DB.Column("score"))
 
         check(
             concise,
@@ -70,14 +70,14 @@ struct ExpressionFrontierArrayTests: SwifQLTests {
     @Test("SQLArray subquery supports formed and builder statements")
     func subqueryForms() {
         let formed = SQL {
-            Select { Path.Column("id") }
-            From { Path.Table("orders") }
+            Select { DB.Column("id") }
+            From { DB.Table("orders") }
         }
 
         let direct = SQLArray.subquery(formed)
         let built = SQLArray.subquery {
-            Select { Path.Column("id") }
-            From { Path.Table("orders") }
+            Select { DB.Column("id") }
+            From { DB.Table("orders") }
         }
 
         for expression in [direct, built] {
@@ -143,7 +143,7 @@ struct ExpressionFrontierArrayTests: SwifQLTests {
         let builderValue = CountingSQLable(3)
         let statement = CountingSQLable(
             SQL {
-                Select { Path.Column("id") }
+                Select { DB.Column("id") }
             }
         )
 

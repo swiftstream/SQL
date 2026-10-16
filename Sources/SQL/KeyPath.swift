@@ -52,9 +52,9 @@ public func => (lhs: SQLable, rhs: SQLable) -> SQLable {
         postfix.append(contentsOf: rhs.parts)
     } else if let _ = rhs as? TableAlias {
         postfix.append(contentsOf: rhs.parts)
-    } else if let schemaWithTable = rhs as? Path.SchemaWithTable {
-        postfix.append(SQLPartAlias(schemaWithTable.table))
-    } else if let table = rhs as? Path.Table {
+    } else if let schemaWithTable = rhs as? DB.Schema.Table {
+        postfix.append(SQLPartAlias(schemaWithTable.name))
+    } else if let table = rhs as? DB.Table {
         postfix.append(SQLPartAlias(table.name))
     } else if let kp = rhs as? Keypathable {
         postfix.append(SQLPartAlias(kp.lastPath))

@@ -33,7 +33,7 @@ public class TableAlias: SQLable {
     }
     
     public subscript(dynamicMember path: String) -> SQLable {
-        Path.Table(name).column(path)
+        DB.Table(name).column(path)
     }
     
     public var parts: [SQLPart] {
@@ -54,7 +54,12 @@ public class GenericTableAlias<M: Decodable>: SQLable, AnyGenericTableAlias {
     }
     
     public var table: SQLable {
-        SQLableParts(parts: SQLPartTableWithAlias(schema: schema, table: name, alias: alias))
+        SQLableParts(parts: SQLPartTableWithAlias(
+            schema: sourceSchema?.name,
+            table: name,
+            alias: alias,
+            catalog: sourceSchema?.catalog?.name
+        ))
     }
     
     var name: String {
@@ -64,22 +69,27 @@ public class GenericTableAlias<M: Decodable>: SQLable, AnyGenericTableAlias {
         return String(describing: M.self)
     }
     
-    var schema: String?
+    var sourceSchema: DB.Schema?
     
     var alias: String
     
     public init(_ alias: String, schema: String?) {
         self.alias = alias
-        self.schema = schema ?? (Model.self as? Schemable.Type)?.schema.name
+        self.sourceSchema = schema.map { DB.Schema($0) } ?? ModelQualification.resolve(Model.self)
     }
     
-    public func column(_ paths: String...) -> Path.TableWithColumn {
-        Path.Table(alias).column(paths)
+    public init(_ alias: String, sourceSchema: DB.Schema) {
+        self.alias = alias
+        self.sourceSchema = sourceSchema
+    }
+
+    public func column(_ paths: String...) -> DB.Table.Column {
+        DB.Table(alias).column(paths)
     }
     
     public subscript<V>(dynamicMember keyPath: KeyPath<Model, V>) -> SQLable {
         guard let k = keyPath as? Keypathable else { return "<keyPath should conform to Keypathable>" }
-        return Path.Table(alias).column(k.paths)
+        return DB.Table(alias).column(k.paths)
     }
 }
 
@@ -119,7 +129,7 @@ public class AliasedKeyPath<K, T, V> where K: KeyPath<T, V>, T: Table, V: Column
 }
 
 extension AliasedKeyPath: SQLKeyPathable {
-    public var schema: String? { (AModel.self as? Schemable.Type)?.schema.name }
+    public var schema: String? { ModelQualification.resolve(AModel.self)?.name }
     public var table: String? { alias }
     public var paths: [String] { kp.paths }
 }

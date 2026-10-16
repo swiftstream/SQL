@@ -113,7 +113,7 @@ struct DuckLambdaListTests: SwifQLTests {
 
     @Test("Outer columns compose through ordinary path expressions")
     func outerColumnCapture() {
-        let table = Path.Table("lambda_capture")
+        let table = DB.Table("lambda_capture")
         let items = table.column("items")
         let delta = table.column("delta")
         let query = SwifQL

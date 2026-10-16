@@ -8,11 +8,11 @@ private final class Task25IdentifierDialect: SQLDialect {
     override func column(_ value: String) -> String { "COL[\(value)]" }
 }
 
-private func task25CopyTarget() -> Path.Table {
-    Path.Table("events")
+private func task25CopyTarget() -> DB.Table {
+    DB.Table("events")
 }
 
-private func task25Copy(_ table: Path.Table, to destination: SwifQLable) -> SwifQLable {
+private func task25Copy(_ table: DB.Table, to destination: SwifQLable) -> SwifQLable {
     SwifQL.copy(table, to: destination)
 }
 
@@ -86,8 +86,8 @@ struct DuckCopyTableFunctionTests: SwifQLTests {
         let table = task25CopyTarget()
         let tableCopy = task25Copy(table, to: "events.csv")
         let databaseCopy = SwifQL.copy(
-            fromDatabase: Path.Catalog("source catalog"),
-            to: Path.Catalog("destination catalog"),
+            fromDatabase: DB.Catalog("source catalog"),
+            to: DB.Catalog("destination catalog"),
             options: .schema
         )
 

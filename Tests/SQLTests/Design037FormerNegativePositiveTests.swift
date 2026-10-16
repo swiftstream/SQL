@@ -5,7 +5,7 @@ import SQL
 struct Design037FormerNegativePositiveTests {
     @Test("standalone JOIN, ON, USING, alias, and DEFAULT fragments render")
     func standaloneContinuationFragments() {
-        let join = SwifQL { Join(.left, Path.Table("Profile")); On(true) }
+        let join = SwifQL { Join(.left, DB.Table("Profile")); On(true) }
         let using = SwifQL { Using("id") }
         let alias = SwifQL { As("alias") }
         let defaultValue = SwifQL { Default() }
@@ -24,7 +24,7 @@ struct Design037FormerNegativePositiveTests {
     @Test("N02 late DISTINCT stays in SELECT source order")
     func n02() {
         let query = Select {
-            Path.Column("id")
+            DB.Column("id")
             Distinct()
         }
         #expect(query.prepare(.psql).plain == #"SELECT "id", DISTINCT"#)
@@ -36,9 +36,9 @@ struct Design037FormerNegativePositiveTests {
         let query = Select {
             if flag {
                 Distinct()
-                Path.Column("id")
+                DB.Column("id")
             }
-            Path.Column("email")
+            DB.Column("email")
         }
         #expect(query.prepare(.psql).plain == #"SELECT DISTINCT "id", "email""#)
     }
@@ -47,10 +47,10 @@ struct Design037FormerNegativePositiveTests {
     func n04() {
         let flag = true
         let query = Select {
-            Path.Column("id")
+            DB.Column("id")
             if flag {
                 Distinct()
-                Path.Column("email")
+                DB.Column("email")
             }
         }
         #expect(query.prepare(.psql).plain == #"SELECT "id", DISTINCT, "email""#)
@@ -62,8 +62,8 @@ struct Design037FormerNegativePositiveTests {
         let query = Select {
             Distinct()
             if flag {
-                DistinctOn(Path.Column("country"))
-                Path.Column("id")
+                DistinctOn(DB.Column("country"))
+                DB.Column("id")
             }
         }
         #expect(query.prepare(.psql).plain == #"SELECT DISTINCT DISTINCT ON ("country") "id""#)
@@ -75,20 +75,20 @@ struct Design037FormerNegativePositiveTests {
         let selected = Select {
             if flag {
                 Distinct()
-                Path.Column("id")
+                DB.Column("id")
             } else {
-                Path.Column("email")
+                DB.Column("email")
             }
-            Path.Column("name")
+            DB.Column("name")
         }
         let plain = Select {
             if !flag {
                 Distinct()
-                Path.Column("id")
+                DB.Column("id")
             } else {
-                Path.Column("email")
+                DB.Column("email")
             }
-            Path.Column("name")
+            DB.Column("name")
         }
         #expect(selected.prepare(.psql).plain == #"SELECT DISTINCT "id", "name""#)
         #expect(plain.prepare(.psql).plain == #"SELECT "email", "name""#)
@@ -100,10 +100,10 @@ struct Design037FormerNegativePositiveTests {
         let query = Select {
             for _ in values {
                 Distinct()
-                Path.Column("id")
+                DB.Column("id")
             }
         }
-        let fields = [Path.Column("id"), Path.Column("email")]
+        let fields = [DB.Column("id"), DB.Column("email")]
         let projections = Select {
             for field in fields { field }
         }
@@ -114,7 +114,7 @@ struct Design037FormerNegativePositiveTests {
     @Test("N08 FROM column list does not require an alias")
     func n08() {
         let query = From {
-            Path.Table("User")
+            DB.Table("User")
             Columns("id")
         }
         #expect(query.prepare(.psql).plain == #"FROM "User" ("id")"#)
@@ -133,8 +133,8 @@ struct Design037FormerNegativePositiveTests {
     @Test("N10 nested FROM then SELECT renders in source order")
     func n10() {
         let query = From {
-            From { Path.Table("User") }
-            Select { Path.Column("id") }
+            From { DB.Table("User") }
+            Select { DB.Column("id") }
         }
         #expect(query.prepare(.psql).plain == #"FROM (FROM "User"), (SELECT "id")"#)
     }
@@ -142,7 +142,7 @@ struct Design037FormerNegativePositiveTests {
     @Test("N11 orphan JOIN and ON can render inside FROM")
     func n11() {
         let query = From {
-            Join(.left, Path.Table("Profile"))
+            Join(.left, DB.Table("Profile"))
             On(true)
         }
         #expect(query.prepare(.psql).plain == #"FROM LEFT JOIN "Profile" ON TRUE"#)
@@ -151,9 +151,9 @@ struct Design037FormerNegativePositiveTests {
     @Test("N12 a source may follow a FROM JOIN continuation")
     func n12() {
         let query = From {
-            Join(.left, Path.Table("Profile"))
+            Join(.left, DB.Table("Profile"))
             On(true)
-            Path.Table("User")
+            DB.Table("User")
         }
         #expect(query.prepare(.psql).plain == #"FROM LEFT JOIN "Profile" ON TRUE, "User""#)
     }
@@ -161,7 +161,7 @@ struct Design037FormerNegativePositiveTests {
     @Test("N13 standalone root JOIN fragment composes with ON")
     func n13() {
         let query = SwifQL {
-            Join(.left, Path.Table("Profile"))
+            Join(.left, DB.Table("Profile"))
             On(true)
         }
         #expect(query.prepare(.psql).plain == #"LEFT JOIN "Profile" ON TRUE"#)
@@ -169,10 +169,10 @@ struct Design037FormerNegativePositiveTests {
 
     @Test("N14 erased FROM and sibling JOIN compose directly")
     func n14() {
-        let erased: any SwifQLable = From { Path.Table("User") }
+        let erased: any SwifQLable = From { DB.Table("User") }
         let query = SwifQL {
             erased
-            Join(.left, Path.Table("Profile"))
+            Join(.left, DB.Table("Profile"))
             On(true)
         }
         #expect(query.prepare(.psql).plain == #"FROM "User" LEFT JOIN "Profile" ON TRUE"#)
@@ -181,19 +181,19 @@ struct Design037FormerNegativePositiveTests {
     @Test("N15 maybe empty FROM and sibling JOIN remain composable")
     func n15() {
         let populated: FromBuilder.Result = From {
-            if true { Path.Table("User") }
+            if true { DB.Table("User") }
         }
         let empty: FromBuilder.Result = From {
-            if false { Path.Table("User") }
+            if false { DB.Table("User") }
         }
         let populatedQuery = SwifQL {
             populated
-            Join(.left, Path.Table("Profile"))
+            Join(.left, DB.Table("Profile"))
             On(true)
         }
         let emptyQuery = SwifQL {
             empty
-            Join(.left, Path.Table("Profile"))
+            Join(.left, DB.Table("Profile"))
             On(true)
         }
         #expect(populatedQuery.prepare(.psql).plain == #"FROM "User" LEFT JOIN "Profile" ON TRUE"#)
@@ -203,8 +203,8 @@ struct Design037FormerNegativePositiveTests {
     @Test("N16 JOIN may follow a root control-flow group")
     func n16() {
         let query = SwifQL {
-            if true { From { Path.Table("User") } }
-            Join(.left, Path.Table("Profile"))
+            if true { From { DB.Table("User") } }
+            Join(.left, DB.Table("Profile"))
             On(true)
         }
         #expect(query.prepare(.psql).plain == #"FROM "User" LEFT JOIN "Profile" ON TRUE"#)
@@ -213,7 +213,7 @@ struct Design037FormerNegativePositiveTests {
     @Test("N17 root ON remains independently composable")
     func n17() {
         let query = SwifQL {
-            From { Path.Table("User") }
+            From { DB.Table("User") }
             On(true)
         }
         #expect(query.prepare(.psql).plain == #"FROM "User" ON TRUE"#)
@@ -222,7 +222,7 @@ struct Design037FormerNegativePositiveTests {
     @Test("N18 root USING remains independently composable")
     func n18() {
         let query = SwifQL {
-            From { Path.Table("User") }
+            From { DB.Table("User") }
             Using("id")
         }
         #expect(query.prepare(.psql).plain == #"FROM "User" USING ("id")"#)
@@ -230,31 +230,31 @@ struct Design037FormerNegativePositiveTests {
 
     @Test("N19 root WHERE fragment renders alone")
     func n19() {
-        let query = SwifQL { Where { Path.Column("id") > 0 } }
+        let query = SwifQL { Where { DB.Column("id") > 0 } }
         #expect(query.prepare(.psql).plain == #"WHERE "id" > 0"#)
     }
 
     @Test("N20 root GROUP BY fragment renders alone")
     func n20() {
-        let query = SwifQL { GroupBy { Path.Column("id") } }
+        let query = SwifQL { GroupBy { DB.Column("id") } }
         #expect(query.prepare(.psql).plain == #"GROUP BY "id""#)
     }
 
     @Test("N21 root HAVING fragment renders alone")
     func n21() {
-        let query = SwifQL { Having { Fn.count(Path.Column("id")) > 1 } }
+        let query = SwifQL { Having { Fn.count(DB.Column("id")) > 1 } }
         #expect(query.prepare(.psql).plain == #"HAVING count("id") > 1"#)
     }
 
     @Test("N22 root QUALIFY fragment renders alone")
     func n22() {
-        let query = SwifQL { Qualify { Path.Column("id") > 0 } }
+        let query = SwifQL { Qualify { DB.Column("id") > 0 } }
         #expect(query.prepare(.psql).plain == #"QUALIFY "id" > 0"#)
     }
 
     @Test("N23 root ORDER BY fragment renders alone")
     func n23() {
-        let query = SwifQL { OrderBy { OrderByItem.desc(Path.Column("id")) } }
+        let query = SwifQL { OrderBy { OrderByItem.desc(DB.Column("id")) } }
         #expect(query.prepare(.psql).plain == #"ORDER BY "id" DESC"#)
     }
 
@@ -273,10 +273,10 @@ struct Design037FormerNegativePositiveTests {
     @Test("N26 WHERE may follow HAVING in root source order")
     func n26() {
         let query = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
-            Having { Fn.count(Path.Column("id")) > 1 }
-            Where { Path.Column("id") > 0 }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
+            Having { Fn.count(DB.Column("id")) > 1 }
+            Where { DB.Column("id") > 0 }
         }
         #expect(query.prepare(.psql).plain == #"SELECT "id" FROM "User" HAVING count("id") > 1 WHERE "id" > 0"#)
     }
@@ -284,10 +284,10 @@ struct Design037FormerNegativePositiveTests {
     @Test("N27 HAVING may follow QUALIFY in root source order")
     func n27() {
         let query = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
-            Qualify { Path.Column("id") > 0 }
-            Having { Fn.count(Path.Column("id")) > 1 }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
+            Qualify { DB.Column("id") > 0 }
+            Having { Fn.count(DB.Column("id")) > 1 }
         }
         #expect(query.prepare(.psql).plain == #"SELECT "id" FROM "User" QUALIFY "id" > 0 HAVING count("id") > 1"#)
     }
@@ -296,10 +296,10 @@ struct Design037FormerNegativePositiveTests {
     func n28() {
         let query = SwifQL {
             if true {
-                Select { Path.Column("id") }
-                From { Path.Table("User") }
+                Select { DB.Column("id") }
+                From { DB.Table("User") }
             }
-            Where { Path.Column("id") > 0 }
+            Where { DB.Column("id") > 0 }
         }
         #expect(query.prepare(.psql).plain == #"SELECT "id" FROM "User" WHERE "id" > 0"#)
     }
@@ -318,7 +318,7 @@ struct Design037FormerNegativePositiveTests {
 
     @Test("N31 INSERT VALUES may precede target columns")
     func n31() {
-        let query = Insert(Path.Table("User")) {
+        let query = Insert(DB.Table("User")) {
             Values { Row(1) }
             Columns { "id" }
         }
@@ -327,7 +327,7 @@ struct Design037FormerNegativePositiveTests {
 
     @Test("N32 INSERT may omit an explicit column list")
     func n32() {
-        let query = Insert(Path.Table("User")) {
+        let query = Insert(DB.Table("User")) {
             Values { Row(1) }
         }
         #expect(query.prepare(.psql).plain == #"INSERT INTO "User" VALUES (1)"#)
@@ -335,7 +335,7 @@ struct Design037FormerNegativePositiveTests {
 
     @Test("N33 incomplete INSERT body remains a fragment")
     func n33() {
-        let query = Insert(Path.Table("User")) {
+        let query = Insert(DB.Table("User")) {
             Columns { "id" }
         }
         #expect(query.prepare(.psql).plain == #"INSERT INTO "User" ("id")"#)
@@ -343,9 +343,9 @@ struct Design037FormerNegativePositiveTests {
 
     @Test("P01-P14 prior positive source concepts still compile and render")
     func p01ThroughP14() {
-        let p01 = Select { Path.Column("id"); As("identifier") }
-        let p02 = Select { if true { Distinct() }; Path.Column("id") }
-        let p03 = From { Path.Table("User"); As("u"); Columns("id", "name") }
+        let p01 = Select { DB.Column("id"); As("identifier") }
+        let p02 = Select { if true { Distinct() }; DB.Column("id") }
+        let p03 = From { DB.Table("User"); As("u"); Columns("id", "name") }
         let p04 = From {
             Fn.generateSeries(1, 2)
             WithOrdinality()
@@ -353,55 +353,55 @@ struct Design037FormerNegativePositiveTests {
             Columns("value", "position")
         }
         let p05 = From {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
             As("users")
         }
         let p06 = From {
-            Path.Table("User")
-            Join(.left, Path.Table("Profile"))
+            DB.Table("User")
+            Join(.left, DB.Table("Profile"))
             As("profile")
             On(true)
         }
         let p07 = From {
-            Path.Table("User")
-            Join(.left, Path.Table("Profile"))
+            DB.Table("User")
+            Join(.left, DB.Table("Profile"))
             Using("id")
             As("keys")
         }
-        let p08Base = From { Path.Table("User") }
-        let p08 = SwifQL { p08Base; Join(.left, Path.Table("Profile")); On(true) }
-        let p09 = SwifQL { From { Path.Table("User") }; Select { Path.Column("id") } }
+        let p08Base = From { DB.Table("User") }
+        let p08 = SwifQL { p08Base; Join(.left, DB.Table("Profile")); On(true) }
+        let p09 = SwifQL { From { DB.Table("User") }; Select { DB.Column("id") } }
         let p10 = SwifQL {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
-            Where { Path.Column("age") >= 18 }
-            GroupBy { Path.Column("id") }
-            Having { Fn.count(Path.Column("id")) > 1 }
-            Qualify { Path.Column("id") > 0 }
-            OrderBy { OrderByItem.desc(Path.Column("id")) }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
+            Where { DB.Column("age") >= 18 }
+            GroupBy { DB.Column("id") }
+            Having { Fn.count(DB.Column("id")) > 1 }
+            Qualify { DB.Column("id") > 0 }
+            OrderBy { OrderByItem.desc(DB.Column("id")) }
             Limit(10)
             Offset(2)
         }
         let p11 = From {
-            Select { Path.Column("id") }
-            From { Path.Table("User") }
-            Where { Path.Column("age") >= 18 }
-            GroupBy { Path.Column("id") }
-            Having { Fn.count(Path.Column("id")) > 1 }
-            OrderBy { OrderByItem.desc(Path.Column("id")) }
+            Select { DB.Column("id") }
+            From { DB.Table("User") }
+            Where { DB.Column("age") >= 18 }
+            GroupBy { DB.Column("id") }
+            Having { Fn.count(DB.Column("id")) > 1 }
+            OrderBy { OrderByItem.desc(DB.Column("id")) }
             Limit(10)
             Offset(2)
             As("filtered")
         }
         let p12 = From {
-            Path.Table("Organization")
+            DB.Table("Organization")
             if true {
-                Path.Table("User")
+                DB.Table("User")
                 As("u")
             }
         }
-        let p13 = Insert(Path.Table("User")) {
+        let p13 = Insert(DB.Table("User")) {
             Columns { "id"; "name"; "createdAt" }
             Values {
                 Row(1, "John", Default())
@@ -441,8 +441,8 @@ struct Design037FormerNegativePositiveTests {
     func canonicalBindingOrder() {
         let query = SwifQL {
             Select { "projection" }
-            From { Path.Table("User") }
-            Where { Path.Column("email") == "active@example.com" }
+            From { DB.Table("User") }
+            Where { DB.Column("email") == "active@example.com" }
             Limit(10)
         }
         let prepared = query.prepare(.psql)
@@ -453,15 +453,15 @@ struct Design037FormerNegativePositiveTests {
     @Test("dynamic empty WHERE stays omitted at the fragment root")
     func dynamicEmptyWhere() {
         let query = SwifQL {
-            Select { Path.Column("id") }
-            Where { if false { Path.Column("id") > 0 } }
+            Select { DB.Column("id") }
+            Where { if false { DB.Column("id") > 0 } }
         }
         #expect(query.prepare(.psql).plain == #"SELECT "id""#)
     }
     @Test("FROM control flow keeps ordered source and JOIN identities")
     func fromControlFlowAndJoinOrdering() {
         let userOnly = From {
-            if true { Path.Table("User") }
+            if true { DB.Table("User") }
         }
         #expect(userOnly.prepare(.psql).plain == #"FROM "User""#)
 
@@ -471,45 +471,45 @@ struct Design037FormerNegativePositiveTests {
         #expect(emptyOnly.prepare(.psql).plain == "FROM ")
 
         let withOptionalThenJoin = From {
-            Path.Table("User")
-            if true { Path.Table("Profile") }
-            Join(.left, Path.Table("Account"))
+            DB.Table("User")
+            if true { DB.Table("Profile") }
+            Join(.left, DB.Table("Account"))
             On(true)
         }
         #expect(withOptionalThenJoin.prepare(.psql).plain == #"FROM "User", "Profile" LEFT JOIN "Account" ON TRUE"#)
 
         let withoutOptionalThenJoin = From {
-            Path.Table("User")
-            if false { Path.Table("Profile") }
-            Join(.left, Path.Table("Account"))
+            DB.Table("User")
+            if false { DB.Table("Profile") }
+            Join(.left, DB.Table("Account"))
             On(true)
         }
         #expect(withoutOptionalThenJoin.prepare(.psql).plain == #"FROM "User" LEFT JOIN "Account" ON TRUE"#)
 
         let onlyOptionalJoinPresent = From {
-            if true { Path.Table("Profile") }
-            Join(.left, Path.Table("Account"))
+            if true { DB.Table("Profile") }
+            Join(.left, DB.Table("Account"))
             On(true)
         }
         #expect(onlyOptionalJoinPresent.prepare(.psql).plain == #"FROM "Profile" LEFT JOIN "Account" ON TRUE"#)
 
         let onlyOptionalJoinAbsent = From {
-            if false { Path.Table("Profile") }
-            Join(.left, Path.Table("Account"))
+            if false { DB.Table("Profile") }
+            Join(.left, DB.Table("Account"))
             On(true)
         }
         #expect(onlyOptionalJoinAbsent.prepare(.psql).plain == #"FROM LEFT JOIN "Account" ON TRUE"#)
 
         let tables = ["User", "Profile"]
         let loopThenSource = From {
-            for table in tables { Path.Table(table) }
-            Path.Table("Organization")
+            for table in tables { DB.Table(table) }
+            DB.Table("Organization")
         }
         #expect(loopThenSource.prepare(.psql).plain == #"FROM "User", "Profile", "Organization""#)
 
         let loopThenJoin = From {
-            for table in tables { Path.Table(table) }
-            Join(.left, Path.Table("Account"))
+            for table in tables { DB.Table(table) }
+            Join(.left, DB.Table("Account"))
             On(true)
         }
         #expect(loopThenJoin.prepare(.psql).plain == #"FROM "User", "Profile" LEFT JOIN "Account" ON TRUE"#)
@@ -518,15 +518,15 @@ struct Design037FormerNegativePositiveTests {
             if true {
                 Values { Row(1) }
             } else {
-                Path.Table("User")
+                DB.Table("User")
             }
-            Path.Table("Organization")
+            DB.Table("Organization")
         }
         #expect(valuesBranch.prepare(.psql).plain == #"FROM (VALUES (1)), "Organization""#)
 
         let tableBranchThenJoin = From {
-            if true { Path.Table("User") } else { Path.Table("Profile") }
-            Join(.left, Path.Table("Account"))
+            if true { DB.Table("User") } else { DB.Table("Profile") }
+            Join(.left, DB.Table("Account"))
             On(true)
         }
         #expect(tableBranchThenJoin.prepare(.psql).plain == #"FROM "User" LEFT JOIN "Account" ON TRUE"#)

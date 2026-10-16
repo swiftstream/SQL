@@ -7,7 +7,12 @@
 
 public class UpdateTableBuilder<T: Table>: SQLable {
     public var parts: [SQLPart] {
-        let table = Path.Schema(schemaName).table(T.tableName)
+        let table: SQLable
+        if let schemaName {
+            table = schemaName.table(T.tableName)
+        } else {
+            table = DB.Table(T.tableName)
+        }
         var parts: [SQLPart] = []
         if combinedAlterActions.count > 0 {
             var combinedParts = SQL.alter.table[any: table].parts
@@ -52,14 +57,14 @@ public class UpdateTableBuilder<T: Table>: SQLable {
     var standAloneAlterActions: [[SQLPart]] = []
     var otherActions: [[SQLPart]] = []
     var renameTableTo: String?
-    var schemaName: String?
+    var schemaName: DB.Schema?
     
     public init (schema: Schemable.Type? = nil) {
-        self.schemaName = schema?.schema.name ?? (T.self as? Schemable.Type)?.schema.name
+        self.schemaName = schema.flatMap { ModelQualification.resolve($0) } ?? ModelQualification.resolve(T.self)
     }
     
     public init (schema: String) {
-        self.schemaName = schema
+        self.schemaName = DB.Schema(schema)
     }
     
     // MARK: - RENAME TABLE
@@ -473,7 +478,11 @@ public class UpdateTableBuilder<T: Table>: SQLable {
         parts.append(o: .space)
         parts.append(o: .on)
         parts.append(o: .space)
-        parts.append(contentsOf: Path.Schema(schemaName).table(T.tableName).parts)
+        if let schemaName {
+            parts.append(contentsOf: schemaName.table(T.tableName).parts)
+        } else {
+            parts.append(contentsOf: DB.Table(T.tableName).parts)
+        }
         if let type = type {
             parts.append(o: .space)
             parts.append(o: .using)

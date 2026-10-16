@@ -19,14 +19,14 @@ struct ExpressionFrontierQuantifierTests: SwifQLTests {
 
     @Test("Value quantifiers keep exact ANY ALL SOME spelling")
     func exactValueForms() {
-        let score = Path.Column("score")
+        let score = DB.Column("score")
 
         let any = score == ANY(SQLArray.items(1, 2, 3))
         #expect(any.prepare(.psql).plain == #""score" = ANY (ARRAY[1, 2, 3])"#)
 
         let all = score > All(SQLArray.subquery {
-            Select { Path.Column("threshold") }
-            From { Path.Table("limits") }
+            Select { DB.Column("threshold") }
+            From { DB.Table("limits") }
         })
         #expect(
             all.prepare(.psql).plain
@@ -39,19 +39,19 @@ struct ExpressionFrontierQuantifierTests: SwifQLTests {
 
     @Test("Builder quantifiers are nested-statement grammar")
     func builderSubqueries() {
-        let score = Path.Column("score")
+        let score = DB.Column("score")
 
         let any = score == ANY {
-            Select { Path.Column("threshold") }
-            From { Path.Table("limits") }
+            Select { DB.Column("threshold") }
+            From { DB.Table("limits") }
         }
         let all = score > All {
-            Select { Path.Column("threshold") }
-            From { Path.Table("limits") }
+            Select { DB.Column("threshold") }
+            From { DB.Table("limits") }
         }
         let some = score == Some {
-            Select { Path.Column("threshold") }
-            From { Path.Table("limits") }
+            Select { DB.Column("threshold") }
+            From { DB.Table("limits") }
         }
 
         check(
@@ -77,11 +77,11 @@ struct ExpressionFrontierQuantifierTests: SwifQLTests {
     @Test("Formed subquery operand preserves the same grammar")
     func formedSubquery() {
         let formed = SQL {
-            Select { Path.Column("threshold") }
-            From { Path.Table("limits") }
+            Select { DB.Column("threshold") }
+            From { DB.Table("limits") }
         }
 
-        let expression = Path.Column("score") == ANY(formed)
+        let expression = DB.Column("score") == ANY(formed)
 
         check(
             expression,
@@ -93,7 +93,7 @@ struct ExpressionFrontierQuantifierTests: SwifQLTests {
 
     @Test("Duck collection operands stay explicit")
     func duckCollectionOperands() {
-        let score = Path.Column("score")
+        let score = DB.Column("score")
 
         let listAny = score == ANY(Fn.listValue(1, 2, 3))
         let arrayAll = score > All(Fn.arrayValue(1, 2, 3))
@@ -115,8 +115,8 @@ struct ExpressionFrontierQuantifierTests: SwifQLTests {
 
     @Test("SOME is not normalized to ANY")
     func someIdentity() {
-        let expression = Path.Column("score") == Some {
-            Select { Path.Column("threshold") }
+        let expression = DB.Column("score") == Some {
+            Select { DB.Column("threshold") }
         }
 
         let postgres = expression.prepare(.psql).plain
@@ -129,7 +129,7 @@ struct ExpressionFrontierQuantifierTests: SwifQLTests {
         let lhs = SQLableParts(parts: SQLPartUnsafeValue(10))
         let expression = lhs == ANY {
             Select { 20 }
-            Where { Path.Column("value") == 30 }
+            Where { DB.Column("value") == 30 }
         }
 
         let postgres = expression.prepare(.psql)
@@ -193,8 +193,8 @@ struct ExpressionFrontierQuantifierTests: SwifQLTests {
 
     @Test("Legacy instance any and all remain unchanged")
     func legacyCompatibility() {
-        let base = Path.Column("value")
-        let subquery = Select { Path.Column("id") }
+        let base = DB.Column("value")
+        let subquery = Select { DB.Column("id") }
 
         #expect(base.any.prepare(.psql).plain == #""value" ANY"#)
         #expect(
@@ -210,7 +210,7 @@ struct ExpressionFrontierQuantifierTests: SwifQLTests {
         let optional: Any? = "value"
         let values: [Any] = [1, "two"]
         let anyType: Any.Type = Any.self
-        let cast = Path.Column("id") as Any
+        let cast = DB.Column("id") as Any
 
         #expect((erased as? Int) == 1)
         #expect((optional as? String) == "value")

@@ -100,7 +100,7 @@ private func appendCopyOptions(_ options: [CopyOption], to parts: inout [SQLPart
 extension SQLable {
     /// Copies a structural table to an ordinary destination expression.
     public func copy(
-        _ table: Path.Table,
+        _ table: DB.Table,
         to destination: SQLable,
         options: CopyOption...
     ) -> SQLable {
@@ -110,7 +110,7 @@ extension SQLable {
     /// Copies a structural table to an ordinary destination expression using
     /// a caller-owned ordered option collection.
     public func copy(
-        _ table: Path.Table,
+        _ table: DB.Table,
         to destination: SQLable,
         options: [CopyOption]
     ) -> SQLable {
@@ -128,7 +128,7 @@ extension SQLable {
     /// parenthesized source is stable for literal, prepared, and expression
     /// forms and is intentionally independent of preparation mode.
     public func copy(
-        _ table: Path.Table,
+        _ table: DB.Table,
         from source: SQLable,
         options: CopyOption...
     ) -> SQLable {
@@ -138,7 +138,7 @@ extension SQLable {
     /// Copies an ordinary source expression into a structural table using a
     /// caller-owned ordered option collection.
     public func copy(
-        _ table: Path.Table,
+        _ table: DB.Table,
         from source: SQLable,
         options: [CopyOption]
     ) -> SQLable {
@@ -183,8 +183,8 @@ extension SQLable {
     /// Copies all objects or one schema from a structural source catalog to a
     /// structural destination catalog.
     public func copy(
-        fromDatabase source: Path.Catalog,
-        to destination: Path.Catalog,
+        fromDatabase source: DB.Catalog,
+        to destination: DB.Catalog,
         options: CopyOption...
     ) -> SQLable {
         copy(fromDatabase: source, to: destination, options: options)
@@ -192,8 +192,8 @@ extension SQLable {
 
     /// Copies database objects using a caller-owned ordered option collection.
     public func copy(
-        fromDatabase source: Path.Catalog,
-        to destination: Path.Catalog,
+        fromDatabase source: DB.Catalog,
+        to destination: DB.Catalog,
         options: [CopyOption]
     ) -> SQLable {
         var parts = self.parts
