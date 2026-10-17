@@ -273,7 +273,7 @@ This is a documented extension boundary, not current technical debt and not perm
 
 ### DIALECT-015 - Generic terminal structural identifiers
 
-Generic terminal names for structural SQL objects use the value-semantic `Path.Identifier` shape and the `SQLPartIdentifier` part. The path supports unqualified, schema-qualified, and catalog-plus-schema-qualified forms. Qualifiers continue to render through the established catalog and schema hooks; only the terminal object name uses the additive `SQLDialect.identifier(_:)` hook.
+Generic terminal names for structural SQL objects use the value-semantic `DB.Object` shape and the `SQLPartIdentifier` part. `DB.Object` supports unqualified, schema-qualified, and catalog-plus-schema-qualified forms. Qualifiers continue to render through the established catalog and schema hooks; only the terminal object name uses the additive `SQLDialect.identifier(_:)` hook.
 
 The base `SQLDialect.identifier(_:)` implementation returns the supplied name unchanged so legacy downstream subclasses that do not override the new hook remain source-compatible. PostgreSQL and Duck double-quote and double embedded double quotes for this category. MySQL backtick-quotes and doubles embedded backticks. Existing catalog, schema, table, column, alias hooks, and their old output are separate compatibility contracts and must not be reinterpreted through this hook.
 

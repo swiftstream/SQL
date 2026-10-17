@@ -1,17 +1,18 @@
-# SQL 3 Accepted Future Design
+# 3.0.0 Architecture and Accepted Design
 
-This file is the compact future-major overlay for SQL 3.0. It records only the accepted delta from current production architecture. Current source remains SQL 2.x until implementation lands.
+This file is the compact 3.0.0 major-version overlay. It records the accepted delta from the SQL 2.2 baseline and the implementation state of those changes on `master`. The product implementation described here has landed locally; 3.0.0 is not a published stable release until final release closure, tag, CI, public consumer, and publication gates complete.
 
-Load this file for SQL 3 planning, implementation, migration, or audit work. Do not load it for ordinary SQL 2.2 work.
+Load this file for 3.0.0 planning, migration, release-closure, or audit work. Do not load it for ordinary SQL 2.2 work.
 
 ## Status
 
 - Current stable release: SQL 2.2.0.
-- Active development objective: SQL 3.0.0 production implementation.
+- Active development objective: 3.0.0 documentation, whole-candidate validation, and release closure.
 - No standalone SQL 2.3.0 is planned.
-- SQL 3 design is accepted and independently audited.
-- SQL 3 production implementation starts from the accepted foundation sequence below; current source remains the SQL 2.2 baseline until each reviewed implementation checkpoint lands.
-- Bind-aware `SQL.raw` remains open work and moves to a separately bounded SQL 3 wave.
+- The accepted major-version design is independently audited.
+- Foundation, qualified key-path/dialect integration, model/manual structural namespace integration, and bind-aware `SQL.raw` are implemented, independently validated, and locally committed on `master`.
+- Bind-aware raw interpolation is closed as product work: `SQLRaw` plus labeled `\(bind:)` preserves existing `raw(String)`/`String.raw` compatibility and uses the ordinary one-pass preparation/bind pipeline.
+- Current stable release remains SQL 2.2.0 until the 3.0.0 release gates complete.
 
 ## Compatibility posture
 
@@ -31,7 +32,7 @@ Do not add optional schema/catalog bags to every `AnyTable`.
 
 ## Model capabilities
 
-SQL 3 keeps and modernizes `Schemable`:
+`Schemable` now carries structural schema identity:
 
 ```swift
 public protocol Schemable {
@@ -39,9 +40,9 @@ public protocol Schemable {
 }
 ```
 
-The schema is required and non-optional. The historical 2.x implicit `"public"` default is not the SQL 3 contract.
+The schema is required and non-optional. The historical 2.x implicit `"public"` default is not part of the 3.0.0 contract.
 
-SQL 3 adds:
+Catalog-aware models add:
 
 ```swift
 public protocol Catalogable: Schemable {
@@ -57,7 +58,7 @@ Typed `Catalog<T>` is additive. Existing `Schema<T>` remains.
 
 SQL 2.2 remains `Path.*` only. Do not preview or deprecate toward `DB.*` in 2.2.
 
-SQL 3 makes `DB.*` the canonical structural namespace and replaces the broad public `Path.*` namespace at the major boundary while preserving useful type-state.
+`DB.*` is the canonical structural namespace at the 3.0.0 boundary and replaces the broad public `Path.*` namespace while preserving useful type-state.
 
 Accepted semantic progression includes:
 
@@ -75,7 +76,7 @@ DB.Catalog -> required schema state -> table -> column
 
 ## Key-path state
 
-Catalog-aware SQL 3 typed/model/manual key paths use one semantic part:
+Catalog-aware typed/model/manual key paths use one semantic part:
 
 ```swift
 SQLPartKeyPath(
@@ -91,7 +92,7 @@ Do not use a sibling catalog-prefix part for this state.
 
 Public `SQLKeyPathable` gains `catalog: String?` with a default `nil`, so existing downstream conformers do not need a new witness.
 
-Do not add `catalog` to higher-level `Keypathable` in the initial SQL 3 design.
+Do not add `catalog` to higher-level `Keypathable` in the accepted major-version design.
 
 Typed `FormattedKeyPath(T.self, ...)`, `T.manualKeyPath(...)`, and `T.mkp(...)` share capability semantics with ordinary typed table key paths:
 
@@ -123,7 +124,7 @@ Existing open `SQLDialect` hooks remain source-compatible. Additive context/cata
 
 ## Composition and preparation
 
-SQL 3 stays on the existing:
+The implementation stays on the existing:
 
 ```text
 SQLable -> parts -> one preparation traversal -> SQLPrepared
@@ -142,15 +143,16 @@ The deliberate source migrations are:
 1. `Schemable.schemaName: String` / implicit public behavior -> required `Schemable.schema: DB.Schema`.
 2. broad public `Path.*` structural namespace -> canonical `DB.*`.
 
-Migration material must show concrete old/new examples and custom-dialect impact. It must not teach SQL 3 APIs as available before implementation.
+Migration material must show concrete old/new examples and custom-dialect impact. Historical SQL 2.x guidance must not imply that 3.0.0-only APIs existed on those releases; current 3.0.0 release-candidate documentation may teach the landed surface explicitly.
 
-## Implementation order
+## Implementation and closure order
 
-After SQL 2.2 closes:
+After SQL 2.2 closed, the 3.0.0 work proceeded through:
 
-1. DB value/capability/type-state foundation.
-2. Atomic qualified key-path parts and built-in dialect integration.
-3. Model/Decodable/typed-FKP/manual integration plus migration material.
-4. Whole-candidate validation and SQL 3 release closure.
+1. DB value/capability/type-state foundation — implemented and committed.
+2. Atomic qualified key-path parts and built-in dialect integration — implemented and committed.
+3. Model/Decodable/typed-FKP/manual structural namespace integration — implemented and committed.
+4. Bind-aware raw interpolation — implemented and committed as a separately bounded wave.
+5. Stable documentation/managed-skill synchronization, whole-candidate validation, and 3.0.0 release closure — active.
 
-Bind-aware raw interpolation is separate bounded SQL 3 work; it is not a standalone 2.3 release and is not implicitly a prerequisite to every other SQL 3 wave.
+Bind-aware raw interpolation is not a standalone 2.3 release. Its accepted surface uses explicit labeled value interpolation (`\(bind:)`) while ordinary Swift interpolation into the legacy String raw route remains caller-owned SQL text.

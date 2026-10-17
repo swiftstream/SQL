@@ -15,9 +15,9 @@ This is the authoritative architecture router and ID-family map. Every architect
 | `MYSQL-*` | `architecture/dialects/MYSQL.md` | MySQL-specific rendering and compatibility facts |
 | `BUILD-*` | `architecture/BUILDERS_AND_QUERY_PARTS.md` | builders and `QueryParts` materialization |
 
-### Future-major overlay
+### 3.0.0 major-version overlay
 
-`architecture/SQL_3.md` is the compact accepted SQL 3.0 delta from current production architecture. It is not a second owner of existing `DESIGN-*` / `DSL-*` / `DIALECT-*` rules. Load it only for SQL 3 planning, implementation, migration, or audit work; then load the normal base owner(s) only as the concrete task requires. Do not load it for ordinary SQL 2.2 work.
+`architecture/SQL_3.md` is the compact accepted 3.0.0 delta from the 2.2 architecture. It is not a second owner of existing `DESIGN-*` / `DSL-*` / `DIALECT-*` rules. Load it only for 3.0.0 planning, migration, release-closure, or audit work; then load the normal base owner(s) only as the concrete task requires. Do not load it for ordinary SQL 2.2 work.
 
 Do not create placeholder architecture chunks merely for symmetry. Dialect-specific owners are an explicit exception because each supported dialect is an independent, progressively loadable compatibility domain. A compact dialect seed is allowed when it records verified current facts plus a clearly marked future-audit boundary. Never duplicate one rule under both `DIALECT-*` and a dialect-specific ID family.
 

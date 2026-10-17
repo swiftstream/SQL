@@ -111,9 +111,9 @@ Treat these as data:
 - runtime list elements used as values;
 - other untrusted or dynamic values.
 
-Dynamic or untrusted data must stay on the ordinary SQL value/bind path.
+Dynamic or untrusted data must stay on an explicit SQL value/bind path.
 
-Never move runtime data into `SQL.raw(...)` merely to reproduce the original SQL text.
+Prefer the typed/declarative/fluent value path. If the resolved package exposes bind-aware `SQLRaw` and the surrounding SQL must remain an explicit raw structural fragment, runtime **value** data may use labeled `\(bind:)` interpolation. Never use ordinary Swift/String interpolation to splice runtime data into raw SQL text, and never bind identifiers/operators/clauses as data.
 
 A literal embedded in the source SQL may legitimately become a Swift value and therefore a bind. Preserve semantics, not necessarily the original quoting bytes.
 
@@ -139,7 +139,7 @@ On MySQL 8.4, a runtime Swift `String` path remains a bind value and is rejected
 let value = JSONValue(document, SQL.raw("'$.name'"))
 ```
 
-This is a static structural boundary, not a bind-aware raw API. SQL/JSON DEFAULT behavior is owner- and dialect-specific and must not be generalized into arbitrary runtime literalization.
+This example is a static structural boundary. A bind-aware raw API, when available, does not make a placeholder valid in a SQL grammar position that the target database rejects; for example, it does not turn MySQL JSON_VALUE path positions into bindable positions. SQL/JSON DEFAULT behavior is owner- and dialect-specific and must not be generalized into arbitrary runtime literalization.
 
 For PostgreSQL range/multirange SQL, prefer the installed exact PostgreSQL helpers such as `Fn.isEmpty(...)`, `Fn.rangeMerge(...)`, `Fn.rangeAgg { ... }`, and grouped `.op(.custom(...), ...)` forms when source/tests verify the requested construct. Do not project those APIs as portable MySQL or DuckDB range support.
 
@@ -193,7 +193,7 @@ For uncommon or version-sensitive syntax, inspect installed source/tests before 
 
 If no verified declarative helper exists but the fluent/core API supports the construct, return the fluent/core form and say that declarative coverage is unavailable in that resolved version.
 
-If no typed/core representation exists, keep only the unsupported **static structure** in the existing raw structural escape hatch, for example `SQL.raw("...")` or an existing query's `.raw("...")`, and clearly label that boundary.
+If no typed/core representation exists, keep only the unsupported **SQL structure** in the raw structural escape hatch and clearly label that boundary. For fixed structure use the existing String route such as `SQL.raw("...")` or `.raw("...")`. In resolved versions that expose bind-aware `SQLRaw`, legal runtime value positions inside that raw structure may use explicit labeled `\(bind:)`; ordinary Swift interpolation remains caller-owned text.
 
 For resolved versions that expose aggregate argument builders, convert aggregate-local DISTINCT and ORDER BY structurally instead of treating the whole aggregate call as raw SQL. For example:
 
@@ -206,9 +206,9 @@ maps to:
 ```swift
 Fn.arrayAgg {
     Distinct {
-        Path.Column("value")
+        DB.Column("value")
     }
-    OrderBy(Path.Column("value"), .desc)
+    OrderBy(DB.Column("value"), .desc)
 }
 ```
 
@@ -235,12 +235,12 @@ If the consumer already has verified typed model/table metadata, use it.
 
 If no model metadata is available, do not invent types such as `User.table` or `User.$id`.
 
-Use explicit structural identifiers from the installed API, for example:
+Use explicit structural identifiers from the installed API. Current `master` uses the canonical `DB.*` namespace shown below; if the resolved consumer is still on SQL 2.x, follow that installed version's historical `Path.*` surface instead of backporting newer names.
 
 ```swift
-let users = Path.Table("users")
-let id = Path.Column("id")
-let email = Path.Column("email")
+let users = DB.Table("users")
+let id = DB.Column("id")
+let email = DB.Column("email")
 ```
 
 Use table-qualified paths when the SQL requires qualification.
@@ -261,7 +261,7 @@ Assume PostgreSQL and a runtime value:
 
 ```swift
 let email = inputEmail
-let users = Path.Table("users")
+let users = DB.Table("users")
 ```
 
 Canonical declarative form:
@@ -271,8 +271,8 @@ import SQL
 
 let query = SQL {
     Select {
-        Path.Column("id")
-        Path.Column("email").as("email_address")
+        DB.Column("id")
+        DB.Column("email").as("email_address")
     }
 
     From {
@@ -280,10 +280,10 @@ let query = SQL {
     }
 
     Where {
-        Path.Column("email") == email
+        DB.Column("email") == email
     }
 
-    OrderBy(Path.Column("created_at"), .desc)
+    OrderBy(DB.Column("created_at"), .desc)
     Limit(100)
 }
 ```
@@ -295,16 +295,16 @@ import SQL
 
 let query = SQL
     .select(
-        Path.Column("id"),
-        Path.Column("email").as("email_address")
+        DB.Column("id"),
+        DB.Column("email").as("email_address")
     )
     .from(users)
-    .where(Path.Column("email") == email)
-    .orderBy(.desc(Path.Column("created_at")))
+    .where(DB.Column("email") == email)
+    .orderBy(.desc(DB.Column("created_at")))
     .limit(100)
 ```
 
-The runtime `email` stays a value input. Do not interpolate runtime or untrusted data into a raw SQL string merely to reproduce the original text.
+The runtime `email` stays a value input. Prefer the typed predicate shown above. If unsupported surrounding syntax genuinely requires raw SQL and the resolved version exposes `SQLRaw`, keep the SQL structure trusted/static and use only `\(bind: email)` for the runtime value; do not use ordinary String interpolation merely to reproduce the original text.
 
 Prepare and inspect using the target dialect:
 
@@ -326,8 +326,8 @@ For a construct you do not recognize confidently:
 2. search that version's source and tests for the SQL family/operator/clause;
 3. prefer the existing typed/declarative API when it exists;
 4. otherwise prefer existing fluent/core composition;
-5. otherwise use a clearly marked static raw structural boundary;
-6. keep all dynamic data outside raw structure;
+5. otherwise use a clearly marked raw structural boundary;
+6. keep dynamic value data on an explicit bind path — ordinarily through typed SQLable values, or through labeled `\(bind:)` inside raw structure when the resolved version supports `SQLRaw` and the database grammar permits that parameter position;
 7. prepare the result for the target dialect and inspect `.plain` plus `.splitted`.
 
 Do not infer an API from another SQL library, from a newer release, or from the database documentation alone.
@@ -343,13 +343,13 @@ Typical current migration shape:
 ```swift
 // Legacy spelling:
 let oldQuery = SwifQL
-    .select(Path.Column("id"))
-    .from(Path.Table("users"))
+    .select(DB.Column("id"))
+    .from(DB.Table("users"))
 
 // Canonical spelling:
 let query = SQL
-    .select(Path.Column("id"))
-    .from(Path.Table("users"))
+    .select(DB.Column("id"))
+    .from(DB.Table("users"))
 ```
 
 Canonical module import is:
@@ -378,16 +378,16 @@ struct ActiveUserQuery: SQLQuery {
 
     var query: Query {
         Select {
-            Path.Column("id")
-            Path.Column("email")
+            DB.Column("id")
+            DB.Column("email")
         }
 
         From {
-            Path.Table("users")
+            DB.Table("users")
         }
 
         Where {
-            Path.Column("email") == email
+            DB.Column("email") == email
         }
     }
 }
@@ -402,7 +402,7 @@ Before presenting the conversion, verify:
 - the target dialect or assumption is explicit;
 - every Swift symbol exists in the resolved package;
 - statement structure and vendor semantics are preserved;
-- runtime/untrusted values are not interpolated into raw structure;
+- runtime/untrusted values are never spliced through ordinary String interpolation; if raw structure is unavoidable and bind-aware `SQLRaw` exists, only legal value positions use labeled `\(bind:)`;
 - declarative output uses only verified builders;
 - fluent output starts from direct `SQL`, not `SQL.root`;
 - `SQLContent` is used only when concrete typing is needed;
@@ -419,7 +419,7 @@ Stop and inspect source/tests instead of guessing when:
 - the consumer is pinned to an older version;
 - a symbol remembered from another version is not found;
 - declarative and fluent APIs differ materially;
-- the raw fallback would need to contain runtime/untrusted data;
+- raw fallback would need runtime/untrusted data but the resolved package lacks bind-aware `SQLRaw`, or the target grammar does not permit a parameter in that position;
 - exact bind order is unclear;
 - conversion would require modifying the SQL package itself.
 

@@ -9,13 +9,14 @@ This is a navigation aid, not an architecture contract. Use it to locate the sma
 ## Core composition, preparation, and output
 
 - `Sources/SQL/SQLable.swift` — public `SQLable`/`SQLPart`, structural-frame-aware `SQLableParts`, ordinary and observed preparation entrypoints.
-- `Sources/SQL/PreparationObservation.swift` — single shared recursive preparation renderer/collector plus unsafe-value provenance model, complete/unavailable trace state, and zero-SQL observation-marker handling.
+- `Sources/SQL/SQLRaw.swift` — public value-semantic bind-aware raw interpolation carrier; literal chunks remain raw SQL text and explicit labeled `\(bind:)` values lower to ordinary unsafe-value parts.
+- `Sources/SQL/PreparationObservation.swift` — single shared recursive preparation renderer/collector plus unsafe-value provenance, ordered prepared text/bind output segments, complete/unavailable trace state, and zero-SQL observation-marker handling.
 - `Sources/SQL/StructuralComposition.swift` — public structural SQL-region/frame model, open clause owner/kind identities, `structurallyAppending(_:)`.
 - `Sources/SQL/Parts/GroupByPart.swift` — owner-sensitive GROUP BY part.
 - `Sources/SQL/Parts/OrderByPart.swift` — owner-sensitive ORDER BY part.
-- `Sources/SQL/Prepared.swift`
+- `Sources/SQL/Prepared.swift` — immutable prepared result backed by one ordered text/bind segment stream plus original/formatted value collectors; exposes shared `plain` and `splitted` views.
 - `Sources/SQL/SplittedQuery.swift`
-- `Sources/SQL/Formatter.swift`
+- `Sources/SQL/Formatter.swift` — post-processes prepared text/bind provenance into inline or placeholder SQL without scanning caller text for marker strings.
 
 ## Declarative DDL authoring
 
@@ -72,8 +73,8 @@ The first Duck closure is implemented. Representative Duck/closure source owners
 - `Sources/SQL/Attach.swift`
 - `Sources/SQL/Copy.swift`
 - `Sources/SQL/TableFunction.swift`
-- `Sources/SQL/Path/Path+Catalog.swift`
-- `Sources/SQL/Path/Path+Identifier.swift`
+- `Sources/SQL/DB/DB+Catalog.swift`
+- `Sources/SQL/DB/DB+Object.swift`
 - `Sources/SQL/Functions/Functions+Columns.swift`
 - `Sources/SQL/Functions/Functions+List.swift`
 - `Sources/SQL/Functions/Functions+NestedValues.swift`
@@ -144,6 +145,7 @@ The query/bind graph itself remains intentionally non-Sendable where its semanti
 - `Tests/SQLTests/FnTests.swift` - function/date migration coverage.
 - `Tests/SQLTests/EstablishedOperatorCompatibilityTests.swift` - established compatibility guard.
 - `Tests/SQLTests/PreparationObservationTests.swift` - same-render unsafe-value provenance, one-evaluation, fail-closed custom-hook, Duck consumed-value, and built-in compatibility coverage.
+- `Tests/SQLTests/RawInterpolationTests.swift` - bind-aware `SQLRaw` API, old String-route compatibility, cross-dialect placeholder/value ordering, Optional behavior, marker-collision preservation, composition, and one-evaluation coverage.
 - `Tests/SQLTests/PureDateTests.swift` - PureDate semantics and Foundation interop.
 - `Tests/SQLTests/PureTimeTests.swift` - PureTime domain and canonical formatting.
 - `Tests/SQLTests/DateTimeTests.swift` - civil composition and Foundation interop.

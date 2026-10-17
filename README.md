@@ -25,12 +25,25 @@ Generated SQL examples in this README use PostgreSQL `.plain` rendering unless n
 
 Requires Swift 6.3 or newer.
 
+This README documents the unreleased `3.0.0` release candidate currently on `master`, which is ahead of the published `2.2.0` release. Until the `3.0.0` tag is published, preview the API shown below with:
+
+```swift
+.package(
+    url: "https://github.com/SwiftStream/SQL",
+    branch: "master"
+)
+```
+
+For the current stable release instead, use:
+
 ```swift
 .package(
     url: "https://github.com/SwiftStream/SQL",
     from: "2.2.0"
 )
 ```
+
+The `2.2.0` tag does not contain the newer `DB.*` structural namespace or bind-aware raw interpolation shown later in this README.
 
 Then depend on product `SQL`:
 
@@ -117,11 +130,11 @@ Use these references throughout model-backed queries.
 When you do not have a model type, explicit paths are available too:
 
 ```swift
-let users = Path.Table("users")
+let users = DB.Table("users")
 let email = users.column("email")
 ```
 
-Use `Path.Table(...)` and `Path.Column(...)` when you need explicit paths. Model-backed code can keep using `User.table` and type-safe key paths.
+Use `DB.Table(...)` and `DB.Column(...)` when you need explicit paths. Model-backed code can keep using `User.table` and type-safe key paths.
 
 ## Declarative queries
 
@@ -345,6 +358,31 @@ let source = From(
 
 `Query` is the shorthand return type provided by `SQLQuery`.
 
+## Database qualification
+
+Current `master` uses the `DB` namespace for explicit database structure:
+
+```swift
+let catalog: DB.Catalog = "warehouse"
+let schema = DB.Schema(catalog: catalog, name: "analytics")
+let events = schema.table("events")
+let userID = events.column("user", "id")
+```
+
+These values compose as ordinary `SQLable` structure. `DB.Table` and `DB.Column` cover unqualified structural names; `DB.Schema` can carry an optional catalog; `DB.Object` represents a general database object with optional catalog/schema scope.
+
+Models that own qualification expose structural values too:
+
+```swift
+struct Event: Decodable, Table, Catalogable {
+    static let tableName = "events"
+    static let schema = DB.Schema("analytics")
+    static let catalog = DB.Catalog("warehouse")
+}
+```
+
+`Schemable.schema` is required by the 3.0.0 API; the historical implicit `"public"` schema is no longer part of the contract. For `Catalogable` models, the explicit model catalog wins over a catalog embedded in `schema`.
+
 ## Preparation, binds, and execution
 
 SQL builds statements. Your driver executes them.
@@ -371,6 +409,23 @@ let prepared = query.prepare(.psql).splitted
 let sql = prepared.query
 let values = prepared.values
 ```
+
+When you need vendor-specific or otherwise intentionally raw SQL structure but still have runtime values, use the explicit bind-aware raw interpolation route:
+
+```swift
+let id = 42
+let name = "Ada"
+
+let query = SQL.raw(
+    "WHERE id = \(bind: id) AND name = \(bind: name)"
+)
+
+let prepared = query.prepare(.psql).splitted
+// query: "WHERE id = $1 AND name = $2"
+// values: [42, "Ada"]
+```
+
+`\(bind:)` is only for value data. Keep identifiers, operators, clauses, and other SQL structure as explicit trusted SQL text or typed SQL APIs. Existing `SQL.raw(String)`, instance `.raw(String)`, and `String.raw` remain caller-owned SQL text; ordinary Swift interpolation such as `SQL.raw("id = \(id)")` is still ordinary String interpolation and does **not** create a bind. A bind also does not make a parameter legal in a database grammar position that rejects parameters.
 
 That split is the normal boundary for a database driver or integration layer:
 
@@ -686,7 +741,7 @@ let activeCount =
 SQL ARRAY values are composable expressions:
 
 ```swift
-let values = SQLArray.items(1, 2, Path.Column("score"))
+let values = SQLArray.items(1, 2, DB.Column("score"))
 ```
 
 PostgreSQL gives:
@@ -698,7 +753,7 @@ ARRAY[1, 2, "score"]
 Slices keep bracket grammar structural:
 
 ```swift
-let sliceExpression = Path.Column("scores")[slice(2, 4)]
+let sliceExpression = DB.Column("scores")[slice(2, 4)]
 ```
 
 ```sql
@@ -709,7 +764,7 @@ Quantified comparisons keep their exact SQL identity:
 
 ```swift
 let predicate =
-    Path.Column("score") == ANY(SQLArray.items(1, 2, 3))
+    DB.Column("score") == ANY(SQLArray.items(1, 2, 3))
 ```
 
 ```sql
@@ -720,10 +775,10 @@ Aggregate-local ordering stays inside the aggregate call:
 
 ```swift
 let values = Fn.arrayAgg {
-    Path.Column("value")
+    DB.Column("value")
     OrderBy {
-        OrderByItem.desc(Path.Column("createdAt"))
-        OrderByItem.asc(Path.Column("id"))
+        OrderByItem.desc(DB.Column("createdAt"))
+        OrderByItem.asc(DB.Column("id"))
     }
 }
 ```
@@ -739,8 +794,8 @@ array_agg("value" ORDER BY "createdAt" DESC, "id" ASC)
 For an exact binary SQL operator that does not have a useful Swift operator spelling, use `.op(.custom(...), ...)`:
 
 ```swift
-let expression = Path.Column("lhs")
-    .op(.custom("@?"), Path.Column("rhs"))
+let expression = DB.Column("lhs")
+    .op(.custom("@?"), DB.Column("rhs"))
 ```
 
 ```sql
@@ -764,7 +819,7 @@ SQL/JSON owners are intentionally capability-scoped:
 PostgreSQL owns option grammar such as `Passing(...)`, `Returning(...)`, and the supported `ON EMPTY` / `ON ERROR` forms:
 
 ```swift
-let value = JSONValue(Path.Column("payload"), "$.p") {
+let value = JSONValue(DB.Column("payload"), "$.p") {
     Passing(2, as: "limit")
     Returning(.integer)
     DefaultOnEmpty(0)
@@ -780,7 +835,7 @@ For a genuinely fixed trusted MySQL path, make that structure explicit:
 
 ```swift
 let value = JSONValue(
-    Path.Column("payload"),
+    DB.Column("payload"),
     SQL.raw("'$.name'")
 )
 ```

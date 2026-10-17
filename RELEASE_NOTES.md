@@ -1,3 +1,84 @@
+# 3.0.0
+
+Version 3.0.0 is the next major release candidate. It adds first-class catalog/schema/database object qualification, carries that metadata through model/manual key paths and aliases, and adds bind-aware raw SQL value interpolation while preserving the existing single preparation/binding pipeline.
+
+## Database qualification
+
+Database structure can now be expressed with immutable `DB` values:
+
+```swift
+let catalog: DB.Catalog = "warehouse"
+let schema = DB.Schema(catalog: catalog, name: "analytics")
+let events = schema.table("events")
+let userID = events.column("user", "id")
+```
+
+The same values are `SQLable`, so the selected dialect renders their structural identity through the ordinary query pipeline. Qualified columns lower to one key-path part carrying optional catalog/schema/table plus ordered path segments.
+
+Models that own a schema now declare the structural value directly:
+
+```swift
+struct Event: Decodable, Table, Schemable {
+    static let tableName = "events"
+    static let schema = DB.Schema("analytics")
+}
+```
+
+A catalog-aware model can add `Catalogable`:
+
+```swift
+struct Event: Decodable, Table, Catalogable {
+    static let tableName = "events"
+    static let schema = DB.Schema("analytics")
+    static let catalog = DB.Catalog("warehouse")
+}
+```
+
+Model qualification, typed/formatted/manual key paths, source aliases, DDL references, and structural `DB.*` values share this qualification model. Existing custom dialect hooks remain source-compatible.
+
+## Bind-aware raw SQL values
+
+When SQL structure must remain explicit but some positions contain runtime values, bind-aware raw interpolation provides explicit labeled values:
+
+```swift
+let id = 42
+let name = "Ada"
+
+let query = SQL.raw(
+    "WHERE id = \(bind: id) AND name = \(bind: name)"
+)
+```
+
+For PostgreSQL and Duck, the split form preserves existing `$N` placeholders; MySQL preserves `?`. Values remain in strict left-to-right occurrence order, including repeated equal values. Typed `Optional.some` and `.none` remain individual original bind occurrences.
+
+Existing raw String routes remain source-compatible:
+
+```swift
+SQL.raw("CURRENT_TIMESTAMP")
+query.raw("RETURNING id")
+"FOR UPDATE".raw
+```
+
+Ordinary Swift interpolation in those String routes is still caller-owned text and is **not** a bind. Use `\(bind:)` for runtime value data only; identifiers, operators, clauses, and other SQL structure are not bind data. A bind does not make a placeholder legal where a database grammar forbids parameters.
+
+Preparation now retains private text-vs-generated-bind provenance, so caller-owned text that happens to contain marker-like bytes is preserved exactly instead of being rediscovered by string scanning. This does not introduce a second renderer, parser, public AST, or new dialect hook.
+
+## Validation
+
+The accepted bind-aware raw candidate passed:
+
+- Swiftly Apple Swift 6.3.3;
+- Xcode 26.6 / Apple Swift 6.3.3;
+- Xcode 27 / Apple Swift 6.4;
+- 20 focused bind-aware raw tests on all three toolchains;
+- normal-import executable consumer assertions on all three toolchains;
+- 900 tests in 76 suites on all three full-package lanes;
+- independent final product audit with no findings.
+
+SQL 2.2.0 remains the current published stable release until the 3.0.0 release/tag/publication gates complete.
+
+---
+
 # SQL 2.2.0
 
 SQL 2.2.0 expands exact expression authoring, adds first-class SQL/JSON owners, and adds PostgreSQL range/multirange helpers while keeping the existing composition, preparation, and binding model.

@@ -50,7 +50,7 @@ let canonical = SQL
 
 The two call sites use the same canonical implementation identity. The old spelling is only a migration bridge. `SQL` is the public root/function spelling. `SQLContent` is the concrete formed-SQL carrier to name only when explicit concrete typing is genuinely required. Reusable `SQLQuery` conformers normally use their protocol-local `Query` shorthand instead.
 
-The rename does **not** replace the model-backed type-safe DSL. Existing forms such as `\User.$id` and `User.table` remain first-class. `Path.Column(...)` and `Path.Table(...)` remain available as explicit path APIs when you intentionally build SQL without a model type.
+The rename does **not** replace the model-backed type-safe DSL. Existing forms such as `\User.$id` and `User.table` remain first-class. SQL 2.x documentation used `Path.Column(...)` / `Path.Table(...)` for explicit structural paths; 3.0.0 makes `DB.Column(...)` / `DB.Table(...)` the canonical structural namespace. See the 3.0.0 migration section below.
 
 ## Package dependency
 
@@ -67,6 +67,84 @@ The canonical repository is now `https://github.com/SwiftStream/SQL`. SQL 2.0.0 
 ```
 
 If your package still points at `SwifQL/SwifQL`, update the repository URL together with the product and module rename. The old repository/name remains relevant only when consuming historical SwifQL releases.
+
+## 3.0.0: database qualification and structural namespace
+
+Version 3.0.0 makes `DB.*` the canonical structural namespace for explicit database identifiers and changes the model schema capability from a String/default convention to a structural value.
+
+### `Schemable`
+
+The SQL 2.x shape used a schema-name String and historical implicit `"public"` behavior. Version 3.0.0 requires a `DB.Schema` value:
+
+```swift
+// SQL 2.x concept
+// static var schemaName: String { "analytics" }
+
+// 3.0.0
+static let schema = DB.Schema("analytics")
+```
+
+The schema is required and non-optional in the 3.0.0 capability contract.
+
+For catalog-aware models, adopt `Catalogable` and provide an explicit `DB.Catalog`:
+
+```swift
+struct Event: Decodable, Table, Catalogable {
+    static let tableName = "events"
+    static let schema = DB.Schema("analytics")
+    static let catalog = DB.Catalog("warehouse")
+}
+```
+
+For model-default qualification, `Catalogable.catalog` overrides a catalog embedded in `schema`.
+
+### Structural names
+
+For 3.0.0 code, migrate broad structural `Path.*` uses to the `DB` namespace according to meaning:
+
+```swift
+let table = DB.Table("events")
+let column = DB.Column("id")
+let object = DB.Object(schema: DB.Schema("analytics"), name: "events_archive")
+
+let qualified = DB.Schema(
+    catalog: DB.Catalog("warehouse"),
+    name: "analytics"
+)
+.table("events")
+.column("payload", "user", "id")
+```
+
+`DB.Schema` may carry an outer catalog, and schema/table/column progression retains that qualification structurally. `DB.Object` replaces the old general identifier role for optionally catalog/schema-qualified database objects.
+
+Existing downstream `SQLKeyPathable` conformers do not need a new required witness: 3.0.0 adds `catalog: String?` with a default of `nil`. Existing open `SQLDialect` hooks also remain source-compatible; catalog metadata is semantic input, not a promise that every custom or built-in dialect natively supports every catalog-qualified form.
+
+## 3.0.0: bind-aware raw values
+
+Version 3.0.0 adds an additive bind-aware raw interpolation route for cases where part of the statement must remain explicit caller-owned SQL structure:
+
+```swift
+let userID = 42
+let query = SQL.raw("WHERE user_id = \(bind: userID)")
+```
+
+The labeled interpolation is a value bind. It participates in the same preparation traversal and ordered bind collector as ordinary SQL values, so PostgreSQL and Duck use their existing `$N` placeholders while MySQL uses `?`.
+
+Existing raw String APIs remain source-compatible:
+
+```swift
+SQL.raw("CURRENT_TIMESTAMP")
+query.raw("RETURNING id")
+"FOR UPDATE".raw
+```
+
+Ordinary Swift interpolation into those String routes is still caller-owned SQL text, not a safe bind:
+
+```swift
+SQL.raw("WHERE user_id = \(userID)") // String interpolation, not binding
+```
+
+Use `\(bind:)` only for value data. Do not bind identifiers, operators, clauses, or other SQL structure, and remember that binding a value does not make a placeholder valid in a database grammar position that rejects parameters. Typed `Optional.some` and `.none` each remain one bind occurrence rather than being rewritten into a separate SQL literal path.
 
 ## SQL semantics
 

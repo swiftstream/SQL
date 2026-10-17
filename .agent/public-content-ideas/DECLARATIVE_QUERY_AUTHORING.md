@@ -190,7 +190,7 @@ Runtime or untrusted data never moves into raw SQL for textual convenience: it s
 
 ### Publication caveat
 
-This status records the validated source-owned skill in the SQL repository. SQL `2.0.0` and the `SwiftStream/SQL` repository are published; publication of the separate skill to `/Users/imike/Development/SwiftStream/skills` remains an independent external workflow and is not implied here.
+This status records the validated source-owned skill in the SQL repository. SQL `2.0.0` and the `SwiftStream/SQL` repository are published; publication of the separate skill to the independent `SwiftStream/skills` repository remains an external workflow and is not implied here.
 
 ## Reusable parameterized queries with SQLQuery
 
@@ -688,7 +688,7 @@ DESIGN-024 is architecture-approved target UX, not shipped implementation. Final
 
 ## Exact ARRAY authoring without a fake cross-database collection abstraction
 
-Status: implemented in the SQL 2.2.0 development line (EF01-A)
+Status: implemented, validated, and published in stable SQL 2.2.0 (EF01-A)
 Good for: README | website docs | release notes | article
 
 ### Why users should care
@@ -759,7 +759,7 @@ Implemented by EF01-A commit `aa6920f5cb794304418747337b89e7e6a2ae53e4` under co
 
 ## Structural SQL slices stay inside the existing subscript grammar
 
-Status: implemented in the SQL 2.2.0 development line (EF01-B)
+Status: implemented, validated, and published in stable SQL 2.2.0 (EF01-B)
 Good for: README | website docs | release notes | article | short post
 
 ### Why users should care
@@ -813,11 +813,11 @@ Bounds remain ordinary SQL expressions and preserve bind order lower -> upper ->
 
 ### Publication caveat
 
-Implemented on the 2.2.0 development line; not yet part of a published 2.2.0 release.
+Implemented and validated during the SQL 2.2.0 development line; this capability is now published in stable SQL 2.2.0.
 
 ## Quantified comparisons read like SQL without fighting Swift.Any
 
-Status: implemented in the SQL 2.2.0 development line (EF01-C)
+Status: implemented, validated, and published in stable SQL 2.2.0 (EF01-C)
 Good for: README | website docs | release notes | article | short post
 
 The shipped family is intentionally asymmetric. Swift makes bare UpperCamel `Any` and bare `Any.sql(...)` unusable, so SQL `ANY` is the exceptional exact-uppercase callable: `ANY(...)` / `ANY { ... }`. `All` and `Some` have no Swift naming conflict and therefore keep normal SQL UpperCamel callable style. Do not uppercase `ALL` / `SOME` just for visual symmetry, and do not lowercase `all` / `some` merely because `ANY` needs an exception.
@@ -875,11 +875,11 @@ DuckDB v1.5.5 native validation confirms quantified comparison against subquerie
 
 ### Publication caveat
 
-Implemented by EF01-C commit `00081fd2e8494a82179d0b2eac3d86d1ef8b7660` under DESIGN-026. Validation 01 passed 792 tests / 68 suites on Swiftly 6.3.3, Xcode 26.6 / Swift 6.3.3, and Xcode 27 / Swift 6.4; the normal-import consumer passed all six call families alongside ordinary Swift `Any` and legacy `.any/.all`. Independent source/diff audit was CLEAN 125/125. This is implemented on the 2.2.0 development line and is not yet part of a published 2.2.0 release.
+Implemented by EF01-C commit `00081fd2e8494a82179d0b2eac3d86d1ef8b7660` under DESIGN-026. Validation 01 passed 792 tests / 68 suites on Swiftly 6.3.3, Xcode 26.6 / Swift 6.3.3, and Xcode 27 / Swift 6.4; the normal-import consumer passed all six call families alongside ordinary Swift `Any` and legacy `.any/.all`. Independent source/diff audit was CLEAN 125/125. This capability was implemented during the SQL 2.2.0 development line and is now published in stable SQL 2.2.0.
 
 ## Aggregate modifiers stay inside the SQL aggregate they belong to
 
-Status: implemented in source (local commit `4940af0490728d3818f5368235575077cb175a3b`, not yet pushed/released)
+Status: implemented, validated, and published in stable SQL 2.2.0 (EF01-D commit `4940af0490728d3818f5368235575077cb175a3b`)
 Good for: README | website docs | release notes | article | short post
 
 ### Why users should care
@@ -936,21 +936,23 @@ WITHIN GROUP (
 
 ### Publication caveat
 
-Implemented by EF01-D commit `4940af0490728d3818f5368235575077cb175a3b` under DESIGN-025 and DESIGN-036. Correction 02 validation passed 807 tests / 69 suites on Swiftly 6.3.3, Xcode 26.6 / Swift 6.3.3, and Xcode 27 / Swift 6.4; all four local compile-negative grammar fixtures rejected on both Swift 6.3.3 and Swift 6.4, the external normal-import consumer passed all three lanes, the six-of-six managed-skill gate passed with five required updates and one no-change verdict, and the independent source/diff/evidence audit was CLEAN 105/105. This is implemented on the 2.2.0 development line and is not yet part of a published 2.2.0 release. Dialect capability remains exact: PostgreSQL and Duck differ in which aggregate modifiers may be combined with window `OVER`, and MySQL aggregate-local ordering is function-specific rather than a universal PostgreSQL-style aggregate grammar.
+Implemented by EF01-D commit `4940af0490728d3818f5368235575077cb175a3b` under DESIGN-025 and DESIGN-036. Correction 02 validation passed 807 tests / 69 suites on Swiftly 6.3.3, Xcode 26.6 / Swift 6.3.3, and Xcode 27 / Swift 6.4; all four local compile-negative grammar fixtures rejected on both Swift 6.3.3 and Swift 6.4, the external normal-import consumer passed all three lanes, the six-of-six managed-skill gate passed with five required updates and one no-change verdict, and the independent source/diff/evidence audit was CLEAN 105/105. This capability was implemented during the SQL 2.2.0 development line and is now published in stable SQL 2.2.0. Dialect capability remains exact: PostgreSQL and Duck differ in which aggregate modifiers may be combined with window `OVER`, and MySQL aggregate-local ordering is function-specific rather than a universal PostgreSQL-style aggregate grammar.
 
 ## Sibling `JOIN` matches nested `JOIN` (dual form)
 
-Status: implemented in source (local commit `1982790`, not yet pushed/released)
+Status: implemented and published; commit `1982790` is historical provenance, and the capability is carried forward through current stable SQL 2.2.0
 Good for: README | website docs | release notes | article | short post
 
 ### Why users should care
 
 SQL allows `JOIN` either nested inside a `FROM` list or as a following clause. SwifQL accepts both spellings and guarantees the same SQL and bind order — no “preferred form” tax, no second query model.
 
-### Candidate example / visual
+### Historical wave example / visual — not current API guidance
+
+The snippets below preserve the source shape used to explain the original sibling-JOIN wave. They use historical `SwifQL` / `Path.*` spellings and must not be reused as current API examples; current public guidance follows the canonical `SQL` module and `DB.*` structural namespace.
 
 ```swift
-// Sibling form — JOIN follows the completed FROM
+// Historical sibling form — JOIN follows the completed FROM
 SwifQL {
     Select { Path.Table("User").column("id") }
     From { Path.Table("User") }

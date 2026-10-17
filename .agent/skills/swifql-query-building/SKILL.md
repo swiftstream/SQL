@@ -12,10 +12,12 @@ Use this workflow for downstream code that consumes the canonical `SQL` module.
 2. Start from the SQL you intend to express. Keep the SQL DSL call site SQL-shaped rather than inventing a separate abstraction first.
 3. For uncommon or version-sensitive syntax, inspect the installed SQL source and tests before choosing an API. Do not invent symbols from memory.
 4. Classify every input as SQL structure or dynamic data. Identifiers, clauses, operators, and deliberately modeled syntax are structure; ordinary runtime values are data.
-5. Keep ordinary dynamic or untrusted values on SQL's normal value path. Do not interpolate them into raw/custom SQL structure.
+5. Keep ordinary dynamic or untrusted values on SQL's normal value/bind path. If the resolved package version exposes bind-aware `SQLRaw` and explicit raw structure is genuinely required, runtime value data may use labeled `\(bind:)` interpolation inside that raw fragment. Never use ordinary Swift/String interpolation to splice runtime data into raw SQL text, and never bind identifiers or SQL structure as data.
 6. Prepare using the actual target dialect supported by the installed version: `.psql`, `.mysql`, or `.duck` when available there.
 7. Use `.plain` to inspect rendered SQL with values formatted inline. Use `.splitted` for driver-facing SQL plus the ordered bind values.
 8. Stop after construction and preparation. SQL builds SQL; database execution belongs to a driver or an integration layer such as Bridges.
+
+For explicit structural identifiers, current `master` uses the canonical `DB.*` namespace. If the resolved consumer is on SQL 2.x, use the structural API actually present in that version rather than backporting newer names.
 
 For exact symbolic binary SQL, use the installed version's grouped operator escape when available instead of concatenating a raw expression:
 
@@ -37,7 +39,7 @@ Runtime paths remain data. On MySQL 8.4, a runtime Swift `String` path stays bou
 let value = JSONValue(document, SQL.raw("'$.name'"))
 ```
 
-That raw fragment is static caller-owned structure, not runtime interpolation. SQL/JSON option and direct `DefaultOnEmpty` behavior is owner- and dialect-specific; do not generalize it into an arbitrary value-literalization rule.
+That raw fragment is static caller-owned structure. In package versions that expose bind-aware `SQLRaw`, labeled `\(bind:)` is available for runtime **value** positions inside intentionally raw SQL, but it does not make a parameter legal in grammar positions that the target database rejects. SQL/JSON option and direct `DefaultOnEmpty` behavior is owner- and dialect-specific; do not generalize it into an arbitrary value-literalization rule.
 
 For civil and interval data, choose the semantic type that matches the value:
 
@@ -67,12 +69,12 @@ let bindValues = prepared.splitted.values
 
 Use direct `SQL.<fluent>` for fluent construction and `SQL { ... }` for declarative construction. Name `SQLContent` only when an explicit concrete formed-SQL type is required; ordinary query examples should normally rely on inference. For reusable `SQLQuery` conformers, prefer the protocol-local `var query: Query { ... }` spelling rather than writing `SQLContent` at the witness.
 
-The runtime `email` must remain a value/bind input. Do not rewrite it into raw SQL merely to reproduce a desired string.
+The runtime `email` must remain a value/bind input. Prefer the typed DSL value path. If an unsupported surrounding construct genuinely requires raw SQL and the installed version exposes `SQLRaw`, keep the structure trusted/static and interpolate only the value as `\(bind: email)`; never use ordinary String interpolation merely to reproduce a desired SQL string.
 
 For package versions that expose aggregate argument builders, keep aggregate-local grammar inside the function call rather than falling back to raw SQL. The ordinary argument body accepts normal `SQLable` expressions, including existential values such as `SQL.asterisk`. Use `Distinct { ... }` for aggregate DISTINCT ownership, and keep aggregate-local `OrderBy(...)` as a sibling after the ordinary arguments or after `Distinct`, never inside the `Distinct { ... }` body:
 
 ```swift
-let value: any SQLable = Path.Column("value")
+let value: any SQLable = DB.Column("value")
 
 let aggregate = Fn.arrayAgg {
     Distinct {

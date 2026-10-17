@@ -4,11 +4,11 @@ This file is the sole owner of `PREP-*` rules and the detailed preparation/outpu
 
 ## Verified preparation path
 
-`SQLable.prepare(_:)` and `SQLable.prepareObservingUnsafeValues(_:)` enter the same library-owned recursive preparation renderer. It runtime-dispatches known concrete `SQLPart` types, recursively renders the internal scoped-part wrapper with a value-semantic `SQLRenderContext`, shares one ordered values/formatted-values collector across the selected render, assembles one internal query string, and returns prepared output from that traversal. Observation mode augments this same renderer; it is not a second part walk or a parallel SQL-generation path.
+`SQLable.prepare(_:)` and `SQLable.prepareObservingUnsafeValues(_:)` enter the same library-owned recursive preparation renderer. It runtime-dispatches known concrete `SQLPart` types, recursively renders the internal scoped-part wrapper with a value-semantic `SQLRenderContext`, shares one ordered values/formatted-values collector across the selected render, assembles one ordered internal prepared-output segment stream, and returns prepared output from that traversal. The segment stream distinguishes caller/dialect text from generated bound-value positions without introducing a public SQL AST or a second render. Observation mode augments this same renderer; it is not a second part walk or a parallel SQL-generation path.
 
 Nested `SQLPartArray` values and scoped expressions are traversed in order through that same renderer and dialect. Nested values and formatted values preserve the same depth-first order, with dialect array delimiters around assembled array fragments. No semantic-statement layer is part of the current approved preparation foundation; that remains the separately gated escalation boundary defined by `DIALECT-013`.
 
-An unsafe value appends its value to `_values`, appends the dialect-formatted representation to `_formattedValues`, and emits the dialect's internal bind symbol into the query unless the selected dialect path consumes or inlines that occurrence. In observation mode, each unsafe occurrence from the selected render is recorded in traversal order as either `bound(index)` or `notBound`. A bound index is the exact zero-based index assigned by the same ordered collector and therefore corresponds to `SQLPrepared.splitted.values[index]`. A zero-SQL observation marker may record an explicitly consumed unsafe occurrence without changing SQL bytes or adding a bound value. The exact external bind-key syntax is owned by `DIALECT_RENDERING.md`.
+An unsafe value appends its value to `_values`, appends the dialect-formatted representation to `_formattedValues`, and contributes a generated bind-provenance segment unless the selected dialect path consumes or inlines that occurrence. Caller-owned SQL text, including bytes equal to a dialect's historical internal marker spelling, remains an ordinary text segment and is never reclassified as a bind by scanning returned SQL. In observation mode, **when the selected render can prove a complete trace**, each unsafe occurrence is recorded in traversal order as either `bound(index)` or `notBound`. A bound index is the exact zero-based index assigned by the same ordered collector and therefore corresponds to `SQLPrepared.splitted.values[index]`. A zero-SQL observation marker may record an explicitly consumed unsafe occurrence without changing SQL bytes or adding a bound value. When an established semantic/custom hook cannot prove complete observation, preparation preserves its exact SQL/value behavior but returns `.unavailable` provenance rather than inventing per-occurrence dispositions. The exact external bind-key syntax is owned by `DIALECT_RENDERING.md`.
 
 `PureDate`, `PureTime`, `DateTime`, and `Interval` use this ordinary unsafe-value path. Each contributes one value occurrence; the one preparation traversal and ordered collector preserve the actual dynamic Swift value in `splitted.values` while the selected dialect formats the plain representation. They do not introduce a second codec, renderer, or binding pass.
 
@@ -16,9 +16,9 @@ Observed provenance is fail-closed. `SQLUnsafeValueTrace.complete` means every u
 
 Established `Data` composition remains unchanged. Hybrid operator preparation preserves the historical PostgreSQL/MySQL behavior while supported dialects may select an explicit representation key. Duck selects the `.duck` representation; a legacy two-branch hybrid without an explicit Duck representation fails deterministically rather than silently borrowing another dialect branch.
 
-An unknown or unhandled part falls through the current `default: return ""` branch. Adding a concrete part that needs special rendering without dispatch support can therefore silently omit SQL and is a correctness hazard.
+An unknown or unhandled part falls through the current `default: break` branch and contributes no output for that part. Adding a concrete part that needs special rendering without dispatch support can therefore silently omit SQL and is a correctness hazard.
 
-`SQLPrepared.plain` replaces internal bind markers with `_formattedValues`. `SQLPrepared.splitted` replaces those markers with dialect bind keys and returns the resulting query with the original `_values` order. `SQLFormatter` only traverses an assembled query, recognizes the dialect's internal marker, and replaces each marker in traversal order; it does not inspect `SQLPart`, build SQL structure, or understand DSL semantics.
+`SQLPrepared.plain` and `SQLPrepared.splitted` derive from the same prepared segment stream and collector order. `plain` copies text segments byte-for-byte and formats generated bind segments from `_formattedValues`; `splitted` copies the same text segments byte-for-byte, formats generated bind segments with dialect bind keys, and returns the original `_values` order. `SQLFormatter` post-processes this prepared provenance only; it does not inspect `SQLPart`, scan caller-owned text for marker strings, build SQL structure, or understand DSL semantics.
 
 ## Rules
 
@@ -28,15 +28,15 @@ An unknown or unhandled part falls through the current `default: return ""` bran
 
 ### PREP-002 — Dispatch completeness
 
-Every newly used concrete part requiring special rendering must have defined dispatch behavior. The current unknown-part empty-string fallback is a correctness hazard, not a completeness guarantee.
+Every newly used concrete part requiring special rendering must have defined dispatch behavior. The current unknown-part no-op fallback is a correctness hazard, not a completeness guarantee.
 
 ### PREP-003 — Aligned order
 
-Query-marker order, values order, and formatted-values order stay aligned through preparation, formatting, and prepared output.
+Generated bind-segment order, values order, and formatted-values order stay aligned through preparation, formatting, and prepared output.
 
 ### PREP-004 — Formatter boundary
 
-`SQLFormatter` is post-processing only and does not build SQL structure or inspect DSL semantics.
+`SQLFormatter` is post-processing only over prepared text/bind provenance. It does not build SQL structure, inspect DSL semantics, or recover bind positions by scanning caller-owned SQL text.
 
 ### PREP-005 — Shared prepared outputs
 
@@ -65,3 +65,7 @@ Every complete-trace `bound(index)` occurrence denotes the exact zero-based slot
 ### PREP-010 — Completeness is fail-closed
 
 A provenance trace may be `.complete` only when the selected render accounts for every unsafe occurrence that the active rendering path can consume, inline, or bind. When an established semantic/custom rendering hook cannot provide that proof, observed preparation must preserve its exact SQL and value behavior while returning `.unavailable`. Do not infer completeness by rescanning returned SQL, replaying semantic children, or exposing mutable renderer state to extensions.
+
+### PREP-011 — Caller text is never bind provenance
+
+Caller-owned and dialect-emitted text must remain `.text` provenance even when its bytes equal the dialect's historical internal bind marker. Only the renderer's actual bound unsafe-value occurrence may create a generated bind segment. Plain and split formatting must therefore preserve arbitrary marker-like caller text byte-for-byte while replacing only generated bind segments in collector order.

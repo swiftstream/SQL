@@ -112,7 +112,7 @@ Examples of preferred direction:
 
 - `SQL.pivot(...)`, not a database-prefixed PIVOT entry point;
 - `SQL.merge(...)`, not a database-prefixed MERGE entry point;
-- `Path.Catalog(...)` when the concept being modeled is a catalog rather than the database product itself;
+- `DB.Catalog(...)` when the concept being modeled is a catalog rather than the database product itself;
 - clean `Fn.*` / `Type.*` symbols whose exact support is documented/tested per dialect.
 
 A database prefix is appropriate only when the API intentionally exposes database identity, when incompatible same-named concepts cannot share a truthful Swift surface, or for implementation symbols where the distinction materially improves ownership/clarity.
@@ -3216,7 +3216,7 @@ OrderBy(
 )
 ```
 
-The collation operand is structural identifier identity, not a bound string value. A string convenience must lower to identifier parts. Schema-qualified identity must remain representable through `Path.Identifier` or equivalent existing identifier structure.
+The collation operand is structural identifier identity, not a bound string value. A string convenience must lower to identifier parts. Schema- and catalog-qualified identity remains representable through the canonical `DB.Object` structural value.
 
 Builder-oriented `Collate(...)` is a typed postfix continuation attached structurally to the immediately open expression. It must not search rendered tokens or previous receiver history.
 

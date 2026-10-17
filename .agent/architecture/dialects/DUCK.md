@@ -9,7 +9,7 @@ This file intentionally distinguishes:
 - stable Duck API/rendering contracts;
 - verified DuckDB v1.5.5 engine behavior;
 - current implementation state;
-- current published SwifQL 2 pre-release state, known limitations, and deferred families that remain outside the first closure.
+- current SQL package / Duck implementation state, known limitations, and deferred families that remain outside the completed first closure; historical SwifQL pre-release provenance is retained only where explicitly dated/labeled.
 
 Do not duplicate these details in the cross-dialect base owner.
 
@@ -152,7 +152,7 @@ Any direct Duck BLOB/Data binding support must use normal explicit value/binding
 Outside a grammar-specific context, a normal table column path remains qualified:
 
 ```swift
-Path.Table("events").column("payload")
+DB.Table("events").column("payload")
 ```
 
 renders as:
@@ -581,7 +581,7 @@ Duck-compatible.
 | CREATE SEQUENCE, OR REPLACE, IF NOT EXISTS, and schema-qualified persistent names | Supported for the tested exact forms. OR REPLACE resets options/current value; IF NOT EXISTS preserves the existing sequence. OR REPLACE combined with IF NOT EXISTS is a native parser error. |
 | TEMP / TEMPORARY sequence creation and drop | Supported for the tested exact forms. The temporary object is visible in its creating connection and absent from the second connection. Explicitly schema-qualifying a temporary sequence is native-invalid. |
 | START, START WITH, signed nonzero INCREMENT BY, MINVALUE, MAXVALUE, CYCLE, and their NO siblings | Supported as direct value-bearing composition. Sequence metadata is BIGINT-shaped. INCREMENT BY 0 is a native parser error. Positive and negative increments, explicit bounds, no-cycle boundaries, and ascending/descending cycle wrap were verified. |
-| Quoted reserved, Unicode, and embedded-double-quote sequence names | Supported for the tested create/catalog/drop forms through Path.Identifier; the embedded-name nextval string spelling remains DuckDB utility-parser territory. |
+| Quoted reserved, Unicode, and embedded-double-quote sequence names | Supported for the tested create/catalog/drop forms through DB.Object; the embedded-name nextval string spelling remains DuckDB utility-parser territory. |
 | DROP SEQUENCE default, IF EXISTS, RESTRICT, CASCADE, and create/drop rollback | Supported for the tested exact actions. Dependency-sensitive default expressions are classified separately below. |
 | Prepared placeholders in sequence option positions | Native-invalid at prepare/parse time for START, START WITH, INCREMENT BY, MINVALUE, and MAXVALUE. SQL keeps the numeric option methods safe-inline and does not add a dialect-specific runtime rejection. |
 | Int64 upper-bound literals | The tested literal 9223372036854775806 with MAXVALUE 9223372036854775807 is accepted and returns the exact start value. No broader overflow guarantee is claimed. |
@@ -621,14 +621,14 @@ shortcut is a Duck sequence claim.
 | Macro dependency and transaction behavior | Dropping a base macro can leave a derived macro stored but invalid when invoked; the tested create/drop rollback boundaries restore catalog state. |
 | Zero-parameter, untyped, and typed AS TABLE macros; invocation in FROM | Supported for the tested exact forms. Prepared table-macro invocation arguments are native-positive. |
 | Table-macro temporary isolation and drop forms | Temporary table macros are isolated from the second connection. DROP MACRO TABLE and the tested optional-table spelling are native-positive. |
-| Fn.call(Path.Identifier, ...) | Generic unqualified, schema-qualified, and catalog-plus-schema-qualified identifier paths with zero, one, or multiple ordinary arguments are supported as direct function-call composition. The terminal name uses SQLDialect.identifier(_); catalog/schema/table/column/alias hooks remain distinct. |
+| Fn.call(DB.Object, ...) | Generic unqualified, schema-qualified, and catalog-plus-schema-qualified identifier paths with zero, one, or multiple ordinary arguments are supported as direct function-call composition. The terminal name uses SQLDialect.identifier(_); catalog/schema/table/column/alias hooks remain distinct. |
 | Native macro defaults/named calls using := | Native-positive in the pinned runtime, including default and named calls; invalid default ordering is rejected natively. This public abstraction remains intentionally deferred under DUCK-025. |
 | Native macro overload definitions | Native-positive for the tested multi-signature form. Overload infrastructure remains unclaimed/deferred because it would require a structured multi-signature statement representation. |
 
 The canonical public source remains direct composition:
 
 ~~~swift
-let sequence = Path.Identifier(schema: "analytics", name: "order_id_seq")
+let sequence = DB.Object(schema: DB.Schema("analytics"), name: "order_id_seq")
 
 SQL.create.sequence.if.not.exists[any: sequence]
     .start(with: 1)
@@ -642,16 +642,16 @@ SQL.default(Fn.nextVal("order_id_seq"))
 let x = MacroParameter("x")
 let typed = MacroParameter("value", .integer)
 
-SQL.create.macro[any: Path.Identifier("twice")]
+SQL.create.macro[any: DB.Object("twice")]
     .macroParameters(x)
     .as(x * 2)
 
-SQL.create.macro[any: Path.Identifier("rows")]
+SQL.create.macro[any: DB.Object("rows")]
     .macroParameters(typed)
     .as.table
     .select(typed)
 
-Fn.call(Path.Identifier("twice"), 21)
+Fn.call(DB.Object("twice"), 21)
 ~~~
 
 MacroParameter is value-semantic and bind-free. Its ordinary SQLable parts
@@ -668,7 +668,7 @@ escape hatch is part of the claimed surface.
 ### DUCK-028 - ATTACH, DETACH, and USE catalog integration is claimed per exact source/action
 
 The direct catalog-management source is generic SQL composition over the
-existing `Path.Catalog` namespace type. Native validation covers the exact
+existing `DB.Catalog` namespace type. Native validation covers the exact
 source shapes and actions below against DuckDB v1.5.5 (`d8cdaa33fd`, codename
 `Variegata`). It does not make a broad Duck-specific builder or execution API
 claim.
@@ -678,7 +678,7 @@ claim.
 The canonical public source is:
 
 ~~~swift
-let analytics = Path.Catalog("analytics")
+let analytics = DB.Catalog("analytics")
 
 SQL.attach("warehouse.duckdb", as: analytics)
 SQL.attach(
@@ -706,7 +706,7 @@ its parser boundary. Value-bearing ATTACH options remain ordinary bindable
 expressions.
 
 An omitted `as:` lets DuckDB infer the catalog name from the source. An
-explicit `as:` accepts only `Path.Catalog`; the alias is a structural catalog
+explicit `as:` accepts only `DB.Catalog`; the alias is a structural catalog
 name rendered through `SQLDialect.catalogName(_:)` and never becomes a bind.
 Reserved, Unicode, and embedded-double-quote catalog names use the existing
 catalog renderer and path semantics.
@@ -743,7 +743,7 @@ rollback.
 The public source is structural and bind-free:
 
 ~~~swift
-SQL.detach(Path.Catalog("analytics"))
+SQL.detach(DB.Catalog("analytics"))
 ~~~
 
 DuckDB rejects detaching the current default database. Use another catalog
@@ -755,9 +755,9 @@ after detachment retain DuckDB's native binder errors.
 The exact overloads are:
 
 ~~~swift
-SQL.use(Path.Catalog("analytics"))
-SQL.use(Path.Schema("reporting"))
-SQL.use(Path.Catalog("analytics").schema("reporting"))
+SQL.use(DB.Catalog("analytics"))
+SQL.use(DB.Schema("reporting"))
+SQL.use(DB.Catalog("analytics").schema("reporting"))
 ~~~
 
 All three targets are structural and bind-free. The catalog overload changes
@@ -772,7 +772,7 @@ Catalog-qualified object paths continue to use the established generic path
 chain:
 
 ~~~swift
-Path.Catalog("analytics")
+DB.Catalog("analytics")
     .schema("reporting")
     .table("events")
     .column("id")
@@ -796,9 +796,9 @@ execution, file-management, or extension-management claim.
 The canonical public sources are:
 
 ~~~swift
-let events = Path.Table("events")
-let source = Path.Catalog("source")
-let destination = Path.Catalog("destination")
+let events = DB.Table("events")
+let source = DB.Catalog("source")
+let destination = DB.Catalog("destination")
 
 SQL.copy(events, to: "events.parquet", options: .format("parquet"))
 SQL.copy(events, from: "events.csv", options: .format("csv"), .header)
@@ -940,10 +940,10 @@ These facts refine capability claims only. They do not authorize source mutation
 
 ### DUCK-021 - Catalog is a SQL namespace concept, not a Duck-branded user concept
 
-Public catalog qualification should use a clean generic SQL namespace API rather than a Duck-branded user concept. Target direction is:
+Public catalog qualification uses the clean generic `DB` namespace rather than a Duck-branded user concept. The current spelling is:
 
 ```swift
-Path.Catalog("warehouse")
+DB.Catalog("warehouse")
     .schema("reporting")
     .table("events")
 ```

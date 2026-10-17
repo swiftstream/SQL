@@ -14,7 +14,7 @@ Use this workflow when a consuming package or application needs reusable SQL com
 4. If a helper means “continue this query,” use `structurallyAppending(_:)`. Do not assume flattening a framed root is equivalent to continuation.
 5. If the goal is to copy the same structural value rather than continue it, keep that distinction explicit; `SQLableParts(parts: query.parts)` is the normal copy path.
 6. Use public `SQLClauseOwner` and `SQLClauseKind` only when the extension genuinely owns clause semantics. Inspect the installed source/tests for the exact structural pattern before introducing custom ownership.
-7. Keep dynamic or untrusted data out of raw/custom SQL structure. Ordinary scalar arguments should flow through their normal `SQLable` representation and binding path.
+7. Keep dynamic or untrusted data on an explicit value/bind path. Ordinary scalar arguments should normally flow through their normal `SQLable` representation. If the installed package exposes bind-aware `SQLRaw` and a downstream helper truly needs caller-owned raw structure, keep that structure static/trusted and use labeled `\(bind:)` only for value data; never splice runtime values through ordinary String interpolation. The target database grammar must still permit a parameter in that exact position — bind-aware raw does not make placeholders legal where the database requires a literal or another grammar token.
 8. Return composed results to the ordinary `SQLable` preparation pipeline. Do not add a second renderer, formatter, placeholder system, or bind collector.
 9. Validate representative target-dialect output and the exact bind-value order.
 
@@ -24,7 +24,7 @@ For a downstream exact binary operator helper, prefer the installed version's pu
 let expression = lhs.op(.custom("@?"), rhs)
 ```
 
-Here `@?` is a fixed PostgreSQL operator token chosen by the extension author. The `.op` primitive itself is generic, groups the complete binary expression, and keeps `rhs` on the ordinary SQLable preparation/bind path. Do not accept an untrusted runtime operator token, interpolate the RHS into `SQL.raw`, invent punctuation-specific public constants for portability, or construct the internal SELECT postfix-request state directly.
+Here `@?` is a fixed PostgreSQL operator token chosen by the extension author. The `.op` primitive itself is generic, groups the complete binary expression, and keeps `rhs` on the ordinary SQLable preparation/bind path. Prefer that typed path over raw SQL. Do not accept an untrusted runtime operator token, splice the RHS through ordinary String interpolation, invent punctuation-specific public constants for portability, or construct the internal SELECT postfix-request state directly.
 
 A custom scalar function with a runtime argument can stay on the normal value path:
 
@@ -56,9 +56,9 @@ extension Fn {
 }
 
 let aggregate = Fn.weightedSum {
-    Path.Column("value")
-    Path.Column("weight")
-    OrderBy(Path.Column("created_at"), .desc)
+    DB.Column("value")
+    DB.Column("weight")
+    OrderBy(DB.Column("created_at"), .desc)
 }
 ```
 
@@ -76,4 +76,4 @@ For a same-value copy where continuation is not intended:
 let copied = SQLableParts(parts: query.parts)
 ```
 
-Do not convert a dynamic value into a raw operator/string merely to make a custom extension easier to render. If the desired feature appears to require bypassing normal preparation, inspect the installed SQL composition model first; the extension should normally be expressible as `SQLPart` composition that rejoins standard preparation.
+Do not stringify a dynamic value into raw SQL merely to make a custom extension easier to render. If the desired feature appears to require explicit raw structure, inspect the installed SQL composition model first; prefer ordinary `SQLPart` composition. On versions that expose bind-aware `SQLRaw`, a truly raw structural fragment may still keep runtime value data on standard preparation through labeled `\(bind:)`, but identifiers/operators/clauses remain structure rather than bind data, and the target database must permit a parameter in that exact grammar position.
