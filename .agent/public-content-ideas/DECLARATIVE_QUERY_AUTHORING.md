@@ -940,7 +940,7 @@ Implemented by EF01-D commit `4940af0490728d3818f5368235575077cb175a3b` under DE
 
 ## Sibling `JOIN` matches nested `JOIN` (dual form)
 
-Status: implemented and published; commit `1982790` is historical provenance, and the capability is carried forward through current stable SQL 2.2.0
+Status: implemented and published; commit `1982790` is historical provenance, and the capability is carried forward through current stable SQL 3.0.0
 Good for: README | website docs | release notes | article | short post
 
 ### Why users should care

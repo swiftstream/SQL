@@ -10,12 +10,38 @@ Before publication:
 
 - require a clean, independently accepted release candidate on the intended branch;
 - record its exact commit as `RELEASE_SHA`;
-- require public docs/stable governance to describe the intended release truthfully;
+- require the exact candidate tree to pass the release-snapshot documentation gate below;
 - require the future release tag to be absent locally and remotely;
 - preserve unrelated work;
 - never force-push, reset, move an existing release tag, or rewrite published history.
 
 A docs/governance-only release closure does not require rerunning a large local source matrix solely because text changed. It still requires fresh remote CI and consumer evidence for the exact published candidate.
+
+## Release snapshot documentation gate
+
+This gate is part of `RELEASE_SHA` acceptance. It MUST pass before the release branch is published and MUST be rechecked immediately before stable tag creation.
+
+**The exact tree that will be tagged must already contain the final stable-release documentation snapshot.** Tag absence is never a reason to keep release-facing docs in candidate/preview form.
+
+For the exact candidate tree require:
+
+- `README.md` installation uses the target stable release version/tag, never a `master`/branch preview for that release;
+- `README.md`, `RELEASE_NOTES.md`, `CHANGELOG.md`, `MIGRATION.md`, and stable release-state owners under `.agent/**` contain no target-release wording such as `unreleased`, `release candidate`, `until the tag is published`, or `previous version is the current stable release`;
+- `CHANGELOG.md` already contains the target release section;
+- migration/source-transition documentation required by the release is already in the candidate;
+- stable status/roadmap/memory owners are advanced to the target stable line where they own current release state;
+- wording may omit remote facts that cannot exist yet, such as a GitHub Release ID or `published_at`, but MUST NOT substitute temporary pre-release wording for them;
+- a bounded release-doc census/review is recorded against the exact `RELEASE_SHA`.
+
+If any release-facing or stable-state document still requires a post-tag wording correction, the candidate is **NOT tag-ready**. STOP before branch publication/tag creation and fix/review/commit the documentation first.
+
+Post-publication governance may record facts that only become knowable after publication, such as GitHub Release ID/URL/time and the later moving `master` SHA. It MUST NOT be used to repair README installation, changelog, migration, release notes, or current-stable wording that belonged inside the immutable release tag.
+
+If such a release-snapshot defect is discovered after tag publication:
+- record it as a release-process failure;
+- never move/delete/recreate/force-push the published tag to hide it;
+- correct the moving branch with a normal descendant commit;
+- update the workflow so the same class of defect is blocked before future tags.
 
 ## Branch publication
 
@@ -23,6 +49,7 @@ Push the accepted branch normally.
 
 Before tag creation require:
 
+- the release snapshot documentation gate is still PASS on exact `RELEASE_SHA`;
 - local `HEAD == RELEASE_SHA`;
 - `origin/master == RELEASE_SHA`;
 - branch CI identifies exact `RELEASE_SHA`;

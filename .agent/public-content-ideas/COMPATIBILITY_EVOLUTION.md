@@ -241,7 +241,7 @@ Relevant architecture commits:
 
 ### Publication caveat
 
-The compatibility philosophy is stable architecture. Generic semantic render scopes and the clean structural Duck PIVOT implementation first shipped in the `2.0.0-beta.5.0.0` line and are part of the current stable SQL 2.x surface. Public material should distinguish the Swift-5-era 1.5.x line, the historical SwifQL 2 prerelease lineage, the current SQL 2.x line, and later deferred Duck families.
+The compatibility philosophy is stable architecture. Generic semantic render scopes and the clean structural Duck PIVOT implementation first shipped in the `2.0.0-beta.5.0.0` line, became part of the stable SQL 2.x surface, and are carried forward in current stable SQL 3.0.0. Public material should distinguish the Swift-5-era 1.5.x line, the historical SwifQL/SQL 2 line, current SQL 3.x, and later deferred Duck families.
 
 ## Migration story: Structural `parts` Without Rewriting Query Source
 
@@ -286,7 +286,7 @@ This creates a strong explanation of why a breaking internal/public representati
 
 ### Publication caveat
 
-The structural SQL-region frames, historical `SwifQLClauseOwner` / `SwifQLClauseKind` spellings, owner-sensitive clauses, and `structurallyAppending(_:)` were implemented and validated before stable 2.0.0 and remain part of the current SQL 2.x architecture. Current public material should use the canonical SQL identity and treat the SwifQL spellings here as historical migration context.
+The structural SQL-region frames, historical `SwifQLClauseOwner` / `SwifQLClauseKind` spellings, owner-sensitive clauses, and `structurallyAppending(_:)` were implemented and validated before stable 2.0.0, became part of the SQL 2.x architecture, and are carried forward in current SQL 3.x. Current public material should use the canonical SQL identity and treat the SwifQL spellings here as historical migration context.
 
 ## Major identity migration: SwifQL -> SQL
 

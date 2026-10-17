@@ -1,18 +1,19 @@
 # 3.0.0 Architecture and Accepted Design
 
-This file is the compact 3.0.0 major-version overlay. It records the accepted delta from the SQL 2.2 baseline and the implementation state of those changes on `master`. The product implementation described here has landed locally; 3.0.0 is not a published stable release until final release closure, tag, CI, public consumer, and publication gates complete.
+This file is the compact 3.0.0 major-version overlay. It records the accepted delta from the SQL 2.2 baseline and the published implementation state of those changes. SQL 3.0.0 is the current stable release, frozen at immutable release commit `ae6aedb064f882b67488c8fb27ead5bc0a65bc43` and annotated tag `3.0.0`.
 
-Load this file for 3.0.0 planning, migration, release-closure, or audit work. Do not load it for ordinary SQL 2.2 work.
+Load this file for SQL 3.0.0 architecture, migration, compatibility, release-history, or follow-up work. Historical SQL 2.2 behavior remains relevant only where this overlay explicitly contrasts the previous stable line.
 
 ## Status
 
-- Current stable release: SQL 2.2.0.
-- Active development objective: 3.0.0 documentation, whole-candidate validation, and release closure.
-- No standalone SQL 2.3.0 is planned.
+- Current stable release: SQL 3.0.0.
+- Immutable release commit: `ae6aedb064f882b67488c8fb27ead5bc0a65bc43`.
+- Annotated release tag: `3.0.0`, tag object `966136c265d23c59477416ccb710c612fe888511`.
+- Verified GitHub Release: `🗃️ SQL 3.0.0`, release ID `415777873`.
+- No standalone SQL 2.3.0 exists.
 - The accepted major-version design is independently audited.
-- Foundation, qualified key-path/dialect integration, model/manual structural namespace integration, and bind-aware `SQL.raw` are implemented, independently validated, and locally committed on `master`.
+- Foundation, qualified key-path/dialect integration, model/manual structural namespace integration, and bind-aware `SQL.raw` are implemented, validated, and published in 3.0.0.
 - Bind-aware raw interpolation is closed as product work: `SQLRaw` plus labeled `\(bind:)` preserves existing `raw(String)`/`String.raw` compatibility and uses the ordinary one-pass preparation/bind pipeline.
-- Current stable release remains SQL 2.2.0 until the 3.0.0 release gates complete.
 
 ## Compatibility posture
 
@@ -153,6 +154,6 @@ After SQL 2.2 closed, the 3.0.0 work proceeded through:
 2. Atomic qualified key-path parts and built-in dialect integration — implemented and committed.
 3. Model/Decodable/typed-FKP/manual structural namespace integration — implemented and committed.
 4. Bind-aware raw interpolation — implemented and committed as a separately bounded wave.
-5. Stable documentation/managed-skill synchronization, whole-candidate validation, and 3.0.0 release closure — active.
+5. Stable documentation synchronization, whole-candidate validation, exact branch/tag CI, public exact-version consumer validation, and 3.0.0 GitHub Release publication — complete.
 
 Bind-aware raw interpolation is not a standalone 2.3 release. Its accepted surface uses explicit labeled value interpolation (`\(bind:)`) while ordinary Swift interpolation into the legacy String raw route remains caller-owned SQL text.

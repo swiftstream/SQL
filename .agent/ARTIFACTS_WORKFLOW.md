@@ -299,6 +299,7 @@ Keep it updated after continuity-critical transitions, for example:
 - new active planning/implementation/correction artifact sets;
 - important stop/blocker state;
 - the exact next intended action;
+- for active stable-release work: the path to `.agent/RELEASE_PUBLICATION.md`, exact release version/SHA, and explicit PASS/BLOCKED state of the pre-tag release-snapshot documentation gate;
 - session/model/tool constraints that matter to continuation but do not belong as permanent repository governance.
 
 Do not turn it into an ever-growing transcript. Replace/supersede stale continuation instructions with a current snapshot while preserving only historical rationale that remains useful.
@@ -332,7 +333,10 @@ active dependency/database/API facts needed by the work
 current artifact index, if artifacts were recreated
 next intended action
 agent/orchestration rules required for continuation
+for stable-release work: RELEASE_PUBLICATION authority + pre-tag release-snapshot documentation gate state
 ```
+
+For stable-release continuity, `NEW_CHAT.md` MUST NOT schedule release-facing documentation cleanup after tag creation. If the exact candidate still says the target release is unreleased/a candidate, uses a branch preview for installation, omits the target changelog entry, or calls the previous version current stable, the next action is documentation correction/review **before** branch publication/tag creation.
 
 Machine-local paths/tool context IDs are allowed in `NEW_CHAT.md` because it is transient, but stable `.agent/**` documentation must remain portable.
 

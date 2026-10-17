@@ -65,7 +65,7 @@ Architecture checkpoint:
 
 ### Publication caveat
 
-The generic semantic render-scope mechanism and the clean structural Duck PIVOT API first shipped in `2.0.0-beta.5.0.0` and remain part of the current stable SQL 2.x surface. Current public material should use the canonical SQL identity while distinguishing later deferred Duck families from shipped behavior.
+The generic semantic render-scope mechanism and the clean structural Duck PIVOT API first shipped in `2.0.0-beta.5.0.0`, became part of the stable SQL 2.x surface, and are carried forward in current stable SQL 3.0.0. Current public material should use the canonical SQL identity while distinguishing later deferred Duck families from shipped behavior.
 
 ## Semantic render scopes: context travels with the expression
 
@@ -165,7 +165,7 @@ is only a valid PIVOT query when the parent PIVOT construct is actually present.
 
 ### Publication caveat
 
-The generic render-scope mechanism and Duck PIVOT APIs first shipped in `2.0.0-beta.5.0.0` and remain part of the current stable SQL 2.x surface. The SwifQL spellings in this captured example are historical and must be normalized to current SQL names before promotion unless the old spelling is itself the migration subject.
+The generic render-scope mechanism and Duck PIVOT APIs first shipped in `2.0.0-beta.5.0.0`, became part of the stable SQL 2.x surface, and are carried forward in current stable SQL 3.0.0. The SwifQL spellings in this captured example are historical and must be normalized to current SQL names before promotion unless the old spelling is itself the migration subject.
 
 ## Nested expressions keep their grammar context
 
@@ -213,7 +213,7 @@ Architecture decision in `DIALECT_RENDERING.md` DIALECT-008 and Duck-specific qu
 
 ### Publication caveat
 
-The nested-path behavior is implemented, validated, and part of the current stable SQL 2.x surface. Public examples should use the canonical SQL identity and preserve the exact Duck-specific rendering behavior.
+The nested-path behavior is implemented, validated, shipped in the stable SQL 2.x line, and carried forward in current stable SQL 3.0.0. Public examples should use the canonical SQL identity and preserve the exact Duck-specific rendering behavior.
 
 ## Preserve `KeyPathLastPath` without faking a PIVOT-only overload
 
@@ -310,7 +310,7 @@ External-consumer validation established that `SQLDialect.init()` is public, a d
 
 ### Publication caveat
 
-The scope/extensibility architecture first shipped in `2.0.0-beta.5.0.0` together with the approved first-closure Duck statement APIs and remains part of the current stable SQL 2.x surface. Public material should distinguish current SQL 2.x APIs from later deferred Duck families and from the Swift-5-era 1.5.x line.
+The scope/extensibility architecture first shipped in `2.0.0-beta.5.0.0` together with the approved first-closure Duck statement APIs, became part of the stable SQL 2.x surface, and is carried forward in current stable SQL 3.0.0. Public material should distinguish historical SQL 2.x APIs, current SQL 3.x APIs, later deferred Duck families, and the Swift-5-era 1.5.x line.
 
 ## Scopes first, focused semantic statement representation only when grammar truly needs more
 
@@ -400,4 +400,4 @@ Stable Duck facts are owned by `.agent/architecture/dialects/DUCK.md`. Current t
 
 ### Publication caveat
 
-The native engine facts and the redesigned PIVOT API were implemented and validated before stable `2.0.0` and remain relevant to the current SQL 2.x surface. Public content should use current SQL naming, distinguish shipped behavior from later deferred Duck work, and treat the SwifQL spellings in this shard as historical context.
+The native engine facts and the redesigned PIVOT API were implemented and validated before stable `2.0.0`, became part of the SQL 2.x surface, and remain relevant in current SQL 3.x. Public content should use current SQL naming, distinguish shipped behavior from later deferred Duck work, and treat the SwifQL spellings in this shard as historical context.

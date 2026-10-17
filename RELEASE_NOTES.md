@@ -1,6 +1,6 @@
 # 3.0.0
 
-Version 3.0.0 is the next major release candidate. It adds first-class catalog/schema/database object qualification, carries that metadata through model/manual key paths and aliases, and adds bind-aware raw SQL value interpolation while preserving the existing single preparation/binding pipeline.
+Version 3.0.0 is the current stable major release. It adds first-class catalog/schema/database object qualification, carries that metadata through model/manual key paths and aliases, and adds bind-aware raw SQL value interpolation while preserving the existing single preparation/binding pipeline.
 
 ## Database qualification
 
@@ -75,7 +75,7 @@ The accepted bind-aware raw candidate passed:
 - 900 tests in 76 suites on all three full-package lanes;
 - independent final product audit with no findings.
 
-SQL 2.2.0 remains the current published stable release until the 3.0.0 release/tag/publication gates complete.
+SQL 3.0.0 is published as the current stable release. Its immutable `3.0.0` tag remains the release point even as later `master` documentation/governance commits advance the branch.
 
 ---
 

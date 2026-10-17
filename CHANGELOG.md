@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.0.0
+
+- adds first-class `DB.Catalog`, `DB.Schema`, `DB.Table`, `DB.Column`, and `DB.Object` structural qualification, including catalog/schema metadata carried through model-backed and explicit paths
+- makes `DB.*` the canonical structural namespace for SQL 3.0.0 and updates `Schemable` to require an explicit non-optional `DB.Schema`; catalog-aware models can adopt `Catalogable`
+- adds bind-aware `SQLRaw` interpolation through labeled `\(bind:)`, preserving the existing dialect preparation pipeline, placeholder rules, and left-to-right bind ordering
+- keeps existing raw `String` routes source-compatible; ordinary Swift interpolation in those routes remains caller-owned SQL text rather than a bind
+- requires Swift 6.3 or newer
+- see [MIGRATION.md](MIGRATION.md) for SQL 2.x source changes and [RELEASE_NOTES.md](RELEASE_NOTES.md) for examples and detailed behavior
+
 ## 2.2.0
 
 - adds exact `SQLArray` constructors, structural slices, quantified `ANY` / `ALL` / `SOME` comparisons, and aggregate argument builders

@@ -25,25 +25,16 @@ Generated SQL examples in this README use PostgreSQL `.plain` rendering unless n
 
 Requires Swift 6.3 or newer.
 
-This README documents the unreleased `3.0.0` release candidate currently on `master`, which is ahead of the published `2.2.0` release. Until the `3.0.0` tag is published, preview the API shown below with:
+SQL `3.0.0` is the current stable release. Install it with:
 
 ```swift
 .package(
     url: "https://github.com/SwiftStream/SQL",
-    branch: "master"
+    from: "3.0.0"
 )
 ```
 
-For the current stable release instead, use:
-
-```swift
-.package(
-    url: "https://github.com/SwiftStream/SQL",
-    from: "2.2.0"
-)
-```
-
-The `2.2.0` tag does not contain the newer `DB.*` structural namespace or bind-aware raw interpolation shown later in this README.
+For source changes from SQL 2.x, see [MIGRATION.md](MIGRATION.md). For the 3.0.0 feature summary and examples, see [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
 Then depend on product `SQL`:
 
