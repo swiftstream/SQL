@@ -21,59 +21,26 @@ struct SQLFormatter {
         case plain
     }
     
-    func string(from query: String, with formattedValues: [String]) -> String {
-        switch mode {
-        case .binded:
-            return binded(query)
-        case .plain:
-            return plain(query: query, with: formattedValues)
-        }
-    }
-    
-    private func binded(_ query: String, _ valueRetriever: @escaping (Int) -> String) -> String {
-        let rawChars: [Character] = Array(query)
-        var finalChars: [Character] = []
-        var skipTill = -1
-        var b = 1
-        for (i, char) in rawChars.enumerated() {
-            guard skipTill < i else { continue }
-            guard char == dialect.bindSymbol.first else {
-                finalChars.append(char)
-                continue
-            }
-            if dialect.bindSymbol.count > 1 {
-                guard rawChars.count >= i + dialect.bindSymbol.count else { continue }
-                for n in 1...dialect.bindSymbol.count - 1 {
-                    guard rawChars[i + n] == Array(dialect.bindSymbol)[n] else { continue }
+    func string(from segments: [SQLPreparedOutputSegment], with formattedValues: [String]) -> String {
+        var output: [String] = []
+        output.reserveCapacity(segments.count)
+        var bindIndex = 0
+
+        for segment in segments {
+            switch segment {
+            case let .text(text):
+                output.append(text)
+            case .bind:
+                switch mode {
+                case .binded:
+                    output.append(dialect.bindKey(bindIndex + 1))
+                case .plain:
+                    output.append(formattedValues[bindIndex])
                 }
-                skipTill = i + dialect.bindSymbol.count - 1
+                bindIndex += 1
             }
-            finalChars.append(contentsOf: Array(valueRetriever(b)))
-            b = b + 1
-        }
-        return String(finalChars)
-    }
-    
-    private func binded(_ query: String) -> String {
-        binded(query) { self.dialect.bindKey($0) }
-    }
-    
-    private func plain(query: String, with formattedValues: [String]) -> String {
-        binded(query) { formattedValues[$0 - 1] }
-    }
-}
-
-extension String {
-    fileprivate func split(by length: Int) -> [String] {
-        var startIndex = self.startIndex
-        var results = [Substring]()
-
-        while startIndex < self.endIndex {
-            let endIndex = self.index(startIndex, offsetBy: length, limitedBy: self.endIndex) ?? self.endIndex
-            results.append(self[startIndex..<endIndex])
-            startIndex = endIndex
         }
 
-        return results.map { String($0) }
+        return output.joined()
     }
 }

@@ -16,11 +16,25 @@ extension SQLable {
         parts.append(o: .custom(anything))
         return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
     }
+
+    public func raw(_ anything: SQLRaw) -> SQLable {
+        var parts = self.parts
+        parts.appendSpaceIfNeeded()
+        parts.append(contentsOf: anything.parts)
+        return _SQLStructuralComposition.reconstructingSequentialContinuation(from: self, resultParts: parts)
+    }
     
     public static func raw(_ anything: String) -> SQLable {
         var parts: [SQLPart] = []
         parts.append(o: .space)
         parts.append(o: .custom(anything))
+        return SQLableParts(parts: parts)
+    }
+
+    public static func raw(_ anything: SQLRaw) -> SQLable {
+        var parts: [SQLPart] = []
+        parts.append(o: .space)
+        parts.append(contentsOf: anything.parts)
         return SQLableParts(parts: parts)
     }
 }

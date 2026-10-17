@@ -71,6 +71,23 @@ enum SQLPreparationMode {
     case observeUnsafeValues
 }
 
+enum SQLPreparedOutputSegment {
+    case text(String)
+    case bind(marker: String)
+}
+
+struct SQLPreparedOutput {
+    private(set) var segments: [SQLPreparedOutputSegment] = []
+
+    mutating func append(text: String) {
+        segments.append(.text(text))
+    }
+
+    mutating func append(bindMarker marker: String) {
+        segments.append(.bind(marker: marker))
+    }
+}
+
 struct SQLPreparationResult {
     let prepared: SQLPrepared
     let unsafeValueTrace: SQLUnsafeValueTrace
@@ -91,10 +108,11 @@ final class SQLPreparationRenderer {
     }
 
     func prepare(_ parts: [SQLPart]) -> SQLPreparationResult {
-        let query = render(parts, context: SQLRenderContext())
+        var output = SQLPreparedOutput()
+        render(parts, context: SQLRenderContext(), into: &output)
         let prepared = SQLPrepared(
             dialect: dialect,
-            query: query,
+            segments: output.segments,
             values: values,
             formattedValues: formattedValues
         )
@@ -110,44 +128,49 @@ final class SQLPreparationRenderer {
         return .init(prepared: prepared, unsafeValueTrace: trace)
     }
 
-    private func render(_ parts: [SQLPart], context: SQLRenderContext) -> String {
-        parts.map { part in
+    private func render(
+        _ parts: [SQLPart],
+        context: SQLRenderContext,
+        into output: inout SQLPreparedOutput
+    ) {
+        for part in parts {
             if let scopedPart = part as? SQLScopedPart {
-                return render(
+                render(
                     scopedPart.parts,
-                    context: context.appending(scopedPart.scope)
+                    context: context.appending(scopedPart.scope),
+                    into: &output
                 )
+                continue
             }
 
             if let observedUnsafe = part as? SQLUnsafeValueObservationPart {
-                guard mode == .observeUnsafeValues else {
-                    return ""
-                }
+                guard mode == .observeUnsafeValues else { continue }
                 unsafeValueOccurrences.append(
                     .init(
                         value: observedUnsafe.unsafeValue.unsafeValue,
                         disposition: .notBound
                     )
                 )
-                return ""
+                continue
             }
 
             switch part {
             case let v as SQLExpressionSubscriptPart:
                 // Render each child once so observation and prepared values
                 // remain in base-then-item order for every dialect.
-                let base = render(v.baseParts, context: context)
-                let item = render(v.itemParts, context: context)
-                let groupedBase: String
                 switch dialect.subscriptBaseGrouping(v) {
                 case .direct:
-                    groupedBase = base
+                    render(v.baseParts, context: context, into: &output)
                 case .parenthesized:
-                    groupedBase = "(" + base + ")"
+                    output.append(text: "(")
+                    render(v.baseParts, context: context, into: &output)
+                    output.append(text: ")")
                 }
-                return groupedBase + "[" + item + "]"
+                output.append(text: "[")
+                render(v.itemParts, context: context, into: &output)
+                output.append(text: "]")
             case let v as SQLStructuralFramePart:
-                return render(v.children, context: SQLRenderContext())
+                render(v.children, context: SQLRenderContext(), into: &output)
             case let v as SQLGroupByPart:
                 let childContext = v.owner.map {
                     context.appending($0.renderScope(for: .groupBy))
@@ -164,7 +187,7 @@ final class SQLPreparationRenderer {
                     }
                     clauseParts.append(contentsOf: field)
                 }
-                return render(clauseParts, context: childContext)
+                render(clauseParts, context: childContext, into: &output)
             case let v as SQLOrderByPart:
                 let childContext = v.owner.map {
                     context.appending($0.renderScope(for: .orderBy))
@@ -181,30 +204,32 @@ final class SQLPreparationRenderer {
                     }
                     clauseParts.append(contentsOf: item)
                 }
-                return render(clauseParts, context: childContext)
+                render(clauseParts, context: childContext, into: &output)
             case let v as SQLPartArray:
                 guard !v.elements.isEmpty else {
-                    return dialect.emptyArrayStart + dialect.emptyArrayEnd
+                    output.append(text: dialect.emptyArrayStart + dialect.emptyArrayEnd)
+                    continue
                 }
-                var string = dialect.arrayStart
+                output.append(text: dialect.arrayStart)
                 for (i, element) in v.elements.enumerated() {
                     if i > 0 {
-                        string += dialect.arraySeparator
+                        output.append(text: dialect.arraySeparator)
                     }
-                    string += render(element.parts, context: context)
+                    render(element.parts, context: context, into: &output)
                 }
-                return string + dialect.arrayEnd
+                output.append(text: dialect.arrayEnd)
             case let v as SQLPartBool:
-                return dialect.boolValue(v.value)
+                output.append(text: dialect.boolValue(v.value))
             case is SQLPartNull:
-                return dialect.null
+                output.append(text: dialect.null)
             case let v as SQLPartCatalog:
-                return dialect.catalogName(v.name)
+                output.append(text: dialect.catalogName(v.name))
             case let v as SQLPartIdentifier:
-                return dialect.identifier(v.name)
+                output.append(text: dialect.identifier(v.name))
             case let v as SQLPartSchema:
-                guard let schema = v.schema else { return "" }
-                return dialect.schemaName(schema)
+                if let schema = v.schema {
+                    output.append(text: dialect.schemaName(schema))
+                }
             case let v as SQLPartTable:
                 var relation = ""
                 if let catalog = v.catalog {
@@ -213,7 +238,7 @@ final class SQLPreparationRenderer {
                 if let schema = v.schema {
                     relation += dialect.schemaName(schema) + "."
                 }
-                return relation + dialect.tableName(v.table)
+                output.append(text: relation + dialect.tableName(v.table))
             case let v as SQLPartTableWithAlias:
                 var relation = ""
                 if let catalog = v.catalog {
@@ -222,15 +247,15 @@ final class SQLPreparationRenderer {
                 if let schema = v.schema {
                     relation += dialect.schemaName(schema) + "."
                 }
-                return relation + dialect.tableName(v.table, andAlias: v.alias)
+                output.append(text: relation + dialect.tableName(v.table, andAlias: v.alias))
             case let v as SQLPartAlias:
-                return dialect.alias(v.alias)
+                output.append(text: dialect.alias(v.alias))
             case let v as SQLPartKeyPath:
-                return dialect.keyPath(v, context: context)
+                output.append(text: dialect.keyPath(v, context: context))
             case let v as SQLPartSampling:
                 switch mode {
                 case .legacy:
-                    return render(dialect.sampling(v), context: context)
+                    render(dialect.sampling(v), context: context, into: &output)
                 case .observeUnsafeValues:
                     let observed = dialect.sampling(
                         v,
@@ -239,12 +264,12 @@ final class SQLPreparationRenderer {
                     if !observed.isComplete {
                         traceIsComplete = false
                     }
-                    return render(observed.parts, context: context)
+                    render(observed.parts, context: context, into: &output)
                 }
             case let v as SQLPartLambda:
                 switch mode {
                 case .legacy:
-                    return render(dialect.lambda(v), context: context)
+                    render(dialect.lambda(v), context: context, into: &output)
                 case .observeUnsafeValues:
                     let observed = dialect.lambda(
                         v,
@@ -253,18 +278,18 @@ final class SQLPreparationRenderer {
                     if !observed.isComplete {
                         traceIsComplete = false
                     }
-                    return render(observed.parts, context: context)
+                    render(observed.parts, context: context, into: &output)
                 }
             case let v as SQLPartType:
-                return dialect.type(v.type)
+                output.append(text: dialect.type(v.type))
             case let v as SQLPartColumn:
-                return dialect.column(v.name)
+                output.append(text: dialect.column(v.name))
             case let v as SQLStarExcludePart:
-                return render(dialect.starExcludeParts(v), context: context)
+                render(dialect.starExcludeParts(v), context: context, into: &output)
             case let v as SQLStarReplacePart:
                 switch mode {
                 case .legacy:
-                    return render(dialect.starReplaceParts(v), context: context)
+                    render(dialect.starReplaceParts(v), context: context, into: &output)
                 case .observeUnsafeValues:
                     let observed = dialect.starReplaceParts(
                         v,
@@ -273,18 +298,18 @@ final class SQLPreparationRenderer {
                     if !observed.isComplete {
                         traceIsComplete = false
                     }
-                    return render(observed.parts, context: context)
+                    render(observed.parts, context: context, into: &output)
                 }
             case let v as SQLStarRenamePart:
-                return render(dialect.starRenameParts(v), context: context)
+                render(dialect.starRenameParts(v), context: context, into: &output)
             case let v as SQLPartOperator:
-                return v._value
+                output.append(text: v._value)
             case let v as SQLHybridOperator:
-                return dialect.hybridOperator(v)._value
+                output.append(text: dialect.hybridOperator(v)._value)
             case let v as SQLPartDate:
-                return dialect.date(v.date)
+                output.append(text: dialect.date(v.date))
             case let v as SQLPartSafeValue:
-                return dialect.safeValue(v.safeValue)
+                output.append(text: dialect.safeValue(v.safeValue))
             case let v as SQLPartUnsafeValue:
                 if let inlineValue = dialect.inlineUnsafeValue(v.unsafeValue, context: context) {
                     if mode == .observeUnsafeValues {
@@ -292,7 +317,8 @@ final class SQLPreparationRenderer {
                             .init(value: v.unsafeValue, disposition: .notBound)
                         )
                     }
-                    return inlineValue
+                    output.append(text: inlineValue)
+                    continue
                 }
 
                 let index = values.count
@@ -303,10 +329,10 @@ final class SQLPreparationRenderer {
                 }
                 values.append(v.unsafeValue)
                 formattedValues.append(dialect.safeValue(v.unsafeValue))
-                return dialect.bindSymbol
+                output.append(bindMarker: dialect.bindSymbol)
             default:
-                return ""
+                break
             }
-        }.joined(separator: "")
+        }
     }
 }

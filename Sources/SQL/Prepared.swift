@@ -9,27 +9,30 @@ import Foundation
 
 public struct SQLPrepared {
     var _dialect: SQLDialect
-    var _query: String
+    var _segments: [SQLPreparedOutputSegment]
     var _values: [Encodable]
     var _formattedValues: [String]
     
-    init (dialect: SQLDialect, query: String, values: [Encodable], formattedValues: [String]) {
+    init (
+        dialect: SQLDialect,
+        segments: [SQLPreparedOutputSegment],
+        values: [Encodable],
+        formattedValues: [String]
+    ) {
         _dialect = dialect
-        _query = query
+        _segments = segments
         _values = values
         _formattedValues = formattedValues
     }
     
     public var plain: String {
-        guard _values.count > 0 else { return _query }
         let formatter = SQLFormatter(_dialect, mode: .plain)
-        return formatter.string(from: _query, with: _formattedValues)
+        return formatter.string(from: _segments, with: _formattedValues)
     }
     
     public var splitted: SQLSplittedQuery {
-        guard _values.count > 0 else { return .init(query: _query, values: _values) }
         let formatter = SQLFormatter(_dialect, mode: .binded)
-        let result = formatter.string(from: _query, with: _formattedValues)
+        let result = formatter.string(from: _segments, with: _formattedValues)
         return .init(query: result, values: _values)
     }
 }
