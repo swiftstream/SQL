@@ -36,7 +36,8 @@ At minimum, before the final response the local agent must inspect the locations
 
 - task/review/probe subdirectories inside `.artifacts/**`;
 - `/tmp` and platform-equivalent temporary directories when the prompt created work there;
-- disposable external workspaces, package clones, compiler/build trees, index stores, caches, temporary virtual environments, fixture repositories, generated dependency checkouts, and similar prompt-local machine output.
+- disposable external workspaces, package clones, compiler/build trees, index stores, caches, temporary virtual environments, fixture repositories, generated dependency checkouts, and similar prompt-local machine output;
+- agent-created temporary Git branches, backup/rewrite refs, linked worktrees, and detached worktrees once their recovery purpose is safely superseded. Git-resource ownership and safety are governed by `COMMIT_RULES.md`; never delete pre-existing/user Git resources as cleanup.
 
 Preserve only the smallest textual evidence/manifests/logs intentionally required by the active artifact contract. Do not preserve large build products merely because they were generated during validation.
 

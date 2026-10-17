@@ -27,3 +27,4 @@ These are the repository-wide invariants. Detailed architecture contracts belong
 - Synchronize documentation selectively when an owned durable fact changes; do not duplicate another owner's contract.
 - Stable repository authority lives in `.agent/`. Research, plans, evidence, task decomposition, and implementation history remain transient in `.artifacts/`.
 - Reports and agent claims are evidence inputs, not proof; the actual repository state must be audited.
+- Agent-created temporary Git branches, backup/rewrite refs, and linked/detached worktrees are prompt/task-scoped disposable state. Remove them before terminal completion once their recovery purpose is safely superseded by verified durable state/evidence; never delete pre-existing or user-owned Git resources. If safe removal cannot yet be proven, the terminal report must name the retained resource and its cleanup condition instead of silently leaving it behind.
