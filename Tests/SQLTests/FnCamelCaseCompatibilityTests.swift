@@ -106,7 +106,7 @@ struct FnCamelCaseCompatibilityTests {
         expectEquivalent(
             Fn.dateFormat(CarBrands.column("createdAt"), "%y-%m"),
             Fn.date_format(CarBrands.column("createdAt"), "%y-%m"),
-            expected: "SELECT DATE_FORMAT(CarBrands.createdAt, '%y-%m')",
+            expected: "SELECT DATE_FORMAT(car_brands.createdAt, '%y-%m')",
             dialect: .mysql
         )
     }

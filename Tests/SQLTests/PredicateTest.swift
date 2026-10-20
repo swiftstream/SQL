@@ -11,9 +11,9 @@ struct PredicateTests: SwifQLTests {
     func greaterThan() {
         check(
             SwifQL.where(\CarBrandReferences.$score > 10),
-            .psql(#"WHERE "CarBrandReferences"."score" > 10"#),
-            .mysql("WHERE CarBrandReferences.score > 10"),
-            .duck(#"WHERE "CarBrandReferences"."score" > 10"#)
+            .psql(#"WHERE "car_brand_references"."score" > 10"#),
+            .mysql("WHERE car_brand_references.score > 10"),
+            .duck(#"WHERE "car_brand_references"."score" > 10"#)
         )
     }
     
@@ -23,9 +23,9 @@ struct PredicateTests: SwifQLTests {
     func lessThan() {
         check(
             SwifQL.where(\CarBrandReferences.$score < 10),
-            .psql(#"WHERE "CarBrandReferences"."score" < 10"#),
-            .mysql("WHERE CarBrandReferences.score < 10"),
-            .duck(#"WHERE "CarBrandReferences"."score" < 10"#)
+            .psql(#"WHERE "car_brand_references"."score" < 10"#),
+            .mysql("WHERE car_brand_references.score < 10"),
+            .duck(#"WHERE "car_brand_references"."score" < 10"#)
         )
     }
     
@@ -35,9 +35,9 @@ struct PredicateTests: SwifQLTests {
     func greaterThanOrEqual() {
         check(
             SwifQL.where(\CarBrandReferences.$score >= 10),
-            .psql(#"WHERE "CarBrandReferences"."score" >= 10"#),
-            .mysql("WHERE CarBrandReferences.score >= 10"),
-            .duck(#"WHERE "CarBrandReferences"."score" >= 10"#)
+            .psql(#"WHERE "car_brand_references"."score" >= 10"#),
+            .mysql("WHERE car_brand_references.score >= 10"),
+            .duck(#"WHERE "car_brand_references"."score" >= 10"#)
         )
     }
     
@@ -47,9 +47,9 @@ struct PredicateTests: SwifQLTests {
     func lessThanOrEqual() {
         check(
             SwifQL.where(\CarBrandReferences.$score <= 10),
-            .psql(#"WHERE "CarBrandReferences"."score" <= 10"#),
-            .mysql("WHERE CarBrandReferences.score <= 10"),
-            .duck(#"WHERE "CarBrandReferences"."score" <= 10"#)
+            .psql(#"WHERE "car_brand_references"."score" <= 10"#),
+            .mysql("WHERE car_brand_references.score <= 10"),
+            .duck(#"WHERE "car_brand_references"."score" <= 10"#)
         )
     }
     
@@ -59,9 +59,9 @@ struct PredicateTests: SwifQLTests {
     func equalNumber() {
         check(
             SwifQL.where(\CarBrandReferences.$score == 10),
-            .psql(#"WHERE "CarBrandReferences"."score" = 10"#),
-            .mysql("WHERE CarBrandReferences.score = 10"),
-            .duck(#"WHERE "CarBrandReferences"."score" = 10"#)
+            .psql(#"WHERE "car_brand_references"."score" = 10"#),
+            .mysql("WHERE car_brand_references.score = 10"),
+            .duck(#"WHERE "car_brand_references"."score" = 10"#)
         )
     }
     
@@ -71,9 +71,9 @@ struct PredicateTests: SwifQLTests {
     func equalString() {
         check(
             SwifQL.where(\CarBrandReferences.$model == "x001"),
-            .psql(#"WHERE "CarBrandReferences"."model" = 'x001'"#),
-            .mysql("WHERE CarBrandReferences.model = 'x001'"),
-            .duck(#"WHERE "CarBrandReferences"."model" = 'x001'"#)
+            .psql(#"WHERE "car_brand_references"."model" = 'x001'"#),
+            .mysql("WHERE car_brand_references.model = 'x001'"),
+            .duck(#"WHERE "car_brand_references"."model" = 'x001'"#)
         )
     }
     
@@ -83,9 +83,9 @@ struct PredicateTests: SwifQLTests {
     func equalBoolean() {
         check(
             SwifQL.where(\CarBrandReferences.$available == true),
-            .psql(#"WHERE "CarBrandReferences"."available" = TRUE"#),
-            .mysql("WHERE CarBrandReferences.available = TRUE"),
-            .duck(#"WHERE "CarBrandReferences"."available" = TRUE"#)
+            .psql(#"WHERE "car_brand_references"."available" = TRUE"#),
+            .mysql("WHERE car_brand_references.available = TRUE"),
+            .duck(#"WHERE "car_brand_references"."available" = TRUE"#)
         )
     }
 
@@ -95,9 +95,9 @@ struct PredicateTests: SwifQLTests {
     func equalAType() {
         check(
             SwifQL.where(\CarBrandReferences.$mainGers == GearboxType.manual),
-            .psql(#"WHERE "CarBrandReferences"."mainGers" = 'manual'"#),
-            .mysql("WHERE CarBrandReferences.mainGers = 'manual'"),
-            .duck(#"WHERE "CarBrandReferences"."mainGers" = 'manual'"#)
+            .psql(#"WHERE "car_brand_references"."mainGers" = 'manual'"#),
+            .mysql("WHERE car_brand_references.mainGers = 'manual'"),
+            .duck(#"WHERE "car_brand_references"."mainGers" = 'manual'"#)
         )
     }
     
@@ -107,9 +107,9 @@ struct PredicateTests: SwifQLTests {
     func equalNULL() {
         check(
             SwifQL.where(\CarBrandReferences.$model == nil),
-            .psql(#"WHERE "CarBrandReferences"."model" IS NULL"#),
-            .mysql("WHERE CarBrandReferences.model IS NULL"),
-            .duck(#"WHERE "CarBrandReferences"."model" IS NULL"#)
+            .psql(#"WHERE "car_brand_references"."model" IS NULL"#),
+            .mysql("WHERE car_brand_references.model IS NULL"),
+            .duck(#"WHERE "car_brand_references"."model" IS NULL"#)
         )
     }
     
@@ -119,9 +119,9 @@ struct PredicateTests: SwifQLTests {
     func notEqualNumber() {
         check(
             SwifQL.where(\CarBrandReferences.$score != 10),
-            .psql(#"WHERE "CarBrandReferences"."score" != 10"#),
-            .mysql("WHERE CarBrandReferences.score != 10"),
-            .duck(#"WHERE "CarBrandReferences"."score" != 10"#)
+            .psql(#"WHERE "car_brand_references"."score" != 10"#),
+            .mysql("WHERE car_brand_references.score != 10"),
+            .duck(#"WHERE "car_brand_references"."score" != 10"#)
         )
     }
     
@@ -131,9 +131,9 @@ struct PredicateTests: SwifQLTests {
     func notEqualString() {
         check(
             SwifQL.where(\CarBrandReferences.$model != "x001"),
-            .psql(#"WHERE "CarBrandReferences"."model" != 'x001'"#),
-            .mysql("WHERE CarBrandReferences.model != 'x001'"),
-            .duck(#"WHERE "CarBrandReferences"."model" != 'x001'"#)
+            .psql(#"WHERE "car_brand_references"."model" != 'x001'"#),
+            .mysql("WHERE car_brand_references.model != 'x001'"),
+            .duck(#"WHERE "car_brand_references"."model" != 'x001'"#)
         )
     }
     
@@ -143,9 +143,9 @@ struct PredicateTests: SwifQLTests {
     func notEqualBoolean() {
         check(
             SwifQL.where(\CarBrandReferences.$available != true),
-            .psql(#"WHERE "CarBrandReferences"."available" != TRUE"#),
-            .mysql("WHERE CarBrandReferences.available != TRUE"),
-            .duck(#"WHERE "CarBrandReferences"."available" != TRUE"#)
+            .psql(#"WHERE "car_brand_references"."available" != TRUE"#),
+            .mysql("WHERE car_brand_references.available != TRUE"),
+            .duck(#"WHERE "car_brand_references"."available" != TRUE"#)
         )
     }
     
@@ -155,9 +155,9 @@ struct PredicateTests: SwifQLTests {
     func notEqualAType() {
         check(
             SwifQL.where(\CarBrandReferences.$mainGers != GearboxType.manual),
-            .psql(#"WHERE "CarBrandReferences"."mainGers" != 'manual'"#),
-            .mysql("WHERE CarBrandReferences.mainGers != 'manual'"),
-            .duck(#"WHERE "CarBrandReferences"."mainGers" != 'manual'"#)
+            .psql(#"WHERE "car_brand_references"."mainGers" != 'manual'"#),
+            .mysql("WHERE car_brand_references.mainGers != 'manual'"),
+            .duck(#"WHERE "car_brand_references"."mainGers" != 'manual'"#)
         )
     }
     
@@ -167,9 +167,9 @@ struct PredicateTests: SwifQLTests {
     func notEqualNULL() {
         check(
             SwifQL.where(\CarBrandReferences.$model != nil),
-            .psql(#"WHERE "CarBrandReferences"."model" IS NOT NULL"#),
-            .mysql("WHERE CarBrandReferences.model IS NOT NULL"),
-            .duck(#"WHERE "CarBrandReferences"."model" IS NOT NULL"#)
+            .psql(#"WHERE "car_brand_references"."model" IS NOT NULL"#),
+            .mysql("WHERE car_brand_references.model IS NOT NULL"),
+            .duck(#"WHERE "car_brand_references"."model" IS NOT NULL"#)
         )
     }
     
@@ -179,9 +179,9 @@ struct PredicateTests: SwifQLTests {
     func betweenInt () {
         check(
             SwifQL.where(\CarBrandReferences.$score <> 5 && 20),
-            .psql(#"WHERE "CarBrandReferences"."score" BETWEEN 5 AND 20"#),
-            .mysql("WHERE CarBrandReferences.score BETWEEN 5 AND 20"),
-            .duck(#"WHERE "CarBrandReferences"."score" BETWEEN 5 AND 20"#)
+            .psql(#"WHERE "car_brand_references"."score" BETWEEN 5 AND 20"#),
+            .mysql("WHERE car_brand_references.score BETWEEN 5 AND 20"),
+            .duck(#"WHERE "car_brand_references"."score" BETWEEN 5 AND 20"#)
         )
     }
     
@@ -191,9 +191,9 @@ struct PredicateTests: SwifQLTests {
     func betweenString () {
         check(
             SwifQL.where(\CarBrandReferences.$model <> "a" && "t"),
-            .psql(#"WHERE "CarBrandReferences"."model" BETWEEN 'a' AND 't'"#),
-            .mysql("WHERE CarBrandReferences.model BETWEEN 'a' AND 't'"),
-            .duck(#"WHERE "CarBrandReferences"."model" BETWEEN 'a' AND 't'"#)
+            .psql(#"WHERE "car_brand_references"."model" BETWEEN 'a' AND 't'"#),
+            .mysql("WHERE car_brand_references.model BETWEEN 'a' AND 't'"),
+            .duck(#"WHERE "car_brand_references"."model" BETWEEN 'a' AND 't'"#)
         )
     }
     
@@ -203,7 +203,7 @@ struct PredicateTests: SwifQLTests {
     func rangeLeftEnum() {
         check(
             SwifQL.where(\CarBrandReferences.$availableGers ||> [GearboxType.manual]),
-            .psql(#"WHERE "CarBrandReferences"."availableGers" @> '{manual}'"#)
+            .psql(#"WHERE "car_brand_references"."availableGers" @> '{manual}'"#)
         )
     }
     
@@ -213,7 +213,7 @@ struct PredicateTests: SwifQLTests {
     func rangeRightEnum() {
         check(
             SwifQL.where(\CarBrandReferences.$availableGers <|| [GearboxType.manual]),
-            .psql(#"WHERE "CarBrandReferences"."availableGers" <@ '{manual}'"#)
+            .psql(#"WHERE "car_brand_references"."availableGers" <@ '{manual}'"#)
         )
     }
     
@@ -223,7 +223,7 @@ struct PredicateTests: SwifQLTests {
     func rangeLeftString() {
         check(
             SwifQL.where(\CarBrandReferences.$tags ||> PgArray(["red"])),
-            .psql(#"WHERE "CarBrandReferences"."tags" @> ARRAY['red']"#)
+            .psql(#"WHERE "car_brand_references"."tags" @> ARRAY['red']"#)
         )
     }
     
@@ -233,7 +233,7 @@ struct PredicateTests: SwifQLTests {
     func rangeRightString() {
         check(
             SwifQL.where(\CarBrandReferences.$tags <|| PgArray(["red"])),
-            .psql(#"WHERE "CarBrandReferences"."tags" <@ ARRAY['red']"#)
+            .psql(#"WHERE "car_brand_references"."tags" <@ ARRAY['red']"#)
         )
     }
     
@@ -243,7 +243,7 @@ struct PredicateTests: SwifQLTests {
     func rangeLeftInt() {
         check(
             SwifQL.where(\CarBrandReferences.$availableYears ||> PgArray([1, 2, 3])),
-            .psql(#"WHERE "CarBrandReferences"."availableYears" @> ARRAY[1, 2, 3]"#)
+            .psql(#"WHERE "car_brand_references"."availableYears" @> ARRAY[1, 2, 3]"#)
         )
     }
     
@@ -253,7 +253,7 @@ struct PredicateTests: SwifQLTests {
     func rangeRightInt() {
         check(
             SwifQL.where(\CarBrandReferences.$availableYears <|| PgArray([1, 2, 3])),
-            .psql(#"WHERE "CarBrandReferences"."availableYears" <@ ARRAY[1, 2, 3]"#)
+            .psql(#"WHERE "car_brand_references"."availableYears" <@ ARRAY[1, 2, 3]"#)
         )
     }
     
@@ -263,7 +263,7 @@ struct PredicateTests: SwifQLTests {
     func rangeLeftUUID() {
         check(
             SwifQL.where(\CarBrandReferences.$knowedIssues ||> PgArray([UUID(uuidString: "25afebec-179e-43ff-8c7b-a0a460c7c996")!, UUID(uuidString: "25afebec-179e-43ff-8c7b-a0a460c7c996")!])),
-            .psql(#"WHERE "CarBrandReferences"."knowedIssues" @> ARRAY['25AFEBEC-179E-43FF-8C7B-A0A460C7C996', '25AFEBEC-179E-43FF-8C7B-A0A460C7C996']"#)
+            .psql(#"WHERE "car_brand_references"."knowedIssues" @> ARRAY['25AFEBEC-179E-43FF-8C7B-A0A460C7C996', '25AFEBEC-179E-43FF-8C7B-A0A460C7C996']"#)
         )
     }
     
@@ -273,7 +273,7 @@ struct PredicateTests: SwifQLTests {
     func rangeRightUUID() {
         check(
             SwifQL.where(\CarBrandReferences.$knowedIssues <|| PgArray([UUID(uuidString: "25afebec-179e-43ff-8c7b-a0a460c7c996")!, UUID(uuidString: "25afebec-179e-43ff-8c7b-a0a460c7c996")!])),
-            .psql(#"WHERE "CarBrandReferences"."knowedIssues" <@ ARRAY['25AFEBEC-179E-43FF-8C7B-A0A460C7C996', '25AFEBEC-179E-43FF-8C7B-A0A460C7C996']"#)
+            .psql(#"WHERE "car_brand_references"."knowedIssues" <@ ARRAY['25AFEBEC-179E-43FF-8C7B-A0A460C7C996', '25AFEBEC-179E-43FF-8C7B-A0A460C7C996']"#)
         )
     }
 }

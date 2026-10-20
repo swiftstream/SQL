@@ -21,15 +21,15 @@ struct FnTests: SwifQLTests {
     func concat() {
         check(
             Fn.concat("Hello ", CarBrands.column("name")),
-            .psql(#"concat('Hello ', "CarBrands"."name")"#),
-            .mysql("concat('Hello ', CarBrands.name)"),
-            .duck(#"concat('Hello ', "CarBrands"."name")"#)
+            .psql(#"concat('Hello ', "car_brands"."name")"#),
+            .mysql("concat('Hello ', car_brands.name)"),
+            .duck(#"concat('Hello ', "car_brands"."name")"#)
         )
         check(
             Fn.concatWS(", ", "Hello", CarBrands.column("name")),
-            .psql(#"concat_ws(', ', 'Hello', "CarBrands"."name")"#),
-            .mysql("concat_ws(', ', 'Hello', CarBrands.name)"),
-            .duck(#"concat_ws(', ', 'Hello', "CarBrands"."name")"#)
+            .psql(#"concat_ws(', ', 'Hello', "car_brands"."name")"#),
+            .mysql("concat_ws(', ', 'Hello', car_brands.name)"),
+            .duck(#"concat_ws(', ', 'Hello', "car_brands"."name")"#)
         )
     }
     
@@ -87,8 +87,8 @@ struct FnTests: SwifQLTests {
     func tsRankCD() {
         check(
             SwifQL.select(Fn.tsRankCD(FormattedKeyPath(CarBrands.self, "id"), Fn.toTSQuery("The Fat Rats"))),
-            .psql(#"SELECT ts_rank_cd("CarBrands"."id", to_tsquery('The Fat Rats'))"#),
-            .mysql("SELECT ts_rank_cd(CarBrands.id, to_tsquery('The Fat Rats'))")
+            .psql(#"SELECT ts_rank_cd("car_brands"."id", to_tsquery('The Fat Rats'))"#),
+            .mysql("SELECT ts_rank_cd(car_brands.id, to_tsquery('The Fat Rats'))")
         )
     }
     
@@ -145,8 +145,8 @@ struct FnTests: SwifQLTests {
     func dateFormat() {
         check(
             SwifQL.select(Fn.dateFormat(CarBrands.column("createdAt"), "%y-%m")),
-            .psql(#"SELECT DATE_FORMAT("CarBrands"."createdAt", '%y-%m')"#),
-            .mysql("SELECT DATE_FORMAT(CarBrands.createdAt, '%y-%m')")
+            .psql(#"SELECT DATE_FORMAT("car_brands"."createdAt", '%y-%m')"#),
+            .mysql("SELECT DATE_FORMAT(car_brands.createdAt, '%y-%m')")
         )
     }
 

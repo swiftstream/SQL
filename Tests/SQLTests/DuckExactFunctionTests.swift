@@ -398,9 +398,9 @@ struct DuckExactFunctionTests: SwifQLTests {
 
         check(
             query,
-            .psql(#"SELECT abs(-5), substr('abcdef', 2), string_agg("CarBrands"."name", ', ')"#),
-            .mysql("SELECT abs(-5), substr('abcdef', 2), string_agg(CarBrands.name, ', ')"),
-            .duck(#"SELECT abs(-5), substr('abcdef', 2), string_agg("CarBrands"."name", ', ')"#)
+            .psql(#"SELECT abs(-5), substr('abcdef', 2), string_agg("car_brands"."name", ', ')"#),
+            .mysql("SELECT abs(-5), substr('abcdef', 2), string_agg(car_brands.name, ', ')"),
+            .duck(#"SELECT abs(-5), substr('abcdef', 2), string_agg("car_brands"."name", ', ')"#)
         )
     }
 }

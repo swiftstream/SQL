@@ -83,9 +83,9 @@ struct SelectTests: SwifQLTests {
     func selectColumn_keyPath() {
         check(
             SwifQL.select(\CarBrands.$id),
-            .psql(#"SELECT "CarBrands"."id""#),
-            .mysql("SELECT CarBrands.id"),
-            .duck(#"SELECT "CarBrands"."id""#)
+            .psql(#"SELECT "car_brands"."id""#),
+            .mysql("SELECT car_brands.id"),
+            .duck(#"SELECT "car_brands"."id""#)
         )
     }
     
@@ -93,9 +93,9 @@ struct SelectTests: SwifQLTests {
     func selectColumn_keyPath_alias_simple() {
         check(
             SwifQL.select(\CarBrands.$id => "ident"),
-            .psql(#"SELECT "CarBrands"."id" as "ident""#),
-            .mysql("SELECT CarBrands.id as ident"),
-            .duck(#"SELECT "CarBrands"."id" as "ident""#)
+            .psql(#"SELECT "car_brands"."id" as "ident""#),
+            .mysql("SELECT car_brands.id as ident"),
+            .duck(#"SELECT "car_brands"."id" as "ident""#)
         )
     }
     
@@ -107,9 +107,9 @@ struct SelectTests: SwifQLTests {
         }
         check(
             SwifQL.select(\CarBrands.$id => \Result.$abc),
-            .psql(#"SELECT "CarBrands"."id" as "ident""#),
-            .mysql("SELECT CarBrands.id as ident"),
-            .duck(#"SELECT "CarBrands"."id" as "ident""#)
+            .psql(#"SELECT "car_brands"."id" as "ident""#),
+            .mysql("SELECT car_brands.id as ident"),
+            .duck(#"SELECT "car_brands"."id" as "ident""#)
         )
     }
     
@@ -147,9 +147,9 @@ struct SelectTests: SwifQLTests {
     func genericSelector_all() {
         check(
             CarBrands.select,
-            .psql(#"SELECT "CarBrands".* FROM "CarBrands""#),
-            .mysql("SELECT CarBrands.* FROM CarBrands"),
-            .duck(#"SELECT "CarBrands".* FROM "CarBrands""#)
+            .psql(#"SELECT "car_brands".* FROM "car_brands""#),
+            .mysql("SELECT car_brands.* FROM car_brands"),
+            .duck(#"SELECT "car_brands".* FROM "car_brands""#)
         )
     }
     
@@ -157,9 +157,9 @@ struct SelectTests: SwifQLTests {
     func selectCarBrands() {
         check(
             SwifQL.select(CarBrands.column("id")),
-            .psql(#"SELECT "CarBrands"."id""#),
-            .mysql("SELECT CarBrands.id"),
-            .duck(#"SELECT "CarBrands"."id""#)
+            .psql(#"SELECT "car_brands"."id""#),
+            .mysql("SELECT car_brands.id"),
+            .duck(#"SELECT "car_brands"."id""#)
         )
     }
     
@@ -178,9 +178,9 @@ struct SelectTests: SwifQLTests {
         let cb = Schema<CarBrands>("hello")
         check(
             SwifQL.select(cb.column("id")),
-            .psql(#"SELECT "hello"."CarBrands"."id""#),
-            .mysql("SELECT hello.CarBrands.id"),
-            .duck(#"SELECT "hello"."CarBrands"."id""#)
+            .psql(#"SELECT "hello"."car_brands"."id""#),
+            .mysql("SELECT hello.car_brands.id"),
+            .duck(#"SELECT "hello"."car_brands"."id""#)
         )
     }
     
@@ -188,9 +188,9 @@ struct SelectTests: SwifQLTests {
     func selectCarBrandsSeveralFields() {
         check(
             SwifQL.select(CarBrands.column("id"), CarBrands.column("name")),
-            .psql(#"SELECT "CarBrands"."id", "CarBrands"."name""#),
-            .mysql("SELECT CarBrands.id, CarBrands.name"),
-            .duck(#"SELECT "CarBrands"."id", "CarBrands"."name""#)
+            .psql(#"SELECT "car_brands"."id", "car_brands"."name""#),
+            .mysql("SELECT car_brands.id, car_brands.name"),
+            .duck(#"SELECT "car_brands"."id", "car_brands"."name""#)
         )
     }
     
@@ -218,9 +218,9 @@ struct SelectTests: SwifQLTests {
     func selectCarBrandsSeveralFieldsMixed() {
         check(
             SwifQL.select(CarBrands.column("id"), cb.column("name"), CarBrands.column("createdAt")),
-            .psql(#"SELECT "CarBrands"."id", "cb"."name", "CarBrands"."createdAt""#),
-            .mysql("SELECT CarBrands.id, cb.name, CarBrands.createdAt"),
-            .duck(#"SELECT "CarBrands"."id", "cb"."name", "CarBrands"."createdAt""#)
+            .psql(#"SELECT "car_brands"."id", "cb"."name", "car_brands"."createdAt""#),
+            .mysql("SELECT car_brands.id, cb.name, car_brands.createdAt"),
+            .duck(#"SELECT "car_brands"."id", "cb"."name", "car_brands"."createdAt""#)
         )
     }
     
@@ -474,9 +474,9 @@ struct SelectTests: SwifQLTests {
         )
         check(
             SwifQL.select(Fn.count(CarBrands.column("id"))),
-            .psql(#"SELECT count("CarBrands"."id")"#),
-            .mysql("SELECT count(CarBrands.id)"),
-            .duck(#"SELECT count("CarBrands"."id")"#)
+            .psql(#"SELECT count("car_brands"."id")"#),
+            .mysql("SELECT count(car_brands.id)"),
+            .duck(#"SELECT count("car_brands"."id")"#)
         )
         check(
             SwifQL.select(Fn.count(cb.column("id"))),
@@ -486,9 +486,9 @@ struct SelectTests: SwifQLTests {
         )
         check(
             SwifQL.select(Fn.count(Distinct(CarBrands.column("id")))),
-            .psql(#"SELECT count(DISTINCT "CarBrands"."id")"#),
-            .mysql("SELECT count(DISTINCT CarBrands.id)"),
-            .duck(#"SELECT count(DISTINCT "CarBrands"."id")"#)
+            .psql(#"SELECT count(DISTINCT "car_brands"."id")"#),
+            .mysql("SELECT count(DISTINCT car_brands.id)"),
+            .duck(#"SELECT count(DISTINCT "car_brands"."id")"#)
         )
 
         let filtered = SwifQL.select(
@@ -496,8 +496,8 @@ struct SelectTests: SwifQLTests {
         )
         check(
             filtered,
-            .psql(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'active')"#),
-            .duck(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'active')"#)
+            .psql(#"SELECT count(*) FILTER (WHERE "car_brands"."name" = 'active')"#),
+            .duck(#"SELECT count(*) FILTER (WHERE "car_brands"."name" = 'active')"#)
         )
 
         let firstPredicate = CarBrands.column("name") == "first"
@@ -507,10 +507,10 @@ struct SelectTests: SwifQLTests {
         )
         check(
             twoPredicates,
-            .psql(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."id" = 'second')"#),
+            .psql(#"SELECT count(*) FILTER (WHERE "car_brands"."name" = 'first' AND "car_brands"."id" = 'second')"#),
             // Render compatibility only; this does not claim native MySQL FILTER support.
-            .mysql("SELECT count(*) FILTER (WHERE CarBrands.name = 'first' AND CarBrands.id = 'second')"),
-            .duck(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."id" = 'second')"#)
+            .mysql("SELECT count(*) FILTER (WHERE car_brands.name = 'first' AND car_brands.id = 'second')"),
+            .duck(#"SELECT count(*) FILTER (WHERE "car_brands"."name" = 'first' AND "car_brands"."id" = 'second')"#)
         )
 
         let twoPredicatesArray = SwifQL.select(
@@ -533,8 +533,8 @@ struct SelectTests: SwifQLTests {
         )
         check(
             threePredicates,
-            .psql(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."name" = 'second' AND "CarBrands"."name" = 'third')"#),
-            .duck(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."name" = 'second' AND "CarBrands"."name" = 'third')"#)
+            .psql(#"SELECT count(*) FILTER (WHERE "car_brands"."name" = 'first' AND "car_brands"."name" = 'second' AND "car_brands"."name" = 'third')"#),
+            .duck(#"SELECT count(*) FILTER (WHERE "car_brands"."name" = 'first' AND "car_brands"."name" = 'second' AND "car_brands"."name" = 'third')"#)
         )
         #expect(
             threePredicates.prepare(.psql).splitted.values.map { String(describing: $0) }
@@ -553,8 +553,8 @@ struct SelectTests: SwifQLTests {
         )
         check(
             groupedFilter,
-            .psql(#"SELECT count(*) FILTER (WHERE ("CarBrands"."name" = 'active' OR "CarBrands"."name" = 'pending') AND "CarBrands"."id" = 'selected')"#),
-            .duck(#"SELECT count(*) FILTER (WHERE ("CarBrands"."name" = 'active' OR "CarBrands"."name" = 'pending') AND "CarBrands"."id" = 'selected')"#)
+            .psql(#"SELECT count(*) FILTER (WHERE ("car_brands"."name" = 'active' OR "car_brands"."name" = 'pending') AND "car_brands"."id" = 'selected')"#),
+            .duck(#"SELECT count(*) FILTER (WHERE ("car_brands"."name" = 'active' OR "car_brands"."name" = 'pending') AND "car_brands"."id" = 'selected')"#)
         )
 
         let multiFilteredWindow = SwifQL.select(
@@ -564,8 +564,8 @@ struct SelectTests: SwifQLTests {
         )
         check(
             multiFilteredWindow,
-            .psql(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."id" = 'second') OVER (PARTITION BY "CarBrands"."name")"#),
-            .duck(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."id" = 'second') OVER (PARTITION BY "CarBrands"."name")"#)
+            .psql(#"SELECT count(*) FILTER (WHERE "car_brands"."name" = 'first' AND "car_brands"."id" = 'second') OVER (PARTITION BY "car_brands"."name")"#),
+            .duck(#"SELECT count(*) FILTER (WHERE "car_brands"."name" = 'first' AND "car_brands"."id" = 'second') OVER (PARTITION BY "car_brands"."name")"#)
         )
 
         let empty = SQLableParts(rawParts: [])
@@ -582,8 +582,8 @@ struct SelectTests: SwifQLTests {
         )
         check(
             emptyFragmentFilter,
-            .psql(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."id" = 'second')"#),
-            .duck(#"SELECT count(*) FILTER (WHERE "CarBrands"."name" = 'first' AND "CarBrands"."id" = 'second')"#)
+            .psql(#"SELECT count(*) FILTER (WHERE "car_brands"."name" = 'first' AND "car_brands"."id" = 'second')"#),
+            .duck(#"SELECT count(*) FILTER (WHERE "car_brands"."name" = 'first' AND "car_brands"."id" = 'second')"#)
         )
         #expect(
             emptyFragmentFilter.prepare(.psql).splitted.values.map { String(describing: $0) }
@@ -594,9 +594,9 @@ struct SelectTests: SwifQLTests {
             SwifQL.select(
                 Fn.count().over(partitionBy: CarBrands.column("name"))
             ),
-            .psql(#"SELECT count(*) OVER (PARTITION BY "CarBrands"."name")"#),
-            .mysql("SELECT count(*) OVER (PARTITION BY CarBrands.name)"),
-            .duck(#"SELECT count(*) OVER (PARTITION BY "CarBrands"."name")"#)
+            .psql(#"SELECT count(*) OVER (PARTITION BY "car_brands"."name")"#),
+            .mysql("SELECT count(*) OVER (PARTITION BY car_brands.name)"),
+            .duck(#"SELECT count(*) OVER (PARTITION BY "car_brands"."name")"#)
         )
 
         let allRows = SwifQL.select(Fn.count()).prepare(.psql).splitted
@@ -647,9 +647,9 @@ struct SelectTests: SwifQLTests {
     func selectFnMax() {
         check(
             SwifQL.select(Fn.max(CarBrands.column("id"))),
-            .psql(#"SELECT max("CarBrands"."id")"#),
-            .mysql("SELECT max(CarBrands.id)"),
-            .duck(#"SELECT max("CarBrands"."id")"#)
+            .psql(#"SELECT max("car_brands"."id")"#),
+            .mysql("SELECT max(car_brands.id)"),
+            .duck(#"SELECT max("car_brands"."id")"#)
         )
         check(
             SwifQL.select(Fn.max(cb.column("id"))),
@@ -663,9 +663,9 @@ struct SelectTests: SwifQLTests {
     func selectFnMin() {
         check(
             SwifQL.select(Fn.min(CarBrands.column("id"))),
-            .psql(#"SELECT min("CarBrands"."id")"#),
-            .mysql("SELECT min(CarBrands.id)"),
-            .duck(#"SELECT min("CarBrands"."id")"#)
+            .psql(#"SELECT min("car_brands"."id")"#),
+            .mysql("SELECT min(car_brands.id)"),
+            .duck(#"SELECT min("car_brands"."id")"#)
         )
         check(
             SwifQL.select(Fn.min(cb.column("id"))),
@@ -755,9 +755,9 @@ struct SelectTests: SwifQLTests {
     func selectFnSum() {
         check(
             SwifQL.select(Fn.sum(CarBrands.column("id"))),
-            .psql(#"SELECT sum("CarBrands"."id")"#),
-            .mysql("SELECT sum(CarBrands.id)"),
-            .duck(#"SELECT sum("CarBrands"."id")"#)
+            .psql(#"SELECT sum("car_brands"."id")"#),
+            .mysql("SELECT sum(car_brands.id)"),
+            .duck(#"SELECT sum("car_brands"."id")"#)
         )
         check(
             SwifQL.select(Fn.sum(cb.column("id"))),
@@ -771,9 +771,9 @@ struct SelectTests: SwifQLTests {
     func selectFnStringAgg() {
         check(
             SwifQL.select(Fn.stringAgg(CarBrands.column("name"), ", ")),
-            .psql(#"SELECT string_agg("CarBrands"."name", ', ')"#),
-            .mysql("SELECT string_agg(CarBrands.name, ', ')"),
-            .duck(#"SELECT string_agg("CarBrands"."name", ', ')"#)
+            .psql(#"SELECT string_agg("car_brands"."name", ', ')"#),
+            .mysql("SELECT string_agg(car_brands.name, ', ')"),
+            .duck(#"SELECT string_agg("car_brands"."name", ', ')"#)
         )
     }
 
@@ -885,9 +885,9 @@ struct SelectTests: SwifQLTests {
     func selectWithAliasInSelectParams() {
         check(
             SwifQL.select("hello", =>"aaa").from(|SwifQL.select(CarBrands.column("name")).from(CarBrands.table))| => "aaa",
-            .psql(#"SELECT 'hello', "aaa" FROM (SELECT "CarBrands"."name" FROM "CarBrands") as "aaa""#),
-            .mysql("SELECT 'hello', aaa FROM (SELECT CarBrands.name FROM CarBrands) as aaa"),
-            .duck(#"SELECT 'hello', "aaa" FROM (SELECT "CarBrands"."name" FROM "CarBrands") as "aaa""#)
+            .psql(#"SELECT 'hello', "aaa" FROM (SELECT "car_brands"."name" FROM "car_brands") as "aaa""#),
+            .mysql("SELECT 'hello', aaa FROM (SELECT car_brands.name FROM car_brands) as aaa"),
+            .duck(#"SELECT 'hello', "aaa" FROM (SELECT "car_brands"."name" FROM "car_brands") as "aaa""#)
         )
     }
 }

@@ -140,7 +140,7 @@ public struct ColumnDefault {
     }
 }
 
-public protocol ColumnRoot {
+public nonisolated protocol ColumnRoot {
     init ()
     
     static func key<C>(for column: KeyPath<Self, C>) -> String where C: ColumnRootNameable

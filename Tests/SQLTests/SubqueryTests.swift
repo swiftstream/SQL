@@ -34,8 +34,8 @@ struct SubqueryTests: SwifQLTests {
                         ) => "alias1")|
                 )
                 .from(a.table),
-            .psql(#"SELECT "a"."name", (SELECT json_agg("alias1") as "test1" FROM (SELECT "b"."name" as "someName" FROM "CarBrands" AS "b" WHERE "b"."id" = "a"."id") as "alias1") FROM "CarBrands" AS "a""#),
-            .mysql("SELECT a.name, (SELECT json_agg(alias1) as test1 FROM (SELECT b.name as someName FROM CarBrands AS b WHERE b.id = a.id) as alias1) FROM CarBrands AS a")
+            .psql(#"SELECT "a"."name", (SELECT json_agg("alias1") as "test1" FROM (SELECT "b"."name" as "someName" FROM "car_brands" AS "b" WHERE "b"."id" = "a"."id") as "alias1") FROM "car_brands" AS "a""#),
+            .mysql("SELECT a.name, (SELECT json_agg(alias1) as test1 FROM (SELECT b.name as someName FROM car_brands AS b WHERE b.id = a.id) as alias1) FROM car_brands AS a")
         )
     }
 }

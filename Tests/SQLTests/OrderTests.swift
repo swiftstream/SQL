@@ -9,9 +9,9 @@ struct OrderTests: SwifQLTests {
     func orderBySimple() {
         check(
             SwifQL.orderBy(.asc(CarBrands.column("name")), .desc(CarBrands.column("id"))),
-            .psql(#"ORDER BY "CarBrands"."name" ASC, "CarBrands"."id" DESC"#),
-            .mysql("ORDER BY CarBrands.name ASC, CarBrands.id DESC"),
-            .duck(#"ORDER BY "CarBrands"."name" ASC, "CarBrands"."id" DESC"#)
+            .psql(#"ORDER BY "car_brands"."name" ASC, "car_brands"."id" DESC"#),
+            .mysql("ORDER BY car_brands.name ASC, car_brands.id DESC"),
+            .duck(#"ORDER BY "car_brands"."name" ASC, "car_brands"."id" DESC"#)
         )
     }
     
@@ -21,12 +21,12 @@ struct OrderTests: SwifQLTests {
     func orderByWithNulls() {
         check(
             SwifQL.orderBy(.asc(CarBrands.column("name"), nulls: .first), .desc(CarBrands.column("id"), nulls: .last)),
-            .psql(#"ORDER BY "CarBrands"."name" ASC NULLS FIRST, "CarBrands"."id" DESC NULLS LAST"#),
-            .duck(#"ORDER BY "CarBrands"."name" ASC NULLS FIRST, "CarBrands"."id" DESC NULLS LAST"#)
+            .psql(#"ORDER BY "car_brands"."name" ASC NULLS FIRST, "car_brands"."id" DESC NULLS LAST"#),
+            .duck(#"ORDER BY "car_brands"."name" ASC NULLS FIRST, "car_brands"."id" DESC NULLS LAST"#)
         )
         check(
             SwifQL.orderBy(.asc(CarBrands.column("name") == nil, CarBrands.column("name")), .desc(CarBrands.column("id") != nil, CarBrands.column("id"))),
-            .mysql("ORDER BY CarBrands.name IS NULL, CarBrands.name ASC, CarBrands.id IS NOT NULL, CarBrands.id DESC")
+            .mysql("ORDER BY car_brands.name IS NULL, car_brands.name ASC, car_brands.id IS NOT NULL, car_brands.id DESC")
         )
     }
     
@@ -36,12 +36,12 @@ struct OrderTests: SwifQLTests {
     func orderByDirection() {
         check(
             SwifQL.orderBy(.direction(.asc, CarBrands.column("name"), nulls: .last)),
-            .psql(#"ORDER BY "CarBrands"."name" ASC NULLS LAST"#),
-            .duck(#"ORDER BY "CarBrands"."name" ASC NULLS LAST"#)
+            .psql(#"ORDER BY "car_brands"."name" ASC NULLS LAST"#),
+            .duck(#"ORDER BY "car_brands"."name" ASC NULLS LAST"#)
         )
         check(
             SwifQL.orderBy(.direction(.desc, CarBrands.column("id"), nulls: .first)),
-            .mysql("ORDER BY CarBrands.id DESC NULLS FIRST")
+            .mysql("ORDER BY car_brands.id DESC NULLS FIRST")
         )
     }
     

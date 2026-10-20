@@ -62,16 +62,16 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         check(
             two,
             .psql(
-                #""CarBrandReferences"."score" = 10 AND "CarBrandReferences"."model" = 'x001'"#,
-                #""CarBrandReferences"."score" = $1 AND "CarBrandReferences"."model" = $2"#
+                #""car_brand_references"."score" = 10 AND "car_brand_references"."model" = 'x001'"#,
+                #""car_brand_references"."score" = $1 AND "car_brand_references"."model" = $2"#
             ),
             .mysql(
-                "CarBrandReferences.score = 10 AND CarBrandReferences.model = 'x001'",
-                "CarBrandReferences.score = ? AND CarBrandReferences.model = ?"
+                "car_brand_references.score = 10 AND car_brand_references.model = 'x001'",
+                "car_brand_references.score = ? AND car_brand_references.model = ?"
             ),
             .duck(
-                #""CarBrandReferences"."score" = 10 AND "CarBrandReferences"."model" = 'x001'"#,
-                #""CarBrandReferences"."score" = $1 AND "CarBrandReferences"."model" = $2"#
+                #""car_brand_references"."score" = 10 AND "car_brand_references"."model" = 'x001'"#,
+                #""car_brand_references"."score" = $1 AND "car_brand_references"."model" = $2"#
             )
         )
 
@@ -87,8 +87,8 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         check(
             three,
             .psql(
-                #""CarBrandReferences"."score" = 10 AND "CarBrandReferences"."model" = 'x001' AND "CarBrandReferences"."available" = TRUE"#,
-                #""CarBrandReferences"."score" = $1 AND "CarBrandReferences"."model" = $2 AND "CarBrandReferences"."available" = TRUE"#
+                #""car_brand_references"."score" = 10 AND "car_brand_references"."model" = 'x001' AND "car_brand_references"."available" = TRUE"#,
+                #""car_brand_references"."score" = $1 AND "car_brand_references"."model" = $2 AND "car_brand_references"."available" = TRUE"#
             )
         )
     }
@@ -120,8 +120,8 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         check(
             present,
             .psql(
-                #""CarBrandReferences"."score" = 10 AND "CarBrandReferences"."model" = 'x001'"#,
-                #""CarBrandReferences"."score" = $1 AND "CarBrandReferences"."model" = $2"#
+                #""car_brand_references"."score" = 10 AND "car_brand_references"."model" = 'x001'"#,
+                #""car_brand_references"."score" = $1 AND "car_brand_references"."model" = $2"#
             )
         )
 
@@ -135,16 +135,16 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         check(
             omitted,
             .psql(
-                #""CarBrandReferences"."score" = 10"#,
-                #""CarBrandReferences"."score" = $1"#
+                #""car_brand_references"."score" = 10"#,
+                #""car_brand_references"."score" = $1"#
             ),
             .mysql(
-                "CarBrandReferences.score = 10",
-                "CarBrandReferences.score = ?"
+                "car_brand_references.score = 10",
+                "car_brand_references.score = ?"
             ),
             .duck(
-                #""CarBrandReferences"."score" = 10"#,
-                #""CarBrandReferences"."score" = $1"#
+                #""car_brand_references"."score" = 10"#,
+                #""car_brand_references"."score" = $1"#
             )
         )
 
@@ -169,8 +169,8 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         check(
             modelBranch,
             .psql(
-                #""CarBrandReferences"."model" = 'x001'"#,
-                #""CarBrandReferences"."model" = $1"#
+                #""car_brand_references"."model" = 'x001'"#,
+                #""car_brand_references"."model" = $1"#
             )
         )
 
@@ -185,8 +185,8 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         check(
             scoreBranch,
             .psql(
-                #""CarBrandReferences"."score" = 10"#,
-                #""CarBrandReferences"."score" = $1"#
+                #""car_brand_references"."score" = 10"#,
+                #""car_brand_references"."score" = $1"#
             )
         )
     }
@@ -205,16 +205,16 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         check(
             built,
             .psql(
-                #""CarBrandReferences"."available" = TRUE AND "CarBrandReferences"."score" = 1 AND "CarBrandReferences"."score" = 2 AND "CarBrandReferences"."score" = 3"#,
-                #""CarBrandReferences"."available" = TRUE AND "CarBrandReferences"."score" = $1 AND "CarBrandReferences"."score" = $2 AND "CarBrandReferences"."score" = $3"#
+                #""car_brand_references"."available" = TRUE AND "car_brand_references"."score" = 1 AND "car_brand_references"."score" = 2 AND "car_brand_references"."score" = 3"#,
+                #""car_brand_references"."available" = TRUE AND "car_brand_references"."score" = $1 AND "car_brand_references"."score" = $2 AND "car_brand_references"."score" = $3"#
             ),
             .mysql(
-                "CarBrandReferences.available = TRUE AND CarBrandReferences.score = 1 AND CarBrandReferences.score = 2 AND CarBrandReferences.score = 3",
-                "CarBrandReferences.available = TRUE AND CarBrandReferences.score = ? AND CarBrandReferences.score = ? AND CarBrandReferences.score = ?"
+                "car_brand_references.available = TRUE AND car_brand_references.score = 1 AND car_brand_references.score = 2 AND car_brand_references.score = 3",
+                "car_brand_references.available = TRUE AND car_brand_references.score = ? AND car_brand_references.score = ? AND car_brand_references.score = ?"
             ),
             .duck(
-                #""CarBrandReferences"."available" = TRUE AND "CarBrandReferences"."score" = 1 AND "CarBrandReferences"."score" = 2 AND "CarBrandReferences"."score" = 3"#,
-                #""CarBrandReferences"."available" = TRUE AND "CarBrandReferences"."score" = $1 AND "CarBrandReferences"."score" = $2 AND "CarBrandReferences"."score" = $3"#
+                #""car_brand_references"."available" = TRUE AND "car_brand_references"."score" = 1 AND "car_brand_references"."score" = 2 AND "car_brand_references"."score" = 3"#,
+                #""car_brand_references"."available" = TRUE AND "car_brand_references"."score" = $1 AND "car_brand_references"."score" = $2 AND "car_brand_references"."score" = $3"#
             )
         )
     }
@@ -232,16 +232,16 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         check(
             built,
             .psql(
-                #"("CarBrandReferences"."score" = 10 AND "CarBrandReferences"."model" = 'x001')"#,
-                #"("CarBrandReferences"."score" = $1 AND "CarBrandReferences"."model" = $2)"#
+                #"("car_brand_references"."score" = 10 AND "car_brand_references"."model" = 'x001')"#,
+                #"("car_brand_references"."score" = $1 AND "car_brand_references"."model" = $2)"#
             ),
             .mysql(
-                "(CarBrandReferences.score = 10 AND CarBrandReferences.model = 'x001')",
-                "(CarBrandReferences.score = ? AND CarBrandReferences.model = ?)"
+                "(car_brand_references.score = 10 AND car_brand_references.model = 'x001')",
+                "(car_brand_references.score = ? AND car_brand_references.model = ?)"
             ),
             .duck(
-                #"("CarBrandReferences"."score" = 10 AND "CarBrandReferences"."model" = 'x001')"#,
-                #"("CarBrandReferences"."score" = $1 AND "CarBrandReferences"."model" = $2)"#
+                #"("car_brand_references"."score" = 10 AND "car_brand_references"."model" = 'x001')"#,
+                #"("car_brand_references"."score" = $1 AND "car_brand_references"."model" = $2)"#
             )
         )
     }
@@ -259,16 +259,16 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         check(
             built,
             .psql(
-                #"("CarBrandReferences"."score" = 10 OR "CarBrandReferences"."score" = 20)"#,
-                #"("CarBrandReferences"."score" = $1 OR "CarBrandReferences"."score" = $2)"#
+                #"("car_brand_references"."score" = 10 OR "car_brand_references"."score" = 20)"#,
+                #"("car_brand_references"."score" = $1 OR "car_brand_references"."score" = $2)"#
             ),
             .mysql(
-                "(CarBrandReferences.score = 10 OR CarBrandReferences.score = 20)",
-                "(CarBrandReferences.score = ? OR CarBrandReferences.score = ?)"
+                "(car_brand_references.score = 10 OR car_brand_references.score = 20)",
+                "(car_brand_references.score = ? OR car_brand_references.score = ?)"
             ),
             .duck(
-                #"("CarBrandReferences"."score" = 10 OR "CarBrandReferences"."score" = 20)"#,
-                #"("CarBrandReferences"."score" = $1 OR "CarBrandReferences"."score" = $2)"#
+                #"("car_brand_references"."score" = 10 OR "car_brand_references"."score" = 20)"#,
+                #"("car_brand_references"."score" = $1 OR "car_brand_references"."score" = $2)"#
             )
         )
     }
@@ -290,16 +290,16 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         check(
             built,
             .psql(
-                #""CarBrandReferences"."available" = TRUE AND ("CarBrandReferences"."score" = 10 OR ("CarBrandReferences"."model" = 'x001' AND "CarBrandReferences"."score" = 20))"#,
-                #""CarBrandReferences"."available" = TRUE AND ("CarBrandReferences"."score" = $1 OR ("CarBrandReferences"."model" = $2 AND "CarBrandReferences"."score" = $3))"#
+                #""car_brand_references"."available" = TRUE AND ("car_brand_references"."score" = 10 OR ("car_brand_references"."model" = 'x001' AND "car_brand_references"."score" = 20))"#,
+                #""car_brand_references"."available" = TRUE AND ("car_brand_references"."score" = $1 OR ("car_brand_references"."model" = $2 AND "car_brand_references"."score" = $3))"#
             ),
             .mysql(
-                "CarBrandReferences.available = TRUE AND (CarBrandReferences.score = 10 OR (CarBrandReferences.model = 'x001' AND CarBrandReferences.score = 20))",
-                "CarBrandReferences.available = TRUE AND (CarBrandReferences.score = ? OR (CarBrandReferences.model = ? AND CarBrandReferences.score = ?))"
+                "car_brand_references.available = TRUE AND (car_brand_references.score = 10 OR (car_brand_references.model = 'x001' AND car_brand_references.score = 20))",
+                "car_brand_references.available = TRUE AND (car_brand_references.score = ? OR (car_brand_references.model = ? AND car_brand_references.score = ?))"
             ),
             .duck(
-                #""CarBrandReferences"."available" = TRUE AND ("CarBrandReferences"."score" = 10 OR ("CarBrandReferences"."model" = 'x001' AND "CarBrandReferences"."score" = 20))"#,
-                #""CarBrandReferences"."available" = TRUE AND ("CarBrandReferences"."score" = $1 OR ("CarBrandReferences"."model" = $2 AND "CarBrandReferences"."score" = $3))"#
+                #""car_brand_references"."available" = TRUE AND ("car_brand_references"."score" = 10 OR ("car_brand_references"."model" = 'x001' AND "car_brand_references"."score" = 20))"#,
+                #""car_brand_references"."available" = TRUE AND ("car_brand_references"."score" = $1 OR ("car_brand_references"."model" = $2 AND "car_brand_references"."score" = $3))"#
             )
         )
     }
@@ -324,21 +324,21 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         let psql = built.prepare(.psql)
         #expect(
             psql.splitted.query ==
-                #""CarBrandReferences"."model" = $1 AND "CarBrandReferences"."model" = $2 AND ("CarBrandReferences"."model" = $3 OR "CarBrandReferences"."model" = $4)"#
+                #""car_brand_references"."model" = $1 AND "car_brand_references"."model" = $2 AND ("car_brand_references"."model" = $3 OR "car_brand_references"."model" = $4)"#
         )
         #expect(psql.splitted.values.map { "\($0)" } == ["primary", "admin", "admin", "moderator"])
 
         let mysql = built.prepare(.mysql)
         #expect(
             mysql.splitted.query ==
-                "CarBrandReferences.model = ? AND CarBrandReferences.model = ? AND (CarBrandReferences.model = ? OR CarBrandReferences.model = ?)"
+                "car_brand_references.model = ? AND car_brand_references.model = ? AND (car_brand_references.model = ? OR car_brand_references.model = ?)"
         )
         #expect(mysql.splitted.values.map { "\($0)" } == ["primary", "admin", "admin", "moderator"])
 
         let duck = built.prepare(.duck)
         #expect(
             duck.splitted.query ==
-                #""CarBrandReferences"."model" = $1 AND "CarBrandReferences"."model" = $2 AND ("CarBrandReferences"."model" = $3 OR "CarBrandReferences"."model" = $4)"#
+                #""car_brand_references"."model" = $1 AND "car_brand_references"."model" = $2 AND ("car_brand_references"."model" = $3 OR "car_brand_references"."model" = $4)"#
         )
         #expect(duck.splitted.values.map { "\($0)" } == ["primary", "admin", "admin", "moderator"])
 
@@ -367,16 +367,16 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         check(
             built,
             .psql(
-                #""CarBrandReferences"."score" = 10"#,
-                #""CarBrandReferences"."score" = $1"#
+                #""car_brand_references"."score" = 10"#,
+                #""car_brand_references"."score" = $1"#
             ),
             .mysql(
-                "CarBrandReferences.score = 10",
-                "CarBrandReferences.score = ?"
+                "car_brand_references.score = 10",
+                "car_brand_references.score = ?"
             ),
             .duck(
-                #""CarBrandReferences"."score" = 10"#,
-                #""CarBrandReferences"."score" = $1"#
+                #""car_brand_references"."score" = 10"#,
+                #""car_brand_references"."score" = $1"#
             )
         )
         #expect(!built.prepare(.psql).plain.contains("()"))
@@ -403,11 +403,11 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         check(
             isNull,
             .psql(
-                #""CarBrandReferences"."model" IS NULL"#,
-                #""CarBrandReferences"."model" IS NULL"#
+                #""car_brand_references"."model" IS NULL"#,
+                #""car_brand_references"."model" IS NULL"#
             ),
-            .mysql("CarBrandReferences.model IS NULL"),
-            .duck(#""CarBrandReferences"."model" IS NULL"#)
+            .mysql("car_brand_references.model IS NULL"),
+            .duck(#""car_brand_references"."model" IS NULL"#)
         )
         #expect(isNull.prepare(.psql).plain == equalNil.prepare(.psql).plain)
         #expect(isNull.prepare(.psql).splitted.query == equalNil.prepare(.psql).splitted.query)
@@ -424,11 +424,11 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         check(
             isNotNull,
             .psql(
-                #""CarBrandReferences"."model" IS NOT NULL"#,
-                #""CarBrandReferences"."model" IS NOT NULL"#
+                #""car_brand_references"."model" IS NOT NULL"#,
+                #""car_brand_references"."model" IS NOT NULL"#
             ),
-            .mysql("CarBrandReferences.model IS NOT NULL"),
-            .duck(#""CarBrandReferences"."model" IS NOT NULL"#)
+            .mysql("car_brand_references.model IS NOT NULL"),
+            .duck(#""car_brand_references"."model" IS NOT NULL"#)
         )
         #expect(isNotNull.prepare(.psql).plain == notEqualNil.prepare(.psql).plain)
         #expect(isNotNull.prepare(.psql).splitted.query == notEqualNil.prepare(.psql).splitted.query)
@@ -457,16 +457,16 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         check(
             built,
             .psql(
-                #""CarBrandReferences"."score" IN (1, 2, 3)"#,
-                #""CarBrandReferences"."score" IN ($1, $2, $3)"#
+                #""car_brand_references"."score" IN (1, 2, 3)"#,
+                #""car_brand_references"."score" IN ($1, $2, $3)"#
             ),
             .mysql(
-                "CarBrandReferences.score IN (1, 2, 3)",
-                "CarBrandReferences.score IN (?, ?, ?)"
+                "car_brand_references.score IN (1, 2, 3)",
+                "car_brand_references.score IN (?, ?, ?)"
             ),
             .duck(
-                #""CarBrandReferences"."score" IN (1, 2, 3)"#,
-                #""CarBrandReferences"."score" IN ($1, $2, $3)"#
+                #""car_brand_references"."score" IN (1, 2, 3)"#,
+                #""car_brand_references"."score" IN ($1, $2, $3)"#
             )
         )
         let psql = built.prepare(.psql)
@@ -543,16 +543,16 @@ struct DeclarativeQueryPredicateTests: SwifQLTests {
         check(
             nonEmpty,
             .psql(
-                #""CarBrandReferences"."score" NOT IN (1, 2)"#,
-                #""CarBrandReferences"."score" NOT IN ($1, $2)"#
+                #""car_brand_references"."score" NOT IN (1, 2)"#,
+                #""car_brand_references"."score" NOT IN ($1, $2)"#
             ),
             .mysql(
-                "CarBrandReferences.score NOT IN (1, 2)",
-                "CarBrandReferences.score NOT IN (?, ?)"
+                "car_brand_references.score NOT IN (1, 2)",
+                "car_brand_references.score NOT IN (?, ?)"
             ),
             .duck(
-                #""CarBrandReferences"."score" NOT IN (1, 2)"#,
-                #""CarBrandReferences"."score" NOT IN ($1, $2)"#
+                #""car_brand_references"."score" NOT IN (1, 2)"#,
+                #""car_brand_references"."score" NOT IN ($1, $2)"#
             )
         )
         #expect(nonEmpty.prepare(.psql).splitted.values.map { "\($0)" } == ["1", "2"])

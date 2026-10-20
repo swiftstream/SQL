@@ -7,14 +7,16 @@
 
 import Foundation
 
-public protocol AnyTable: Codable {
-    /// This model's unique name. By default, this property is set to a `String` describing the type.
+public nonisolated protocol AnyTable: Codable {
+    /// This model's unique name. Simple nominal names default to lower_snake_case;
+    /// unusual, generic, or decorated type shapes should provide an explicit name.
     static var tableName: String { get }
 }
 
 extension AnyTable {
     public static var tableName: String {
         String(describing: Self.self)
+            .lowerSnakeCaseIdentifier
     }
     
     public static func column(_ paths: String...) -> FormattedKeyPath {
@@ -39,10 +41,53 @@ extension AnyTable {
     }
 }
 
+private extension String {
+    var lowerSnakeCaseIdentifier: String {
+        let characters = Array(self)
+        var words: [String] = []
+        var currentWord = ""
+
+        func finishCurrentWord() {
+            guard !currentWord.isEmpty else { return }
+            words.append(currentWord.lowercased())
+            currentWord = ""
+        }
+
+        for index in characters.indices {
+            let character = characters[index]
+
+            if character == "_" {
+                finishCurrentWord()
+                continue
+            }
+
+            if !currentWord.isEmpty {
+                let previous = characters[index - 1]
+                let nextIndex = index + 1
+                let next = nextIndex < characters.count ? characters[nextIndex] : nil
+                let lowerOrNumberToUpper = (previous.isLowercase || previous.isNumber)
+                    && character.isUppercase
+                let acronymToWord = previous.isUppercase
+                    && character.isUppercase
+                    && (next?.isLowercase == true)
+
+                if lowerOrNumberToUpper || acronymToWord {
+                    finishCurrentWord()
+                }
+            }
+
+            currentWord.append(character)
+        }
+
+        finishCurrentWord()
+        return words.joined(separator: "_")
+    }
+}
+
 public protocol KeyPathEncodable {}
 
 @dynamicMemberLookup
-public protocol Table: AnyTable, ColumnRoot {
+public nonisolated protocol Table: AnyTable, ColumnRoot, SendableMetatype {
     @_disfavoredOverload
     init ()
     

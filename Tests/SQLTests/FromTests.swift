@@ -27,9 +27,9 @@ struct FromTests: SwifQLTests {
     func fromOneTable() {
         check(
             SwifQL.from(CarBrands.table),
-            .psql(#"FROM "CarBrands""#),
-            .mysql("FROM CarBrands"),
-            .duck(#"FROM "CarBrands""#)
+            .psql(#"FROM "car_brands""#),
+            .mysql("FROM car_brands"),
+            .duck(#"FROM "car_brands""#)
         )
     }
     
@@ -37,9 +37,9 @@ struct FromTests: SwifQLTests {
     func fromTwoTables() {
         check(
             SwifQL.from(CarBrands.table, CarBrands.table),
-            .psql(#"FROM "CarBrands", "CarBrands""#),
-            .mysql("FROM CarBrands, CarBrands"),
-            .duck(#"FROM "CarBrands", "CarBrands""#)
+            .psql(#"FROM "car_brands", "car_brands""#),
+            .mysql("FROM car_brands, car_brands"),
+            .duck(#"FROM "car_brands", "car_brands""#)
         )
     }
     
@@ -47,9 +47,9 @@ struct FromTests: SwifQLTests {
     func fromOneTableAlias() {
         check(
             SwifQL.from(cb.table),
-            .psql(#"FROM "CarBrands" AS "cb""#),
-            .mysql("FROM CarBrands AS cb"),
-            .duck(#"FROM "CarBrands" AS "cb""#)
+            .psql(#"FROM "car_brands" AS "cb""#),
+            .mysql("FROM car_brands AS cb"),
+            .duck(#"FROM "car_brands" AS "cb""#)
         )
     }
     
@@ -57,9 +57,9 @@ struct FromTests: SwifQLTests {
     func fromTwoTableAliases() {
         check(
             SwifQL.from(cb.table, cb.table),
-            .psql(#"FROM "CarBrands" AS "cb", "CarBrands" AS "cb""#),
-            .mysql("FROM CarBrands AS cb, CarBrands AS cb"),
-            .duck(#"FROM "CarBrands" AS "cb", "CarBrands" AS "cb""#)
+            .psql(#"FROM "car_brands" AS "cb", "car_brands" AS "cb""#),
+            .mysql("FROM car_brands AS cb, car_brands AS cb"),
+            .duck(#"FROM "car_brands" AS "cb", "car_brands" AS "cb""#)
         )
     }
     
@@ -67,9 +67,9 @@ struct FromTests: SwifQLTests {
     func fromTableAndTableAlias() {
         check(
             SwifQL.from(CarBrands.table, cb.table),
-            .psql(#"FROM "CarBrands", "CarBrands" AS "cb""#),
-            .mysql("FROM CarBrands, CarBrands AS cb"),
-            .duck(#"FROM "CarBrands", "CarBrands" AS "cb""#)
+            .psql(#"FROM "car_brands", "car_brands" AS "cb""#),
+            .mysql("FROM car_brands, car_brands AS cb"),
+            .duck(#"FROM "car_brands", "car_brands" AS "cb""#)
         )
     }
 }

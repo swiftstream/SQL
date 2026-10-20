@@ -15,9 +15,9 @@ struct CaseTests: SwifQLTests {
             .then("Fancy driver")
                 .else("Normal driver")
             .end,
-            .psql(#"CASE WHEN "CarBrands"."name" = 'BMW' THEN 'Crazy driver' WHEN "CarBrands"."name" = 'Tesla' THEN 'Fancy driver' ELSE 'Normal driver' END"#),
-            .mysql("CASE WHEN CarBrands.name = 'BMW' THEN 'Crazy driver' WHEN CarBrands.name = 'Tesla' THEN 'Fancy driver' ELSE 'Normal driver' END"),
-            .duck(#"CASE WHEN "CarBrands"."name" = 'BMW' THEN 'Crazy driver' WHEN "CarBrands"."name" = 'Tesla' THEN 'Fancy driver' ELSE 'Normal driver' END"#)
+            .psql(#"CASE WHEN "car_brands"."name" = 'BMW' THEN 'Crazy driver' WHEN "car_brands"."name" = 'Tesla' THEN 'Fancy driver' ELSE 'Normal driver' END"#),
+            .mysql("CASE WHEN car_brands.name = 'BMW' THEN 'Crazy driver' WHEN car_brands.name = 'Tesla' THEN 'Fancy driver' ELSE 'Normal driver' END"),
+            .duck(#"CASE WHEN "car_brands"."name" = 'BMW' THEN 'Crazy driver' WHEN "car_brands"."name" = 'Tesla' THEN 'Fancy driver' ELSE 'Normal driver' END"#)
         )
     }
     
@@ -31,9 +31,9 @@ struct CaseTests: SwifQLTests {
             .then("Fancy driver")
                 .else("Normal driver")
             .end,
-            .psql(#"CASE "CarBrands"."name" WHEN 'BMW' THEN 'Crazy driver' WHEN 'Tesla' THEN 'Fancy driver' ELSE 'Normal driver' END"#),
-            .mysql("CASE CarBrands.name WHEN 'BMW' THEN 'Crazy driver' WHEN 'Tesla' THEN 'Fancy driver' ELSE 'Normal driver' END"),
-            .duck(#"CASE "CarBrands"."name" WHEN 'BMW' THEN 'Crazy driver' WHEN 'Tesla' THEN 'Fancy driver' ELSE 'Normal driver' END"#)
+            .psql(#"CASE "car_brands"."name" WHEN 'BMW' THEN 'Crazy driver' WHEN 'Tesla' THEN 'Fancy driver' ELSE 'Normal driver' END"#),
+            .mysql("CASE car_brands.name WHEN 'BMW' THEN 'Crazy driver' WHEN 'Tesla' THEN 'Fancy driver' ELSE 'Normal driver' END"),
+            .duck(#"CASE "car_brands"."name" WHEN 'BMW' THEN 'Crazy driver' WHEN 'Tesla' THEN 'Fancy driver' ELSE 'Normal driver' END"#)
         )
     }
 }

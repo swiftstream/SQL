@@ -27,9 +27,9 @@ struct WithTests: SwifQLTests {
                 )
                 .select(DB.Table("Table3").*)
                 .from(DB.Table("Table3")),
-            .psql(#"WITH "Table1" as (SELECT "Table1".* FROM "Table1"), "Table2" ("hi", "there") as (SELECT "Table2".* FROM "Table2") SELECT "Table3".* FROM "Table3""#),
-            .mysql("WITH Table1 as (SELECT Table1.* FROM Table1), Table2 (hi, there) as (SELECT Table2.* FROM Table2) SELECT Table3.* FROM Table3"),
-                .duck(#"WITH "Table1" as (SELECT "Table1".* FROM "Table1"), "Table2" ("hi", "there") as (SELECT "Table2".* FROM "Table2") SELECT "Table3".* FROM "Table3""#)
+            .psql(#"WITH "table1" as (SELECT "table1".* FROM "table1"), "Table2" ("hi", "there") as (SELECT "Table2".* FROM "Table2") SELECT "Table3".* FROM "Table3""#),
+            .mysql("WITH table1 as (SELECT table1.* FROM table1), Table2 (hi, there) as (SELECT Table2.* FROM Table2) SELECT Table3.* FROM Table3"),
+                .duck(#"WITH "table1" as (SELECT "table1".* FROM "table1"), "Table2" ("hi", "there") as (SELECT "Table2".* FROM "Table2") SELECT "Table3".* FROM "Table3""#)
         )
     }
 }

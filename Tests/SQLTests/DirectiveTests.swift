@@ -39,33 +39,33 @@ struct DirectiveTests: SwifQLTests {
         )
         check(
             SwifQL.insertInto(CarBrands.table, fields: CarBrands.column("id")),
-            .psql(#"INSERT INTO "CarBrands" ("id")"#),
-            .mysql("INSERT INTO CarBrands (id)"),
-            .duck(#"INSERT INTO "CarBrands" ("id")"#)
+            .psql(#"INSERT INTO "car_brands" ("id")"#),
+            .mysql("INSERT INTO car_brands (id)"),
+            .duck(#"INSERT INTO "car_brands" ("id")"#)
         )
         check(
             SwifQL.insertInto(CarBrands.table, fields: CarBrands.column("id"), CarBrands.column("name"), CarBrands.column("createdAt")),
-            .psql(#"INSERT INTO "CarBrands" ("id", "name", "createdAt")"#),
-            .mysql("INSERT INTO CarBrands (id, name, createdAt)"),
-            .duck(#"INSERT INTO "CarBrands" ("id", "name", "createdAt")"#)
+            .psql(#"INSERT INTO "car_brands" ("id", "name", "createdAt")"#),
+            .mysql("INSERT INTO car_brands (id, name, createdAt)"),
+            .duck(#"INSERT INTO "car_brands" ("id", "name", "createdAt")"#)
         )
         check(
             SwifQL.insertInto(cb.table, fields: cb.column("id")),
-            .psql(#"INSERT INTO "CarBrands" AS "cb" ("id")"#),
-            .mysql("INSERT INTO CarBrands AS cb (id)"),
-            .duck(#"INSERT INTO "CarBrands" AS "cb" ("id")"#)
+            .psql(#"INSERT INTO "car_brands" AS "cb" ("id")"#),
+            .mysql("INSERT INTO car_brands AS cb (id)"),
+            .duck(#"INSERT INTO "car_brands" AS "cb" ("id")"#)
         )
         check(
             SwifQL.insertInto(cb.table, fields: cb.column("id"), cb.column("name"), cb.column("createdAt")),
-            .psql(#"INSERT INTO "CarBrands" AS "cb" ("id", "name", "createdAt")"#),
-            .mysql("INSERT INTO CarBrands AS cb (id, name, createdAt)"),
-            .duck(#"INSERT INTO "CarBrands" AS "cb" ("id", "name", "createdAt")"#)
+            .psql(#"INSERT INTO "car_brands" AS "cb" ("id", "name", "createdAt")"#),
+            .mysql("INSERT INTO car_brands AS cb (id, name, createdAt)"),
+            .duck(#"INSERT INTO "car_brands" AS "cb" ("id", "name", "createdAt")"#)
         )
         check(
             SwifQL.insertInto(cb.table, fields: CarBrands.column("id"), cb.column("name"), CarBrands.column("createdAt")),
-            .psql(#"INSERT INTO "CarBrands" AS "cb" ("id", "name", "createdAt")"#),
-            .mysql("INSERT INTO CarBrands AS cb (id, name, createdAt)"),
-            .duck(#"INSERT INTO "CarBrands" AS "cb" ("id", "name", "createdAt")"#)
+            .psql(#"INSERT INTO "car_brands" AS "cb" ("id", "name", "createdAt")"#),
+            .mysql("INSERT INTO car_brands AS cb (id, name, createdAt)"),
+            .duck(#"INSERT INTO "car_brands" AS "cb" ("id", "name", "createdAt")"#)
         )
     }
     
@@ -75,9 +75,9 @@ struct DirectiveTests: SwifQLTests {
     func delete() {
         check(
             SwifQL.delete(from: CarBrands.table).where(CarBrands.column("name") == "BMW"),
-            .psql(#"DELETE FROM "CarBrands" WHERE "CarBrands"."name" = 'BMW'"#),
-            .mysql("DELETE FROM CarBrands WHERE CarBrands.name = 'BMW'"),
-            .duck(#"DELETE FROM "CarBrands" WHERE "CarBrands"."name" = 'BMW'"#)
+            .psql(#"DELETE FROM "car_brands" WHERE "car_brands"."name" = 'BMW'"#),
+            .mysql("DELETE FROM car_brands WHERE car_brands.name = 'BMW'"),
+            .duck(#"DELETE FROM "car_brands" WHERE "car_brands"."name" = 'BMW'"#)
         )
     }
     
@@ -166,15 +166,15 @@ struct DirectiveTests: SwifQLTests {
         )
         check(
             SwifQL.between((CarBrands.column("id")).and(CarBrands.column("name"))),
-            .psql(#"BETWEEN "CarBrands"."id" AND "CarBrands"."name""#),
-            .mysql("BETWEEN CarBrands.id AND CarBrands.name"),
-            .duck(#"BETWEEN "CarBrands"."id" AND "CarBrands"."name""#)
+            .psql(#"BETWEEN "car_brands"."id" AND "car_brands"."name""#),
+            .mysql("BETWEEN car_brands.id AND car_brands.name"),
+            .duck(#"BETWEEN "car_brands"."id" AND "car_brands"."name""#)
         )
         check(
             SwifQL.not(SwifQL.between((CarBrands.column("id")).and(CarBrands.column("name")))),
-            .psql(#"NOT BETWEEN "CarBrands"."id" AND "CarBrands"."name""#),
-            .mysql("NOT BETWEEN CarBrands.id AND CarBrands.name"),
-            .duck(#"NOT BETWEEN "CarBrands"."id" AND "CarBrands"."name""#)
+            .psql(#"NOT BETWEEN "car_brands"."id" AND "car_brands"."name""#),
+            .mysql("NOT BETWEEN car_brands.id AND car_brands.name"),
+            .duck(#"NOT BETWEEN "car_brands"."id" AND "car_brands"."name""#)
         )
     }
 }
