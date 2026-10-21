@@ -179,7 +179,7 @@ Link to `RELEASE_NOTES.md` and `MIGRATION.md` for the complete story instead of 
 
 ## GitHub Releases
 
-A GitHub Release post should be usable without opening the repository diff.
+A GitHub Release is a concise user-facing announcement, not a validation report, audit summary, CI transcript, or provenance record. It should be usable without opening the repository diff.
 
 Preferred structure:
 
@@ -189,7 +189,18 @@ Preferred structure:
 4. Swift examples and exact SQL/result examples where relevant;
 5. `Breaking change` sections only for actual source migrations;
 6. a short install snippet when the version/tag matters;
-7. link to migration/full notes when useful.
+7. a canonical public link to migration/full notes only when the reader genuinely benefits from it.
+
+Do not include internal validation evidence merely because it exists. In particular, GitHub Release copy must normally omit:
+
+- test counts, suite counts, compiler matrices, CI run details, audit outcomes, evidence hashes, and executor/provenance language;
+- Xcode versions, Swift patch versions, SDK versions, build commands, resolver details, or exact consumer mechanics unless one of them is itself a user-facing minimum requirement or compatibility boundary;
+- internal bridge execution paths, validation call sites, or “we tested X by doing Y” implementation detail;
+- repository-relative navigation such as `See MIGRATION.md`; either omit it or use a canonical public URL when the link is genuinely useful.
+
+A compatibility statement belongs in a GitHub Release only when that compatibility was materially part of the release. State the user-facing outcome, not the test procedure. Name frameworks or application environments only when they help explain the release value. Do not carry compatibility boilerplate forward into later releases merely because the same framework still works.
+
+A `Requirements` section may list only requirements a user actually needs to consume the release. Never use it as a place to publish the validation environment.
 
 The title does not need to enumerate every feature. It should read like a maintainer describing the release, not a generated changelog summary. For a large stable release, a concise title such as `🚀 SQL 2.0.0` is preferable to a generated multi-clause marketing headline. Open with concrete user value and put the install snippet near the top.
 

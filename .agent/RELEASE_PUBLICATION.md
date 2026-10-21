@@ -97,6 +97,7 @@ For a stable release:
 
 - use `--verify-tag`;
 - use the independently reviewed release body;
+- require that body review to apply the GitHub Release rules in `PUBLIC_WRITING_STYLE.md`, including the explicit prohibition on internal validation/test statistics, toolchain/provenance detail, and carried-forward compatibility boilerplate that is not itself user-facing release content;
 - choose the release-title emoji independently for that release so it reflects the release's primary meaning; do not copy the previous release's emoji by default, and reserve 🚀 for a genuine launch/breakthrough milestone rather than routine subsequent releases;
 - do not use draft or prerelease mode;
 - follow `PUBLIC_WRITING_STYLE.md`.
