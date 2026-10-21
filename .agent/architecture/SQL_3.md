@@ -6,9 +6,12 @@ Load this file for SQL 3.x architecture, migration, compatibility, release-histo
 
 ## Status
 
-- Current stable line: SQL 3.1.0.
+- Current stable release: SQL 3.1.0.
+- Immutable release commit: `b0c81191c3494d91b84b5382092e99c64d5c4647`.
+- Annotated release tag: `3.1.0`, tag object `8f751b9ec46b43f88148956948dae3b7c31fadd7`.
+- Verified GitHub Release: `🛡️ SQL 3.1.0`, release ID `419720138`, published at `2026-10-21T15:24:50Z`.
+- Canonical corrected GitHub Release body SHA-256: `70f157572d14ff2233bed91145b437b2a6988bed1799861e71812524c82d56a7`.
 - SQL 3.1 source delta: `34a6b9cf60f47860624d41654b03d8b52f0a23c1` adds Swift 6 table-metadata isolation compatibility and lower-snake-case implicit table names.
-- SQL 3.1 remote release identity is recorded only after publication.
 - Previous immutable release commit: `ae6aedb064f882b67488c8fb27ead5bc0a65bc43`.
 - Previous annotated release tag: `3.0.0`, tag object `966136c265d23c59477416ccb710c612fe888511`.
 - Previous verified GitHub Release: `🗃️ SQL 3.0.0`, release ID `415777873`.
