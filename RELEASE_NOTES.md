@@ -1,6 +1,85 @@
+# 3.1.0
+
+SQL 3.1.0 is a focused Swift 6 compatibility release for model-backed tables and columns.
+
+## Swift 6 default-isolation compatibility
+
+`Table`, `AnyTable`, and `ColumnRoot` now expose the isolation shape needed by Swift 6.3/6.4 consumers without requiring annotations at the model declaration:
+
+```swift
+struct Todo: Table {
+    @Column("id") var id: UUID
+    @Column("name") var name: String
+
+    init() {}
+}
+```
+
+The same model can be constructed and used from nonisolated code, including projected key paths and key lookup:
+
+```swift
+let id = Todo.$id
+let key = Todo.key(for: \Todo.$id)
+```
+
+The implementation does not use `nonisolated(unsafe)`, `@preconcurrency`, or `@unchecked Sendable` to suppress diagnostics, and it does not require consumer-side actor annotations.
+
+## Implicit table names now use lower snake case
+
+When a `Table` does not provide `static var tableName`, simple nominal type names now default to lower snake case:
+
+```text
+Todo        -> todo
+UserProfile -> user_profile
+URLValue    -> url_value
+HTTPServer  -> http_server
+UserId      -> user_id
+URL         -> url
+```
+
+Explicit overrides are unchanged:
+
+```swift
+struct LegacyUser: Table {
+    static var tableName: String { "LegacyUser" }
+    init() {}
+}
+```
+
+### Possibly breaking: implicit `tableName`
+
+This default-name change can affect generated SQL and database object lookup for applications that relied on the old implicit type-name spelling. If the existing table name is part of your persisted schema contract, define `tableName` explicitly before upgrading.
+
+Unusual, generic, nested, qualified, or otherwise decorated type shapes should also use an explicit stable `tableName` instead of treating type-description formatting as schema identity.
+
+## Vapor 4 compatibility
+
+SQL 3.1.0 was validated in both directions:
+
+- an existing Vapor 4 application using the EventLoopFuture-style bridge stack compiled with the local SQL 3.1 source;
+- a fresh Vapor 4.122.2 / swift-tools 6.3 application built on Apple Swift 6.3.3;
+- a real PostgresBridge execution path compiled through `try await query.execute(on: connection).get()`;
+- deterministic SQL preparation/bind tests passed without starting a server or connecting to a live database.
+
+SQL itself remains execution-agnostic: it builds and prepares SQL; concrete bridge packages own connection and execution APIs.
+
+## Validation
+
+The SQL 3.1 source passed:
+
+- Xcode 26.6 / Apple Swift 6.3.3: 903 tests / 77 suites;
+- Xcode 27 / Apple Swift 6.4: 903 tests / 77 suites;
+- Swift compiler compatibility matrix: 8/8;
+- fresh latest-Vapor-4 async consumer build/tests;
+- legacy Vapor 4 / EventLoopFuture application build.
+
+For migration guidance, especially the implicit table-name change, see [MIGRATION.md](MIGRATION.md).
+
+---
+
 # 3.0.0
 
-Version 3.0.0 is the current stable major release. It adds first-class catalog/schema/database object qualification, carries that metadata through model/manual key paths and aliases, and adds bind-aware raw SQL value interpolation while preserving the existing single preparation/binding pipeline.
+Version 3.0.0 introduced first-class catalog/schema/database object qualification, carried that metadata through model/manual key paths and aliases, and added bind-aware raw SQL value interpolation while preserving the existing single preparation/binding pipeline.
 
 ## Database qualification
 
@@ -75,7 +154,7 @@ The accepted bind-aware raw candidate passed:
 - 900 tests in 76 suites on all three full-package lanes;
 - independent final product audit with no findings.
 
-SQL 3.0.0 is published as the current stable release. Its immutable `3.0.0` tag remains the release point even as later `master` documentation/governance commits advance the branch.
+SQL 3.0.0 remains an immutable historical release. Its `3.0.0` tag remains the release point for that version even as the stable line advances.
 
 ---
 

@@ -25,16 +25,16 @@ Generated SQL examples in this README use PostgreSQL `.plain` rendering unless n
 
 Requires Swift 6.3 or newer.
 
-SQL `3.0.0` is the current stable release. Install it with:
+SQL `3.1.0` is the current stable release. Install it with:
 
 ```swift
 .package(
     url: "https://github.com/SwiftStream/SQL",
-    from: "3.0.0"
+    from: "3.1.0"
 )
 ```
 
-For source changes from SQL 2.x, see [MIGRATION.md](MIGRATION.md). For the 3.0.0 feature summary and examples, see [RELEASE_NOTES.md](RELEASE_NOTES.md).
+For source changes and compatibility notes, see [MIGRATION.md](MIGRATION.md). For the 3.1.0 summary and validation details, see [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
 Then depend on product `SQL`:
 
@@ -351,7 +351,7 @@ let source = From(
 
 ## Database qualification
 
-Current `master` uses the `DB` namespace for explicit database structure:
+SQL 3.x uses the `DB` namespace for explicit database structure:
 
 ```swift
 let catalog: DB.Catalog = "warehouse"

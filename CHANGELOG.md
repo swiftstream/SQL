@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.1.0
+
+- makes the model-backed `Table` / `ColumnRoot` contracts compatible with Swift 6 default actor isolation without requiring consumer annotations or unsafe concurrency escape hatches
+- keeps `@Column`, projected key paths such as `\User.$id`, and `Table.key(for:)` usable from nonisolated code under Swift 6.3.3 and Swift 6.4
+- changes the implicit `Table.tableName` default for simple nominal type names to lower snake case, for example `UserProfile -> user_profile`, `HTTPServer -> http_server`, and `URLValue -> url_value`
+- preserves explicit `static var tableName` overrides byte-for-byte; unusual, generic, nested, or otherwise decorated type shapes should continue to define an explicit stable table name
+- **possibly breaking:** applications that relied on the previous implicit type-name spelling should add an explicit `tableName` before upgrading if the existing database object name must remain unchanged
+- validates legacy Vapor 4 / EventLoopFuture integration and a fresh Vapor 4.122.2 async/await application on Apple Swift 6.3.3; SQL remains a query builder and does not add a database execution runtime
+- requires Swift 6.3 or newer
+
 ## 3.0.0
 
 - adds first-class `DB.Catalog`, `DB.Schema`, `DB.Table`, `DB.Column`, and `DB.Object` structural qualification, including catalog/schema metadata carried through model-backed and explicit paths

@@ -68,6 +68,57 @@ The canonical repository is now `https://github.com/SwiftStream/SQL`. SQL 2.0.0 
 
 If your package still points at `SwifQL/SwifQL`, update the repository URL together with the product and module rename. The old repository/name remains relevant only when consuming historical SwifQL releases.
 
+## 3.1.0: Swift 6 table isolation and implicit table names
+
+SQL 3.1.0 keeps the existing `Table` / `@Column` model syntax while making the model metadata surface usable from nonisolated Swift 6 code.
+
+Normal model declarations do not need new annotations:
+
+```swift
+struct Todo: Table {
+    @Column("id") var id: UUID
+    @Column("name") var name: String
+
+    init() {}
+}
+```
+
+Projected key paths and table-key lookup continue to use the same source shape:
+
+```swift
+let projected = Todo.$id
+let key = Todo.key(for: \Todo.$id)
+```
+
+Do not add `nonisolated(unsafe)`, `@preconcurrency`, `@unchecked Sendable`, or consumer-side actor annotations merely to make SQL model metadata compile. The 3.1 contracts own the necessary nonisolated metatype behavior.
+
+### Possibly breaking: the implicit `tableName` default changed
+
+Before 3.1, a model that omitted `static var tableName` used the type-description spelling directly. SQL 3.1 maps simple nominal names to lower snake case:
+
+```text
+Todo        -> todo
+UserProfile -> user_profile
+URLValue    -> url_value
+HTTPServer  -> http_server
+UserId      -> user_id
+URL         -> url
+```
+
+If your persisted database already uses the previous implicit spelling, make the existing schema identity explicit before upgrading:
+
+```swift
+struct UserProfile: Table {
+    static var tableName: String { "UserProfile" }
+
+    init() {}
+}
+```
+
+An explicit `tableName` is unchanged by 3.1. Explicit naming is also recommended for generic, nested, qualified, or otherwise unusual type shapes where a stable database identity should not depend on Swift type-description formatting.
+
+This naming change affects every model-backed path that derives its table component from `Self.tableName`; it does not rename database objects or run migrations for you.
+
 ## 3.0.0: database qualification and structural namespace
 
 Version 3.0.0 makes `DB.*` the canonical structural namespace for explicit database identifiers and changes the model schema capability from a String/default convention to a structural value.

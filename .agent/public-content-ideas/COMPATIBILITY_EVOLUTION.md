@@ -241,7 +241,7 @@ Relevant architecture commits:
 
 ### Publication caveat
 
-The compatibility philosophy is stable architecture. Generic semantic render scopes and the clean structural Duck PIVOT implementation first shipped in the `2.0.0-beta.5.0.0` line, became part of the stable SQL 2.x surface, and are carried forward in current stable SQL 3.0.0. Public material should distinguish the Swift-5-era 1.5.x line, the historical SwifQL/SQL 2 line, current SQL 3.x, and later deferred Duck families.
+The compatibility philosophy is stable architecture. Generic semantic render scopes and the clean structural Duck PIVOT implementation first shipped in the `2.0.0-beta.5.0.0` line, became part of the stable SQL 2.x surface, and are carried forward in current stable SQL 3.1.0. Public material should distinguish the Swift-5-era 1.5.x line, the historical SwifQL/SQL 2 line, current SQL 3.x, and later deferred Duck families.
 
 ## Migration story: Structural `parts` Without Rewriting Query Source
 
